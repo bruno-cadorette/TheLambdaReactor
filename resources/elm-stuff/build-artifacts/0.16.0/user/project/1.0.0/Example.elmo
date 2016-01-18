@@ -1,0 +1,33 @@
+Elm.Example = Elm.Example || {};
+Elm.Example.make = function (_elm) {
+   "use strict";
+   _elm.Example = _elm.Example || {};
+   if (_elm.Example.values) return _elm.Example.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $SocketIO = Elm.SocketIO.make(_elm),
+   $String = Elm.String.make(_elm),
+   $Task = Elm.Task.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var received = $Signal.mailbox("null");
+   var validResponses = A3($Signal.filterMap,function (_p0) {    return $Result.toMaybe($String.toInt(_p0));},0,received.signal);
+   var main = A2($Signal.map,$Graphics$Element.show,validResponses);
+   var eventName = "example";
+   var socket = A2($SocketIO.io,"http://localhost:8001",$SocketIO.defaultOptions);
+   var initial = Elm.Native.Task.make(_elm).perform(A2($Task.andThen,socket,A2($SocketIO.emit,eventName,"0")));
+   var responses = Elm.Native.Task.make(_elm).perform(A2($Task.andThen,socket,A2($SocketIO.on,eventName,received.address)));
+   var recurring = Elm.Native.Task.make(_elm).performSignal("recurring",
+   A2($Signal.map,
+   function (i) {
+      return A2($Task.andThen,socket,A2($SocketIO.emit,eventName,$Basics.toString(i + 1)));
+   },
+   A2($Signal.sampleOn,$Time.fps(1),validResponses)));
+   return _elm.Example.values = {_op: _op,socket: socket,eventName: eventName,received: received,validResponses: validResponses,main: main};
+};
