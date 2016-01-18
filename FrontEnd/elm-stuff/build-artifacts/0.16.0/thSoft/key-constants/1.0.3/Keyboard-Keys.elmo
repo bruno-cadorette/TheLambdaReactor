@@ -1,0 +1,176 @@
+Elm.Keyboard = Elm.Keyboard || {};
+Elm.Keyboard.Keys = Elm.Keyboard.Keys || {};
+Elm.Keyboard.Keys.make = function (_elm) {
+   "use strict";
+   _elm.Keyboard = _elm.Keyboard || {};
+   _elm.Keyboard.Keys = _elm.Keyboard.Keys || {};
+   if (_elm.Keyboard.Keys.values) return _elm.Keyboard.Keys.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Char = Elm.Char.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Keyboard = Elm.Keyboard.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Set = Elm.Set.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var zero = {keyCode: 58,name: "0"};
+   var nine = {keyCode: 57,name: "9"};
+   var eight = {keyCode: 56,name: "8"};
+   var seven = {keyCode: 55,name: "7"};
+   var six = {keyCode: 54,name: "6"};
+   var five = {keyCode: 53,name: "5"};
+   var four = {keyCode: 52,name: "4"};
+   var three = {keyCode: 51,name: "3"};
+   var two = {keyCode: 50,name: "2"};
+   var one = {keyCode: 49,name: "1"};
+   var f10 = {keyCode: 121,name: "F10"};
+   var f9 = {keyCode: 120,name: "F9"};
+   var f8 = {keyCode: 119,name: "F8"};
+   var f4 = {keyCode: 115,name: "F4"};
+   var f2 = {keyCode: 113,name: "F2"};
+   var escape = {keyCode: 27,name: "Escape"};
+   var pageUp = {keyCode: 33,name: "Page up"};
+   var pageDown = {keyCode: 34,name: "Page down"};
+   var home = {keyCode: 36,name: "Home"};
+   var end = {keyCode: 35,name: "End"};
+   var insert = {keyCode: 45,name: "Insert"};
+   var $delete = {keyCode: 46,name: "Delete"};
+   var backspace = {keyCode: 8,name: "Backspace"};
+   var arrowDown = {keyCode: 40,name: "Down arrow"};
+   var arrowUp = {keyCode: 38,name: "Up arrow"};
+   var arrowLeft = {keyCode: 39,name: "Left arrow"};
+   var arrowRight = {keyCode: 37,name: "Right arrow"};
+   var enter = {keyCode: 13,name: "Enter"};
+   var space = {keyCode: 32,name: "Space"};
+   var commandRight = {keyCode: 93,name: "Command right"};
+   var commandLeft = {keyCode: 91,name: "Command left"};
+   var windows = {keyCode: 91,name: "Windows"};
+   var meta = {keyCode: 91,name: "Meta"};
+   var $super = {keyCode: 91,name: "Super"};
+   var tab = {keyCode: 9,name: "Tab"};
+   var shift = {keyCode: 16,name: "Shift"};
+   var ctrl = {keyCode: 17,name: "Ctrl"};
+   var z = {keyCode: 90,name: "z"};
+   var y = {keyCode: 89,name: "y"};
+   var x = {keyCode: 88,name: "x"};
+   var w = {keyCode: 87,name: "w"};
+   var v = {keyCode: 86,name: "v"};
+   var u = {keyCode: 85,name: "u"};
+   var t = {keyCode: 84,name: "t"};
+   var s = {keyCode: 83,name: "s"};
+   var r = {keyCode: 82,name: "r"};
+   var q = {keyCode: 81,name: "q"};
+   var p = {keyCode: 80,name: "p"};
+   var o = {keyCode: 79,name: "o"};
+   var n = {keyCode: 78,name: "n"};
+   var m = {keyCode: 77,name: "m"};
+   var l = {keyCode: 76,name: "l"};
+   var k = {keyCode: 75,name: "k"};
+   var j = {keyCode: 74,name: "j"};
+   var i = {keyCode: 73,name: "i"};
+   var h = {keyCode: 72,name: "h"};
+   var g = {keyCode: 71,name: "g"};
+   var f = {keyCode: 70,name: "f"};
+   var e = {keyCode: 69,name: "e"};
+   var d = {keyCode: 68,name: "d"};
+   var c = {keyCode: 67,name: "b"};
+   var b = {keyCode: 66,name: "b"};
+   var a = {keyCode: 65,name: "a"};
+   var isKeyDown = function (k) {
+      return $Keyboard.isDown(k.keyCode);
+   };
+   var toXY = F2(function (_p0,keyCodes) {
+      var _p1 = _p0;
+      var is = function (key) {
+         return A2($Set.member,key.keyCode,keyCodes) ? 1 : 0;
+      };
+      return {x: is(_p1.right) - is(_p1.left)
+             ,y: is(_p1.up) - is(_p1.down)};
+   });
+   var dropMap = F2(function (f,signal) {
+      return $Signal.dropRepeats(A2($Signal.map,f,signal));
+   });
+   var directionKeys = F4(function (up,down,right,left) {
+      return A2(dropMap,
+      toXY({up: up,down: down,left: left,right: right}),
+      $Keyboard.keysDown);
+   });
+   var Directions = F4(function (a,b,c,d) {
+      return {up: a,down: b,left: c,right: d};
+   });
+   var equals = F2(function (k0,k1) {
+      return _U.eq(k0.keyCode,k1.keyCode);
+   });
+   var Key = F2(function (a,b) {    return {keyCode: a,name: b};});
+   return _elm.Keyboard.Keys.values = {_op: _op
+                                      ,equals: equals
+                                      ,directionKeys: directionKeys
+                                      ,isKeyDown: isKeyDown
+                                      ,a: a
+                                      ,b: b
+                                      ,c: c
+                                      ,d: d
+                                      ,e: e
+                                      ,f: f
+                                      ,g: g
+                                      ,h: h
+                                      ,i: i
+                                      ,j: j
+                                      ,k: k
+                                      ,l: l
+                                      ,m: m
+                                      ,n: n
+                                      ,o: o
+                                      ,p: p
+                                      ,q: q
+                                      ,r: r
+                                      ,s: s
+                                      ,t: t
+                                      ,u: u
+                                      ,v: v
+                                      ,w: w
+                                      ,x: x
+                                      ,y: y
+                                      ,z: z
+                                      ,shift: shift
+                                      ,ctrl: ctrl
+                                      ,tab: tab
+                                      ,$super: $super
+                                      ,meta: meta
+                                      ,windows: windows
+                                      ,commandLeft: commandLeft
+                                      ,commandRight: commandRight
+                                      ,space: space
+                                      ,enter: enter
+                                      ,arrowRight: arrowRight
+                                      ,arrowLeft: arrowLeft
+                                      ,arrowUp: arrowUp
+                                      ,arrowDown: arrowDown
+                                      ,backspace: backspace
+                                      ,$delete: $delete
+                                      ,insert: insert
+                                      ,end: end
+                                      ,home: home
+                                      ,pageDown: pageDown
+                                      ,pageUp: pageUp
+                                      ,escape: escape
+                                      ,f2: f2
+                                      ,f4: f4
+                                      ,f8: f8
+                                      ,f9: f9
+                                      ,f10: f10
+                                      ,one: one
+                                      ,two: two
+                                      ,three: three
+                                      ,four: four
+                                      ,five: five
+                                      ,six: six
+                                      ,seven: seven
+                                      ,eight: eight
+                                      ,nine: nine
+                                      ,zero: zero
+                                      ,Key: Key};
+};

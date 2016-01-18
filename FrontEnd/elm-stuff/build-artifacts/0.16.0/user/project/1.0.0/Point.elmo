@@ -1,0 +1,31 @@
+Elm.Point = Elm.Point || {};
+Elm.Point.make = function (_elm) {
+   "use strict";
+   _elm.Point = _elm.Point || {};
+   if (_elm.Point.values) return _elm.Point.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Math$Vector2 = Elm.Math.Vector2.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var origin = $Math$Vector2.fromRecord({x: 0,y: 0});
+   var getOrientation = F2(function (p1,p2) {
+      return A2($Debug.watch,
+      "orientation",
+      $Basics.radians(A2($Basics.atan2,
+      $Math$Vector2.getY(p2) - $Math$Vector2.getY(p1),
+      $Math$Vector2.getX(p2) - $Math$Vector2.getX(p1))));
+   });
+   var mapOrientation = F3(function (w,h,p) {
+      return $Math$Vector2.fromRecord({x: $Math$Vector2.getX(p) - $Basics.toFloat(w / 2 | 0)
+                                      ,y: $Basics.toFloat(h / 2 | 0) - $Math$Vector2.getY(p)});
+   });
+   return _elm.Point.values = {_op: _op
+                              ,mapOrientation: mapOrientation
+                              ,getOrientation: getOrientation
+                              ,origin: origin};
+};
