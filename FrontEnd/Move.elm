@@ -9,5 +9,4 @@ display = Signal.map3 (\(w,h) b p -> Graphics.Collage.collage w h <| displayBull
 
 
 main =
-  let p = managePlayer
-  in  display dimensions (bulletSignal p) p
+  display dimensions (bulletSignal dimensions managePlayer) managePlayer
