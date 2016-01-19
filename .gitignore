@@ -17,3 +17,5 @@ cabal.sandbox.config
 *.exe
 .stack-work/
 testResources/
+frontend/elm-stuff
+frontend/elm.js
