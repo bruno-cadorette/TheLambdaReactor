@@ -12,7 +12,7 @@ import qualified Snap.Util.FileServe as Snap
 import qualified Snap.Http.Server as Snap
 import Snap.Http.Server.Config
 import qualified Network.SocketIO as SocketIO
-import qualified Cors as CORS
+import qualified Snap.CORS as CORS
 import Debug.Trace
 
 

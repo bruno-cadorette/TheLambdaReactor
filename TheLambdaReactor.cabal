@@ -27,5 +27,6 @@ executable the-lamba-reactor-exe
                     snap-core,
                     snap-server,
                     socket-io,
-                    engine-io-snap
+                    engine-io-snap,
+                    snap-cors
   default-language:    Haskell2010
