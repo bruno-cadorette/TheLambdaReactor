@@ -32,10 +32,10 @@ instance Aeson.FromJSON Message where
 
 
 
-data AddUser = AddUser {message::Message} deriving (Generic,Show)
+data AddUser = AddUser Text.Text
 
 instance Aeson.FromJSON AddUser where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+  parseJSON = Aeson.withText "AddUser" $ pure . AddUser
 
 
 data NumConnected = NumConnected !Int
@@ -85,20 +85,25 @@ server state = do
     forUserName $ \userName ->
       SocketIO.broadcast "new message" (Said userName message)
 
-  SocketIO.on "add user" $ \(AddUser (Message name userName body)) -> do
-    n <- liftIO $ STM.atomically $ do
-      n <- (+ 1) <$> STM.readTVar (ssNConnected state)
-      STM.putTMVar userNameMVar userName
-      STM.writeTVar (ssNConnected state) n
-      return n
+  SocketIO.on "add user" $ \(AddUser text) ->let packet = Aeson.decode (BS.pack (Text.unpack text)) :: Maybe Message
+                                              in
+      case packet of
+        Just (Message method userName body) -> do
+                      n <- liftIO $ STM.atomically $ do
+                        n <- (+ 1) <$> STM.readTVar (ssNConnected state)
+                        STM.putTMVar userNameMVar userName
+                        STM.writeTVar (ssNConnected state) n
+                        return n
 
+                      SocketIO.emit "login" (NumConnected n)
+                      SocketIO.broadcast "user joined" (UserJoined userName n)
+        Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on AddUser") text)
     --SocketIO.emit "login" (NumConnected n)
 --    case (Aeson.decode (BS.pack (Text.unpack userName)) :: Maybe Message) of
 --      Just x -> SocketIO.emit "login" (UserName "marche")
 --      Nothing -> SocketIO.emit "login" (UserName "Marche pas")
 --    SocketIO.broadcast "user joined" (UserJoined userName n)
-    SocketIO.emit "login" (UserName "marche")
-    SocketIO.broadcast "user joined" (UserJoined userName n)
+
 
 
 
