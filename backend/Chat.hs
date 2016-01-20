@@ -1,25 +1,41 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 
 module Chat (server, ServerState (..)) where
 
 import Prelude hiding (mapM_)
-
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative
-import Data.Aeson ((.=))
+import Data.Aeson ((.=), (.:))
 import Data.Foldable (mapM_)
+import Debug.Trace
+import Data.ByteString.Char8
+import qualified Data.ByteString.Lazy.Char8 as BS
+import GHC.Generics
 
 import qualified Control.Concurrent.STM as STM
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import qualified Network.SocketIO as SocketIO
+data Message = Message
+    { method :: Text.Text
+    , name :: Text.Text
+    , body :: Text.Text
+    } deriving (Generic,Show)
+
+instance Aeson.ToJSON Message
+
+instance Aeson.FromJSON Message where
+  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
 
 
-data AddUser = AddUser Text.Text
+
+data AddUser = AddUser {message::Message} deriving (Generic,Show)
 
 instance Aeson.FromJSON AddUser where
-  parseJSON = Aeson.withText "AddUser" $ pure . AddUser
+  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
 
 
 data NumConnected = NumConnected !Int
@@ -69,15 +85,23 @@ server state = do
     forUserName $ \userName ->
       SocketIO.broadcast "new message" (Said userName message)
 
-  SocketIO.on "add user" $ \(AddUser userName) -> do
+  SocketIO.on "add user" $ \(AddUser (Message name userName body)) -> do
     n <- liftIO $ STM.atomically $ do
       n <- (+ 1) <$> STM.readTVar (ssNConnected state)
       STM.putTMVar userNameMVar userName
       STM.writeTVar (ssNConnected state) n
       return n
 
-    SocketIO.emit "login" (NumConnected n)
+    --SocketIO.emit "login" (NumConnected n)
+--    case (Aeson.decode (BS.pack (Text.unpack userName)) :: Maybe Message) of
+--      Just x -> SocketIO.emit "login" (UserName "marche")
+--      Nothing -> SocketIO.emit "login" (UserName "Marche pas")
+--    SocketIO.broadcast "user joined" (UserJoined userName n)
+    SocketIO.emit "login" (UserName "marche")
     SocketIO.broadcast "user joined" (UserJoined userName n)
+
+
+
 
   SocketIO.appendDisconnectHandler $ do
     (n, mUserName) <- liftIO $ STM.atomically $ do
@@ -95,10 +119,14 @@ server state = do
     forUserName $ \userName ->
       SocketIO.emit "typing" (UserName userName)
 
+  SocketIO.on "example2" $
+    forUserName $ \userName ->
+      SocketIO.emit "typing" (UserName userName)
+
   SocketIO.on "stop typing" $
     forUserName $ \userName ->
       SocketIO.broadcast "stop typing" (UserName userName)
 
-  SocketIO.on "example" $
+  SocketIO.on "example" $ \ (Message method name body) ->
     forUserName $ \userName ->
-      SocketIO.emit "example1" $ (Text.pack $ show (6::Float))
+      SocketIO.emit "example1" $ (Text.pack $ Debug.Trace.trace "allo" (show (6::Float)))

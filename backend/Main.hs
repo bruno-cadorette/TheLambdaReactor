@@ -12,13 +12,15 @@ import qualified Snap.Util.FileServe as Snap
 import qualified Snap.Http.Server as Snap
 import Snap.Http.Server.Config
 import qualified Network.SocketIO as SocketIO
+import qualified Cors as CORS
+import Debug.Trace
 
 
 main :: IO ()
 main = do
   state <- ServerState <$> STM.newTVarIO 0
   socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI (server state)
-  Snap.httpServe (setPort 8001 defaultConfig) $
+  Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
-               , ("/", Snap.serveDirectory "resources")
+               , ("/", Snap.serveDirectory "../frontend")
                ]

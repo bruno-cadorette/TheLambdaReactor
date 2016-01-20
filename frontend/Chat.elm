@@ -1,6 +1,7 @@
 import Signal
 import String
 import Keyboard
+import Debug
 import Keyboard.Keys exposing (enter, backspace, Key)
 import Char exposing (fromCode, KeyCode)
 import Text
@@ -11,6 +12,7 @@ import Graphics.Element exposing (Element)
 import Window
 import Html
 import Task
+import Json.Decode as Decode exposing ((:=))
 import SocketIO exposing (..)
 import Html.Events exposing (onWithOptions, keyCode)
 
@@ -42,17 +44,22 @@ receiveMessage str =
       Just x' -> xs ++ [x']
       Nothing -> List.drop 1 xs) []
 
+
 canvas : Signal Element
 canvas = Signal.map2(\(w, h) t -> Collage.collage w h [t]) Window.dimensions writtenText
 
 socket = io "http://localhost:8001" defaultOptions
-
-outgoing s = socket `Task.andThen` emit "chatSend" s
-
-
 receiveMessageMailbox = Signal.mailbox "null"
-incoming = socket `Task.andThen` on "myEvent" receiveMessageMailbox.address
+
+port incoming : Task.Task a ()
+port incoming = socket `Task.andThen` on "login" receiveMessageMailbox.address
+
+port example : Task.Task a ()
+port example = socket `Task.andThen` on "example1" receiveMessageMailbox.address
+
+messages : Signal String
+messages = Signal.filterMap (String.toMaybe) "" receiveMessageMailbox.signal
 
 --removeDefaultBackspace = onWithOptions "onKeyDown" {defaultOptions | preventDefault = True} keyCode (\_ -> Signal.message  mb.address ())
 
-main = canvas --Signal.map (\c -> Html.main' [removeDefaultBackspace] [Html.fromElement c]) canvas
+main = Signal.map Graphics.Element.show receiveMessageMailbox.signal  --Signal.map (\c -> Html.main' [removeDefaultBackspace] [Html.fromElement c]) canvas
