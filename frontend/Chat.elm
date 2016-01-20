@@ -1,22 +1,23 @@
-import Signal
-import String
-import Keyboard
-import Debug
-import Keyboard.Keys exposing (enter, backspace, Key)
 import Char exposing (fromCode, KeyCode)
-import Text
-import Time
-import List
+import Debug
 import Graphics.Collage as Collage
-import Graphics.Element exposing (Element)
-import Window
+import Graphics.Element exposing (Element, show)
 import Html
-import Task
-import Json.Decode as Decode exposing ((:=))
-import SocketIO exposing (..)
 import Html.Events exposing (onWithOptions, keyCode)
+import Json.Decode as Decode exposing ((:=))
+import Keyboard
+import Keyboard.Keys exposing (enter, backspace, Key)
+import List
+import Protocol exposing (..)
+import Signal
+import SocketIO exposing (..)
+import String
+import Task exposing (Task, andThen)
+import Text exposing (Text)
+import Time exposing (Time)
+import Window
 
-
+----Write a message----
 buildWord : Signal KeyCode -> Signal String
 buildWord = Signal.foldp stringBuilder ""
 
@@ -29,37 +30,43 @@ stringBuilder key str =
     else
       String.append str <| String.fromChar <| fromCode key
 
-toText : Signal String -> Signal Collage.Form
-toText = Signal.map(\s->Text.fromString s |> Collage.text)
+writtenText: Signal Text
+writtenText = Keyboard.presses |> buildWord |> Signal.map Text.fromString
 
-writtenText = Keyboard.presses |> buildWord |> toText
+timeToClear = Time.every <| 10 * Time.second
 
-everySecond = Time.every Time.second |> Signal.map (always Nothing)
-
-receiveMessage : Signal String -> Signal (List String)
-receiveMessage str =
-  Signal.merge (Signal.map Just str) everySecond
+receiveMessage : Signal Time -> Signal String -> Signal (List Text)
+receiveMessage removeMessage newStr=
+  Signal.merge (Signal.map (Text.fromString>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
       Just x' -> xs ++ [x']
       Nothing -> List.drop 1 xs) []
 
 
-canvas : Signal Element
-canvas = Signal.map2(\(w, h) t -> Collage.collage w h [t]) Window.dimensions writtenText
+buildText = Signal.map2(\writting received -> Text.join (Text.fromString "\n") (received ++ [writting]) |> Collage.text) writtenText (receiveMessage timeToClear received.signal)
 
-socket = io "http://localhost:8001" defaultOptions
-receiveMessageMailbox = Signal.mailbox "null"
+canvas : Signal Element
+canvas = Signal.map2(\(w, h) t -> Collage.collage w h [t]) Window.dimensions buildText
+
+socket : Task x SocketIO.Socket
+socket = SocketIO.io "http://localhost:8001" SocketIO.defaultOptions
+
+eventName = "example"
+
+-- send a value once at program start
+port initial : Task x ()
+port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo" "allo"))
+
+
+received : Signal.Mailbox String
+received = Signal.mailbox "null"
+
+-- set up the receiving of data
+port responses : Task x ()
+port responses = socket `andThen` SocketIO.on "example1" received.address
 
 port incoming : Task.Task a ()
-port incoming = socket `Task.andThen` on "login" receiveMessageMailbox.address
+port incoming = socket `Task.andThen` SocketIO.on "login" received.address
 
-port example : Task.Task a ()
-port example = socket `Task.andThen` on "example1" receiveMessageMailbox.address
-
-messages : Signal String
-messages = Signal.filterMap (String.toMaybe) "" receiveMessageMailbox.signal
-
---removeDefaultBackspace = onWithOptions "onKeyDown" {defaultOptions | preventDefault = True} keyCode (\_ -> Signal.message  mb.address ())
-
-main = Signal.map Graphics.Element.show receiveMessageMailbox.signal  --Signal.map (\c -> Html.main' [removeDefaultBackspace] [Html.fromElement c]) canvas
+main = canvas
