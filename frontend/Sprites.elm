@@ -1,37 +1,63 @@
-
 module MySprites where
 
+import Time exposing (..)
 import Dict exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 
 {- Test Values -}
-testTiles =
-  fromList [ (1, (0, 0)),
-  (2, (200, 0)),
-  (3, (300, 0)),
-  (4, (400, 0)),
-  (5, (500, 0)),
-  (6, (600, 0)),
-  (7, (700, 0)),
-  (8, (800, 0)),
-  (9, (900, 0)) ]
-testPos = 1
+startCrop = {left = 0, top = 0, width = 100, height = 125 }
+testSprite =
+  sprite (image 1024 1024 "testsheet.png") (crops startCrop 10)
 
-{- Images -}
-cropImage : Dict.Dict Int ( Int, Int ) -> Int -> Maybe Element
-cropImage dict tile =
-  Maybe.map (\p -> croppedImage p 100 125 "testsheet.png") (get tile dict)
+{- Sprites -}
+type alias Image =
+  { image : Element,
+  width : Int,
+  height : Int }
 
-getImage : Maybe Element
-getImage =
-  cropImage testTiles testPos
+type alias Sprite =
+  { length : Int
+  , frames : Dict.Dict Int Image
+  }
 
-imageList : Dict.Dict Int ( Int, Int ) -> List Int -> List (Maybe Element)
-imageList b tiles = List.map (\p -> cropImage b p) tiles
+type alias Crop =
+  { top    : Int
+  , left   : Int
+  , width  : Int
+  , height : Int
+  }
+
+crops : Crop -> Int -> List Crop
+crops crop n =
+  case n of
+    0 -> []
+    _ -> crop :: (crops {crop | left = crop.left + crop.width} (n - 1))
+
+sprite : Element -> List Crop -> Sprite
+sprite sheet crops =
+  let images = spriteHelper (toForm sheet) (sizeOf sheet) crops in
+  toSprite images
+
+spriteHelper : Form -> (Int, Int) -> List Crop -> List Image
+spriteHelper sheet (width, height) crops =
+  case crops of
+    [] -> []
+    (c::cs) ->
+      let translate = (toFloat (-c.left) + (toFloat (width-c.width)/2),
+                       toFloat c.top - (toFloat (height - c.height)/2) - 0.5 )
+          cropped = collage c.width c.height [move translate sheet]
+          image = { image = cropped, width = c.width, height = c.height }
+      in image :: (spriteHelper sheet (width, height) cs)
+
+toSprite : List Image -> Sprite
+toSprite imgs =
+  let n = List.length imgs in
+  let assocs = zip [0..n] imgs in
+  { length = n,
+    frames = Dict.fromList assocs }
 
 {- Animation -}
-type alias Sprite = { length : Int, frames : List Element }
 type alias Animator =
   { sprite : Sprite,
   current : Int,
@@ -50,7 +76,7 @@ updateSprite animator t =
   let diff = t - animator.last
       skip = floor <| diff / animator.rate
   in if skip > 0
-    then { animator | current <- (animator.current + skip) % (animator.sprite.length), last <- t }
+    then { animator | current = (animator.current + skip) % (animator.sprite.length), last = t }
     else animator
 
 {- Utility -}
@@ -62,8 +88,15 @@ unMaybe l =
       Just y -> y::unMaybe xs
       Nothing -> unMaybe xs
 
-{- Main -}
-sprite = 
+zip : List a -> List b -> List (a,b)
+zip xs ys =
+  case (xs, ys) of
+    ( x :: xs', y :: ys' ) ->
+        (x,y) :: zip xs' ys'
 
+    (_, _) ->
+        []
+
+{- Main -}
 main : Element
-main =
+main = updateSprite (animator testSprite
