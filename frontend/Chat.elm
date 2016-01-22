@@ -1,5 +1,5 @@
 import Char exposing (fromCode, KeyCode)
-import Debug
+import Debug exposing (..)
 import Graphics.Collage as Collage
 import Graphics.Element exposing (Element, show)
 import Html
@@ -17,21 +17,30 @@ import Text exposing (Text)
 import Time exposing (Time)
 import Window
 
-----Write a message----
-buildWord : Signal KeyCode -> Signal String
-buildWord = Signal.foldp stringBuilder ""
+type MessageToSend = SendMessage String | BuildString String
+sendToString : MessageToSend -> String
+sendToString x =
+  case x of
+    SendMessage _ -> ""
+    BuildString str -> str
 
-stringBuilder : KeyCode -> String -> String
-stringBuilder key str =
-    if key == enter.keyCode then
-      ""
-    else if key == backspace.keyCode then
-      String.dropRight 1 str
-    else
-      String.append str <| String.fromChar <| fromCode key
+----Write a message----
+buildWord : Signal MessageToSend
+buildWord = Signal.foldp (stringBuilder) (BuildString "") (Keyboard.presses)
+
+stringBuilder : KeyCode -> MessageToSend -> MessageToSend
+stringBuilder key m =
+    let str = sendToString m
+    in
+      if key == enter.keyCode then
+        SendMessage str
+      else if key == backspace.keyCode then
+        BuildString <| String.dropRight 1 str
+      else
+        BuildString <| String.append str <| String.fromChar <| fromCode key
 
 writtenText: Signal Text
-writtenText = Keyboard.presses |> buildWord |> Signal.map Text.fromString
+writtenText = buildWord |> Signal.map (sendToString>>Text.fromString)
 
 timeToClear = Time.every <| 10 * Time.second
 
@@ -54,10 +63,19 @@ socket = SocketIO.io "http://localhost:8001" SocketIO.defaultOptions
 
 eventName = "example"
 
+port sendMessage : Signal (Task String ())
+port sendMessage = Signal.map (\s ->
+  case s of
+    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" (encodeMessage (Message m m m))
+    BuildString s -> Task.succeed ()) buildWord
+
+
 -- send a value once at program start
 port initial : Task x ()
 port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo" "allo"))
 
+sendMailbox : Signal.Mailbox String
+sendMailbox = Signal.mailbox ""
 
 received : Signal.Mailbox String
 received = Signal.mailbox "null"

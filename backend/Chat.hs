@@ -100,13 +100,8 @@ server state messageHandler = do
                         return n
 
                       SocketIO.emit "login" (NumConnected n)
-                      SocketIO.broadcast "user joined" (UserJoined userName n)
+                      SocketIO.broadcast "login" (UserJoined userName n)
         Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on AddUser") text)
-    --SocketIO.emit "login" (NumConnected n)
---    case (Aeson.decode (BS.pack (Text.unpack userName)) :: Maybe Message) of
---      Just x -> SocketIO.emit "login" (UserName "marche")
---      Nothing -> SocketIO.emit "login" (UserName "Marche pas")
---    SocketIO.broadcast "user joined" (UserJoined userName n)
 
   SocketIO.on "chat" $ \(AddUser text) ->let packet = Aeson.decode (BS.pack (Text.unpack text)) :: Maybe Message
                                                  in
@@ -121,7 +116,7 @@ server state messageHandler = do
            Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on chat") text)
 
 
-
+  SocketIO.on "sendMessage" $ \(AddUser text) -> trace "send" $ return text
 
 
   SocketIO.appendDisconnectHandler $ do
