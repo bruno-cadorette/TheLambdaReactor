@@ -6,9 +6,9 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 
 {- Test Values -}
-startCrop = {left = 0, top = 0, width = 100, height = 125 }
+startCrop = {left = 0, top = 0, width = 64, height = 64 }
 testSprite =
-  sprite (image 1024 1024 "testsheet.png") (crops startCrop 10)
+  sprite (image 576 256 "../ressources/sheets/testsheet2.png") (crops startCrop 9)
 
 {- Sprites -}
 type alias Image =
@@ -79,6 +79,14 @@ updateSprite animator t =
     then { animator | current = (animator.current + skip) % (animator.sprite.length), last = t }
     else animator
 
+{- Draw -}
+draw : Animator -> Element
+draw animator =
+    let maybeE = Dict.get (animator.current) (animator.sprite.frames) in
+    case maybeE of
+      Just img -> img.image
+      Nothing -> show "Illegal current frame"
+
 {- Utility -}
 unMaybe : List( Maybe Element ) -> List Element
 unMaybe l =
@@ -98,5 +106,4 @@ zip xs ys =
         []
 
 {- Main -}
-main : Element
-main = updateSprite (animator testSprite
+main = Signal.map (\x -> draw (updateSprite (animator testSprite (100 * Time.millisecond)) x)) (every Time.millisecond)
