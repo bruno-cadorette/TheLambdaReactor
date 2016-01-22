@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 
-module Chat (server, ServerState (..)) where
+module Chat (server, ServerState (..),World (..),Message (..),PacketType(..)) where
 
 import Prelude hiding (mapM_)
 import Control.Monad.IO.Class (liftIO)
@@ -11,6 +11,7 @@ import Control.Applicative
 import Data.Aeson ((.=), (.:))
 import Data.Foldable (mapM_)
 import Debug.Trace
+import Data.List
 import Data.ByteString.Char8
 import qualified Data.ByteString.Lazy.Char8 as BS
 import GHC.Generics
@@ -18,6 +19,7 @@ import GHC.Generics
 import qualified Control.Concurrent.STM as STM
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
+import qualified Data.Map.Strict as Map
 import qualified Network.SocketIO as SocketIO
 data Message = Message
     { method :: Text.Text
@@ -30,7 +32,7 @@ instance Aeson.ToJSON Message
 instance Aeson.FromJSON Message where
   parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
 
-
+data PacketType = Emit | Broadcast
 
 data AddUser = AddUser Text.Text
 
@@ -72,12 +74,14 @@ instance Aeson.ToJSON UserJoined where
     , "numUsers" .= n
     ]
 
+data World = World [Int]
+
 
 --------------------------------------------------------------------------------
-data ServerState = ServerState { ssNConnected :: STM.TVar Int }
+data ServerState = ServerState { ssNConnected :: STM.TVar Int, world :: STM.TVar World}
 
 --server :: ServerState -> StateT SocketIO.RoutingTable Snap.Snap ()
-server state = do
+server state messageHandler = do
   userNameMVar <- liftIO STM.newEmptyTMVarIO
   let forUserName m = liftIO (STM.atomically (STM.tryReadTMVar userNameMVar)) >>= mapM_ m
 
@@ -103,6 +107,18 @@ server state = do
 --      Just x -> SocketIO.emit "login" (UserName "marche")
 --      Nothing -> SocketIO.emit "login" (UserName "Marche pas")
 --    SocketIO.broadcast "user joined" (UserJoined userName n)
+
+  SocketIO.on "chat" $ \(AddUser text) ->let packet = Aeson.decode (BS.pack (Text.unpack text)) :: Maybe Message
+                                                 in
+        forUserName $ \userName ->
+         case packet of
+           Just (Message method userName body) -> do
+             case Map.lookup method messageHandler of
+               Just f -> Data.List.head $ Data.List.map (\ (t,message) -> case t of
+                                                  Emit -> SocketIO.emit "chat" message
+                                                  Broadcast -> SocketIO.broadcast "chat" message) (f (Message method userName body) userName)
+               Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "no method could match") text)
+           Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on chat") text)
 
 
 
