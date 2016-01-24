@@ -16,6 +16,9 @@ eventName = "example"
 port initial : Task x ()
 port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo" "allo"))
 
+port after : Task x ()
+port after = socket `andThen` SocketIO.emit "chat" (encodeMessage (Message "allo" "allo" "allo"))
+
 
 received : Signal.Mailbox String
 received = Signal.mailbox "null"
@@ -33,7 +36,7 @@ messages =
     Signal.map (decodeMessage>>Result.toMaybe) received.signal
     |> Signal.dropRepeats
     |> Signal.foldp (\mx xs -> case mx of
-        Just x -> x::xs
+        Just x ->  after >> x::xs
         Nothing -> xs) []
 
 -- send many values (with a 1-second throttle)

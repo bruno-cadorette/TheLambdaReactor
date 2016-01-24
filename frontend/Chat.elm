@@ -84,6 +84,9 @@ received = Signal.mailbox "null"
 port responses : Task x ()
 port responses = socket `andThen` SocketIO.on "example1" received.address
 
+port responsesNewMessage : Task x ()
+port responsesNewMessage = socket `andThen` SocketIO.on "new message" received.address
+
 port incoming : Task.Task a ()
 port incoming = socket `Task.andThen` SocketIO.on "login" received.address
 

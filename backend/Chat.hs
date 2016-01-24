@@ -76,12 +76,14 @@ instance Aeson.ToJSON UserJoined where
 
 data World = World [Int]
 
-
 --------------------------------------------------------------------------------
 data ServerState = ServerState { ssNConnected :: STM.TVar Int, world :: STM.TVar World}
 
+decodeMessage :: Text.Text -> Maybe Message
+decodeMessage text = Aeson.decode (BS.pack (Text.unpack text))
+
 --server :: ServerState -> StateT SocketIO.RoutingTable Snap.Snap ()
-server state messageHandler = do
+server state = do
   userNameMVar <- liftIO STM.newEmptyTMVarIO
   let forUserName m = liftIO (STM.atomically (STM.tryReadTMVar userNameMVar)) >>= mapM_ m
 
@@ -102,21 +104,15 @@ server state messageHandler = do
                       SocketIO.emit "login" (NumConnected n)
                       SocketIO.broadcast "login" (UserJoined userName n)
         Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on AddUser") text)
+  --SocketIO.on "sendMessage" $ \(AddUser text) -> trace ("send " ++ (Text.unpack text)) $ return text
 
-  SocketIO.on "chat" $ \(AddUser text) ->let packet = Aeson.decode (BS.pack (Text.unpack text)) :: Maybe Message
-                                                 in
-        forUserName $ \userName ->
-         case packet of
-           Just (Message method userName body) -> do
-             case Map.lookup method messageHandler of
-               Just f -> Data.List.head $ Data.List.map (\ (t,message) -> case t of
-                                                  Emit -> SocketIO.emit "chat" message
-                                                  Broadcast -> SocketIO.broadcast "chat" message) (f (Message method userName body) userName)
-               Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "no method could match") text)
-           Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on chat") text)
+  SocketIO.on "sendMessage" $ \(AddUser text) ->
+    trace ("send " ++ (Text.unpack text))
+    $ forUserName $ \userName -> do
+      case fmap (\ (Message method name body) -> (Said userName body)) $ decodeMessage text of
+        Just x -> SocketIO.broadcast "new message" x
+        Nothing -> SocketIO.emit "error" (Message ( "Error") ("Couldn't parse Message on sendMessage") text)
 
-
-  SocketIO.on "sendMessage" $ \(AddUser text) -> trace "send" $ return text
 
 
   SocketIO.appendDisconnectHandler $ do
