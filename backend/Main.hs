@@ -17,13 +17,10 @@ import qualified Snap.CORS as CORS
 import qualified Data.Text as Text
 import Debug.Trace
 
-messageHandler :: Map.Map Text.Text (Message -> Text.Text -> [(PacketType,Message)])
-messageHandler = Map.fromList [(Text.pack "chat",(\(Message method name body) userName -> [(Broadcast,(Message method userName body)),(Emit,(Message method userName body))]))]
-
 main :: IO ()
 main = do
   state <- ServerState <$> STM.newTVarIO 0 <*> STM.newTVarIO (World [])
-  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI (server state messageHandler)
+  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI (server state)
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")
