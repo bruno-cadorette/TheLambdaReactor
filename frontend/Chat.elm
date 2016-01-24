@@ -1,3 +1,5 @@
+module Chat where
+
 import Char exposing (fromCode, KeyCode)
 import Debug exposing (..)
 import Graphics.Collage as Collage
@@ -80,14 +82,14 @@ sendMailbox = Signal.mailbox ""
 received : Signal.Mailbox String
 received = Signal.mailbox "null"
 
+port receiveMessage : Task.Task a ()
+port receiveMessage = socket `Task.andThen` SocketIO.on "receiveMessage" received.address
+
 -- set up the receiving of data
 port responses : Task x ()
 port responses = socket `andThen` SocketIO.on "example1" received.address
 
-port responsesNewMessage : Task x ()
-port responsesNewMessage = socket `andThen` SocketIO.on "new message" received.address
-
-port incoming : Task.Task a ()
-port incoming = socket `Task.andThen` SocketIO.on "login" received.address
+port login : Task.Task a ()
+port login = socket `Task.andThen` SocketIO.on "login" received.address
 
 main = canvas
