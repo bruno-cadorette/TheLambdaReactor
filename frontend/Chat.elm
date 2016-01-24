@@ -66,13 +66,13 @@ eventName = "example"
 port sendMessage : Signal (Task String ())
 port sendMessage = Signal.map (\s ->
   case s of
-    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" (encodeMessage (Message m m m))
+    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" (encodeMessage (Message m m))
     BuildString s -> Task.succeed ()) buildWord
 
 
 -- send a value once at program start
 port initial : Task x ()
-port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo" "allo"))
+port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo"))
 
 sendMailbox : Signal.Mailbox String
 sendMailbox = Signal.mailbox ""

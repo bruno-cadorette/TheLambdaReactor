@@ -21,16 +21,7 @@ import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import qualified Data.Map.Strict as Map
 import qualified Network.SocketIO as SocketIO
-data Message = Message
-    { method :: Text.Text
-    , name :: Text.Text
-    , body :: Text.Text
-    } deriving (Generic,Show)
-
-instance Aeson.ToJSON Message
-
-instance Aeson.FromJSON Message where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+import Message (Message (..),decodeMessage)
 
 data PacketType = Emit | Broadcast
 
@@ -79,8 +70,6 @@ data World = World [Int]
 --------------------------------------------------------------------------------
 data ServerState = ServerState { ssNConnected :: STM.TVar Int, world :: STM.TVar World}
 
-decodeMessage :: Text.Text -> Maybe Message
-decodeMessage text = Aeson.decode (BS.pack (Text.unpack text))
 
 --server :: ServerState -> StateT SocketIO.RoutingTable Snap.Snap ()
 server state = do
@@ -91,10 +80,9 @@ server state = do
     forUserName $ \userName ->
       SocketIO.broadcast "new message" (Said userName message)
 
-  SocketIO.on "add user" $ \(AddUser text) ->let packet = Aeson.decode (BS.pack (Text.unpack text)) :: Maybe Message
-                                              in
-      case packet of
-        Just (Message method userName body) -> do
+  SocketIO.on "add user" $ \(AddUser text) ->
+      case decodeMessage text of
+        Just (Message userName body) -> do
                       n <- liftIO $ STM.atomically $ do
                         n <- (+ 1) <$> STM.readTVar (ssNConnected state)
                         STM.putTMVar userNameMVar userName
@@ -103,15 +91,15 @@ server state = do
 
                       SocketIO.emit "login" (NumConnected n)
                       SocketIO.broadcast "login" (UserJoined userName n)
-        Nothing -> SocketIO.emit "error" (Message (Text.pack "Error") (Text.pack "Couldn't parse Message on AddUser") text)
+        Nothing -> SocketIO.emit "error" (Message "Couldn't parse Message on AddUser " text)
   --SocketIO.on "sendMessage" $ \(AddUser text) -> trace ("send " ++ (Text.unpack text)) $ return text
 
   SocketIO.on "sendMessage" $ \(AddUser text) ->
     trace ("send " ++ (Text.unpack text))
     $ forUserName $ \userName -> do
-      case fmap (\ (Message method name body) -> (Said userName body)) $ decodeMessage text of
+      case fmap (\ (Message name body) -> (Said userName body)) $ decodeMessage text of
         Just x -> SocketIO.broadcast "new message" x
-        Nothing -> SocketIO.emit "error" (Message ( "Error") ("Couldn't parse Message on sendMessage") text)
+        Nothing -> SocketIO.emit "error" (Message  "Couldn't parse Message on sendMessage"  text)
 
 
 
@@ -138,7 +126,3 @@ server state = do
   SocketIO.on "stop typing" $
     forUserName $ \userName ->
       SocketIO.broadcast "stop typing" (UserName userName)
-
-  SocketIO.on "example" $ \ (Message method name body) ->
-    forUserName $ \userName ->
-      SocketIO.emit "example1" $ (Text.pack $ Debug.Trace.trace "allo" (show (6::Float)))
