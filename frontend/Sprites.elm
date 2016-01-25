@@ -6,26 +6,25 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 
 {- Test Values -}
-startCrop = {left = 0, top = 0, width = 64, height = 64 }
-testSprite =
-  sprite (image 576 256 "../ressources/sheets/testsheet2.png") (crops startCrop 9)
+startCrop = {left = 0, top = 0, width = 48, height = 48 }
 
 {- Sprites -}
 type alias Image =
   { image : Element,
   width : Int,
-  height : Int }
+  height : Int
+  }
 
 type alias Sprite =
-  { length : Int
-  , frames : Dict.Dict Int Image
+  { length : Int,
+  frames : Dict.Dict Int Image
   }
 
 type alias Crop =
-  { top    : Int
-  , left   : Int
-  , width  : Int
-  , height : Int
+  { top    : Int,
+  left   : Int,
+  width  : Int,
+  height : Int
   }
 
 crops : Crop -> Int -> List Crop
@@ -35,9 +34,7 @@ crops crop n =
     _ -> crop :: (crops {crop | left = crop.left + crop.width} (n - 1))
 
 sprite : Element -> List Crop -> Sprite
-sprite sheet crops =
-  let images = spriteHelper (toForm sheet) (sizeOf sheet) crops in
-  toSprite images
+sprite sheet crops = toSprite (spriteHelper (toForm sheet) (sizeOf sheet) crops)
 
 spriteHelper : Form -> (Int, Int) -> List Crop -> List Image
 spriteHelper sheet (width, height) crops =
@@ -52,10 +49,9 @@ spriteHelper sheet (width, height) crops =
 
 toSprite : List Image -> Sprite
 toSprite imgs =
-  let n = List.length imgs in
-  let assocs = zip [0..n] imgs in
-  { length = n,
-    frames = Dict.fromList assocs }
+  let n = List.length imgs
+      assocs = zip [0..n] imgs
+  in { length = n, frames = Dict.fromList assocs }
 
 {- Animation -}
 type alias Animator =
@@ -99,11 +95,9 @@ unMaybe l =
 zip : List a -> List b -> List (a,b)
 zip xs ys =
   case (xs, ys) of
-    ( x :: xs', y :: ys' ) ->
-        (x,y) :: zip xs' ys'
-
-    (_, _) ->
-        []
+    ( x :: xs', y :: ys' ) -> (x,y) :: zip xs' ys'
+    (_, _) -> []
 
 {- Main -}
-main = Signal.map (\x -> draw (updateSprite (animator testSprite (100 * Time.millisecond)) x)) (every Time.millisecond)
+main :
+main = Signal.map (\x -> draw (updateSprite (animator (sprite (image 384 48 "../resources/sheets/character.png") (crops startCrop 8)) (100 * Time.millisecond)) x)) (every Time.millisecond)
