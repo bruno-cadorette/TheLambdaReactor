@@ -46,12 +46,20 @@ writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>leftAligne
 
 timeToClear = Time.every <| 10 * Time.second
 
-decodeMessage : String -> Result Text a
-decodeMessage = Result.map (\{name, message} -> Text.join ": " [Text.fromString name, Text.fromString message] ) << Decode.decodeString
+showMessage : String -> Text
+showMessage x =
+  let
+    message =
+        decodeMessage x |>
+        Result.map (\{name, body} -> Text.join (Text.fromString ": ") [Text.fromString name, Text.fromString body] )
+  in
+    case message of
+      Ok m  -> m
+      Err e -> Text.fromString e
 
 receiveMessage : Signal Time -> Signal String -> Signal (List Element)
 receiveMessage removeMessage newStr=
-  Signal.merge (Signal.map (decodeMessage>>Just) newStr) (Signal.map (always Nothing) removeMessage)
+  Signal.merge (Signal.map (showMessage>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
       Just x' -> xs ++ [leftAligned x']
