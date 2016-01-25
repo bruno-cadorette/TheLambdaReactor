@@ -97,8 +97,10 @@ server state = do
   SocketIO.on "sendMessage" $ \(AddUser text) ->
     trace ("send " ++ (Text.unpack text))
     $ forUserName $ \userName -> do
-      case fmap (\ (Message name body) -> (Said userName body)) $ decodeMessage text of
-        Just x -> SocketIO.broadcast "new message" x
+      case decodeMessage text of
+        Just x -> do 
+            SocketIO.broadcast "receiveMessage" x
+            SocketIO.emit "receiveMessage" x
         Nothing -> SocketIO.emit "error" (Message  "Couldn't parse Message on sendMessage"  text)
 
 
