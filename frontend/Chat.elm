@@ -3,7 +3,7 @@ module Chat where
 import Char exposing (fromCode, KeyCode)
 import Debug exposing (..)
 import Graphics.Collage as Collage
-import Graphics.Element exposing (Element, show)
+import Graphics.Element exposing (Element, show, leftAligned, flow, down)
 import Html
 import Html.Events exposing (onWithOptions, keyCode)
 import Json.Decode as Decode exposing ((:=))
@@ -35,30 +35,33 @@ stringBuilder key m =
     let str = sendToString m
     in
       if key == enter.keyCode then
-        SendMessage str
+        log "enter" <| SendMessage str
       else if key == backspace.keyCode then
         BuildString <| String.dropRight 1 str
       else
         BuildString <| String.append str <| String.fromChar <| fromCode key
 
-writtenText: Signal Text
-writtenText = buildWord |> Signal.map (sendToString>>Text.fromString)
+writtenText: Signal Element
+writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>leftAligned)
 
 timeToClear = Time.every <| 10 * Time.second
 
-receiveMessage : Signal Time -> Signal String -> Signal (List Text)
+decodeMessage : String -> Result Text a
+decodeMessage = Result.map (\{name, message} -> Text.join ": " [Text.fromString name, Text.fromString message] ) << Decode.decodeString
+
+receiveMessage : Signal Time -> Signal String -> Signal (List Element)
 receiveMessage removeMessage newStr=
-  Signal.merge (Signal.map (Text.fromString>>Just) newStr) (Signal.map (always Nothing) removeMessage)
+  Signal.merge (Signal.map (decodeMessage>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
-      Just x' -> xs ++ [x']
+      Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
-
-buildText = Signal.map2(\writting received -> Text.join (Text.fromString "\n") (received ++ [writting]) |> Collage.text) writtenText (receiveMessage timeToClear received.signal)
+chat : Signal Element
+chat = Signal.map2(\writting received -> flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
 
 canvas : Signal Element
-canvas = Signal.map2(\(w, h) t -> Collage.collage w h [t]) Window.dimensions buildText
+canvas = Signal.map2(\(w, h) t -> Collage.collage w h [Collage.toForm t]) Window.dimensions chat
 
 socket : Task x SocketIO.Socket
 socket = SocketIO.io "http://localhost:8001" SocketIO.defaultOptions
@@ -82,8 +85,8 @@ sendMailbox = Signal.mailbox ""
 received : Signal.Mailbox String
 received = Signal.mailbox "null"
 
-port receiveMessage : Task.Task a ()
-port receiveMessage = socket `Task.andThen` SocketIO.on "receiveMessage" received.address
+port receiveMessageFromServer : Task.Task a ()
+port receiveMessageFromServer = socket `Task.andThen` SocketIO.on "receiveMessage" received.address
 
 -- set up the receiving of data
 port responses : Task x ()
