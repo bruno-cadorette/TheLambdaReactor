@@ -13,22 +13,19 @@ clock : Signal Time
 clock = Time.every Time.second
 
 type alias Message =
-    { method : String
-    , name : String
+    { name : String
     , body : String
     }
 
 decodeMessage : String -> Result String Message
 decodeMessage =
-    Decode.decodeString <| Decode.object3 Message
-        ("method" := Decode.string)
+    Decode.decodeString <| Decode.object2 Message
         ("name" := Decode.string)
         ("body" := Decode.string)
 
 encodeMessage : Message -> String
-encodeMessage {method, name, body} =
+encodeMessage {name, body} =
     Encode.encode 0 <| Encode.object
-        [ ("method", Encode.string method)
-        , ("name", Encode.string name)
+        [ ("name", Encode.string name)
         , ("body", Encode.string body)
         ]
