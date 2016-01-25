@@ -1,58 +1,106 @@
-import Signal
-import String
+module Chat where
+
+import Char exposing (fromCode, KeyCode)
+import Debug exposing (..)
+import Graphics.Collage as Collage
+import Graphics.Element exposing (Element, show, leftAligned, flow, down)
+import Html
+import Html.Events exposing (onWithOptions, keyCode)
+import Json.Decode as Decode exposing ((:=))
 import Keyboard
 import Keyboard.Keys exposing (enter, backspace, Key)
-import Char exposing (fromCode, KeyCode)
-import Text
-import Time
 import List
-import Graphics.Collage as Collage
-import Graphics.Element exposing (Element)
-import Window
-import Html
-import Task
+import Protocol exposing (..)
+import Signal
 import SocketIO exposing (..)
-import Html.Events exposing (onWithOptions, keyCode)
+import String
+import Task exposing (Task, andThen)
+import Text exposing (Text)
+import Time exposing (Time)
+import Window
 
+type MessageToSend = SendMessage String | BuildString String
+sendToString : MessageToSend -> String
+sendToString x =
+  case x of
+    SendMessage _ -> ""
+    BuildString str -> str
 
-buildWord : Signal KeyCode -> Signal String
-buildWord = Signal.foldp stringBuilder ""
+----Write a message----
+buildWord : Signal MessageToSend
+buildWord = Signal.foldp (stringBuilder) (BuildString "") (Keyboard.presses)
 
-stringBuilder : KeyCode -> String -> String
-stringBuilder key str =
-    if key == enter.keyCode then
-      ""
-    else if key == backspace.keyCode then
-      String.dropRight 1 str
-    else
-      String.append str <| String.fromChar <| fromCode key
+stringBuilder : KeyCode -> MessageToSend -> MessageToSend
+stringBuilder key m =
+    let str = sendToString m
+    in
+      if key == enter.keyCode then
+        log "enter" <| SendMessage str
+      else if key == backspace.keyCode then
+        BuildString <| String.dropRight 1 str
+      else
+        BuildString <| String.append str <| String.fromChar <| fromCode key
 
-toText : Signal String -> Signal Collage.Form
-toText = Signal.map(\s->Text.fromString s |> Collage.text)
+writtenText: Signal Element
+writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>leftAligned)
 
-writtenText = Keyboard.presses |> buildWord |> toText
+timeToClear = Time.every <| 10 * Time.second
 
-everySecond = Time.every Time.second |> Signal.map (always Nothing)
+showMessage : String -> Text
+showMessage x =
+  let
+    message =
+        decodeMessage x |>
+        Result.map (\{name, body} -> Text.join (Text.fromString ": ") [Text.fromString name, Text.fromString body] )
+  in
+    case message of
+      Ok m  -> m
+      Err e -> Text.fromString e
 
-receiveMessage : Signal String -> Signal (List String)
-receiveMessage str =
-  Signal.merge (Signal.map Just str) everySecond
+receiveMessage : Signal Time -> Signal String -> Signal (List Element)
+receiveMessage removeMessage newStr=
+  Signal.merge (Signal.map (showMessage>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
-      Just x' -> xs ++ [x']
+      Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
+chat : Signal Element
+chat = Signal.map2(\writting received -> flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
+
 canvas : Signal Element
-canvas = Signal.map2(\(w, h) t -> Collage.collage w h [t]) Window.dimensions writtenText
+canvas = Signal.map2(\(w, h) t -> Collage.collage w h [Collage.toForm t]) Window.dimensions chat
 
-socket = io "http://localhost:8001" defaultOptions
+socket : Task x SocketIO.Socket
+socket = SocketIO.io "http://localhost:8001" SocketIO.defaultOptions
 
-outgoing s = socket `Task.andThen` emit "chatSend" s
+eventName = "example"
+
+port sendMessage : Signal (Task String ())
+port sendMessage = Signal.map (\s ->
+  case s of
+    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" (encodeMessage (Message m m))
+    BuildString s -> Task.succeed ()) buildWord
 
 
-receiveMessageMailbox = Signal.mailbox "null"
-incoming = socket `Task.andThen` on "myEvent" receiveMessageMailbox.address
+-- send a value once at program start
+port initial : Task x ()
+port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo"))
 
---removeDefaultBackspace = onWithOptions "onKeyDown" {defaultOptions | preventDefault = True} keyCode (\_ -> Signal.message  mb.address ())
+sendMailbox : Signal.Mailbox String
+sendMailbox = Signal.mailbox ""
 
-main = canvas --Signal.map (\c -> Html.main' [removeDefaultBackspace] [Html.fromElement c]) canvas
+received : Signal.Mailbox String
+received = Signal.mailbox "null"
+
+port receiveMessageFromServer : Task.Task a ()
+port receiveMessageFromServer = socket `Task.andThen` SocketIO.on "receiveMessage" received.address
+
+-- set up the receiving of data
+port responses : Task x ()
+port responses = socket `andThen` SocketIO.on "example1" received.address
+
+port login : Task.Task a ()
+port login = socket `Task.andThen` SocketIO.on "login" received.address
+
+main = canvas
