@@ -1,4 +1,4 @@
-module MySprites where
+module Sprites(draw, animator, sprite, crops, Animator, updateSprite, nextImage) where
 
 import Time exposing (..)
 import Dict exposing (..)
@@ -6,7 +6,6 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 
 {- Test Values -}
-startCrop = {left = 0, top = 0, width = 48, height = 48 }
 
 {- Sprites -}
 type alias Image =
@@ -75,11 +74,16 @@ updateSprite animator t =
     then { animator | current = (animator.current + skip) % (animator.sprite.length), last = t }
     else animator
 
+
+nextImage : Animator -> Animator
+nextImage animator =
+  { animator | current = (animator.current + 1) % animator.sprite.length }
+
 {- Draw -}
 draw : Animator -> Element
 draw animator =
-    let maybeE = Dict.get (animator.current) (animator.sprite.frames) in
-    case maybeE of
+    let maybeElem = Dict.get (animator.current) (animator.sprite.frames) in
+    case maybeElem of
       Just img -> img.image
       Nothing -> show "Illegal current frame"
 
@@ -99,5 +103,8 @@ zip xs ys =
     (_, _) -> []
 
 {- Main -}
-main :
-main = Signal.map (\x -> draw (updateSprite (animator (sprite (image 384 48 "../resources/sheets/character.png") (crops startCrop 8)) (100 * Time.millisecond)) x)) (every Time.millisecond)
+--getCurrentImage : Element
+--getCurrentImage = draw (updateSprite (animator (sprite (image 384 48 "../resources/sheets/character.png") (crops startCrop 8)) (100 * Time.millisecond)) x))
+
+
+--main = Signal.map (\x -> draw (updateSprite (animator (sprite (image 384 48 "../resources/sheets/character.png") (crops startCrop 8)) (100 * Time.millisecond)) x)) (every Time.millisecond)

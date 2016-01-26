@@ -1,5 +1,5 @@
 import Signal
-import Chat
+--import Chat
 import Window exposing (dimensions)
 import Bullet exposing (..)
 import Player exposing (..)
