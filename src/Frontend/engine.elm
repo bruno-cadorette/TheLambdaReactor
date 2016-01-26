@@ -1,4 +1,4 @@
-module Engine (getEvents, EngineEvent, GameState, playerInput, mouseInput, run) where
+module Engine (getEvents, EngineEvent(..), GameState, playerInput, mouseInput, run, turn, initialGameState) where
 
 import Signal
 import Math.Vector2 exposing (..)

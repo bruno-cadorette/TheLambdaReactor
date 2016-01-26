@@ -4,11 +4,12 @@
     "repository": "https://github.com/bruno-cadorette/thelambdareactor.git",
     "license": "MIT",
     "source-directories": [
-        "src/Frontend" 
+        "src/Frontend"
     ],
     "exposed-modules": [],
     "dependencies": {
         "Apanatshka/elm-signal-extra": "5.7.0 <= v < 5.8.0",
+        "NoRedInk/elm-check": "2.0.0 <= v < 3.0.0",
         "deadfoxygrandpa/elm-test": "3.0.1 <= v < 4.0.0",
         "elm-community/elm-linear-algebra": "1.0.1 <= v < 2.0.0",
         "elm-lang/core": "3.0.0 <= v < 4.0.0",

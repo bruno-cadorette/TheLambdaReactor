@@ -25,7 +25,7 @@ changePlayerOrientation : Point -> Player -> Player
 changePlayerOrientation p player = { player | orientation = p }
 
 movePlayer : Point -> Player -> Player
-movePlayer p player = { player | direction = p, position = (player.position `add` p), anim = nextImage player.anim }
+movePlayer p player = { player | direction = p, anim = nextImage player.anim }
 
 tickPlayer : Player -> Player
 tickPlayer player =
