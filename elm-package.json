@@ -1,7 +1,7 @@
 {
-    "version": "0.1",
+    "version": "0.1.0",
     "summary": "Online multiplayer top down shooter",
-    "repository": "https://github.com/bruno-cadorette/TheLambdaReactor.git",
+    "repository": "https://github.com/bruno-cadorette/thelambdareactor.git",
     "license": "MIT",
     "source-directories": [
         "frontend" 
