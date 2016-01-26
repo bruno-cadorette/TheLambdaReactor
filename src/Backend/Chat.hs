@@ -74,8 +74,9 @@ data ServerState = ServerState { ssNConnected :: STM.TVar Int, world :: STM.TVar
 --server :: ServerState -> StateT SocketIO.RoutingTable Snap.Snap ()
 server state = do
   userNameMVar <- liftIO STM.newEmptyTMVarIO
+  uuidMVar <- liftIO STM.newEmptyTMVarIO
   let forUserName m = liftIO (STM.atomically (STM.tryReadTMVar userNameMVar)) >>= mapM_ m
-
+  let forUuid m = liftIO (STM.atomically (STM.tryReadTMVar uuidMVar)) >>= mapM_ m
   SocketIO.on "new message" $ \(NewMessage message) ->
     forUserName $ \userName ->
       SocketIO.broadcast "new message" (Said userName message)
@@ -86,6 +87,7 @@ server state = do
                       n <- liftIO $ STM.atomically $ do
                         n <- (+ 1) <$> STM.readTVar (ssNConnected state)
                         STM.putTMVar userNameMVar userName
+                        STM.putTMVar uuidMVar n
                         STM.writeTVar (ssNConnected state) n
                         return n
 
@@ -98,7 +100,7 @@ server state = do
     trace ("send " ++ (Text.unpack text))
     $ forUserName $ \userName -> do
       case decodeMessage text of
-        Just x -> do 
+        Just x -> do
             SocketIO.broadcast "receiveMessage" x
             SocketIO.emit "receiveMessage" x
         Nothing -> SocketIO.emit "error" (Message  "Couldn't parse Message on sendMessage"  text)
