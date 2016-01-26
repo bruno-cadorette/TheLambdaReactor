@@ -1,12 +1,15 @@
 import Signal
 --import Chat
 import Window exposing (dimensions)
-import Bullet exposing (..)
+import Engine exposing (..)
 import Player exposing (..)
+import Bullet exposing (..)
+import Time exposing (fps)
 import Graphics.Collage
+import Mouse
 
 --display : Signal (Int, Int) -> Signal Bullet -> Signal Player -> Graphics.Collage.Element
-display = Signal.map3 (\(w,h) b p -> Graphics.Collage.collage w h <| displayBullets (w,h) b ++ displayPlayer (w,h) p)
+display = Signal.map2 (\(w,h) {player, bullets} -> Graphics.Collage.collage w h <| displayBullets (w,h) bullets ++ displayPlayer (w,h) player)
 
 main =
-  display dimensions (bulletSignal dimensions managePlayer) managePlayer
+  display dimensions <| run <| getEvents playerInput mouseInput (fps 30) dimensions Mouse.clicks
