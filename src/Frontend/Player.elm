@@ -30,7 +30,7 @@ movePlayer event player =
     Move p -> { player | direction = p, position = (player.position `add` p), anim = nextImage player.anim }
     Orientation p -> { player | orientation = p }
 
-initialPlayer = { position = origin, direction = origin, orientation = origin, anim = animator (sprite (image 384 48 "../resources/sheets/character.png") (crops {left = 0, top = 0, width = 48, height = 48 } 8)) (Time.second / 30) }
+initialPlayer = { position = origin, direction = origin, orientation = origin, anim = animator (sprite (image 384 48 "../../resources/sheets/character.png") (crops {left = 0, top = 0, width = 48, height = 48 } 8)) (Time.second / 30) }
 
 playerBody : Graphics.Collage.Form
 playerBody = Graphics.Collage.group
