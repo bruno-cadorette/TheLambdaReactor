@@ -19,3 +19,4 @@ cabal.sandbox.config
 testResources/
 elm-stuff/
 elm.js
+index.html
