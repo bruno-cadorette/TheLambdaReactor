@@ -17,5 +17,5 @@ spec = describe "Message" $ do
         it "decodeMessage" $ do
           (isJust (decodeMessage  (Text.pack $ "{\"name\":\"allo\",\"body\":\"allo\"}"))) `shouldBe` True
 
-        it "fail" $ do
-         False `shouldBe` True
+        it "decodeMessage fail" $ do
+         (isJust (decodeMessage  (Text.pack $ "{\"patate\":\"allo\",\"lol\":\"allo\"}"))) `shouldBe` False
