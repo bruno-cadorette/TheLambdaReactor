@@ -4,7 +4,7 @@
     "repository": "https://github.com/bruno-cadorette/thelambdareactor.git",
     "license": "MIT",
     "source-directories": [
-        "frontend" 
+        "src/Frontend" 
     ],
     "exposed-modules": [],
     "dependencies": {

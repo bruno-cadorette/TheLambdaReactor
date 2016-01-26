@@ -14,7 +14,7 @@ build-type:          Simple
 cabal-version:       >=1.22.4.0
 
 executable the-lamba-reactor-exe
-  hs-source-dirs:      backend
+  hs-source-dirs:      src/Backend
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
@@ -46,7 +46,8 @@ test-suite spec
                   socket-io,
                   engine-io-snap,
                   snap-cors,
-                  bytestring
-  hs-source-dirs: test
+                  bytestring,
+                  QuickCheck
+  hs-source-dirs: test,src/Backend
   main-is: Spec.hs
   Type: exitcode-stdio-1.0
