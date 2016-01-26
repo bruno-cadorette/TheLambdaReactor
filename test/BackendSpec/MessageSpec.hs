@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module MessageSpec (main, spec) where
+module BackendSpec.MessageSpec (main, spec) where
 
 import Test.Hspec
 import Test.QuickCheck
