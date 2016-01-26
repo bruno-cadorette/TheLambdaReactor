@@ -1,13 +1,13 @@
 name:                TheLambdaReactor
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Online multiplayer top down shooter
 description:         Please see README.md
 homepage:            https://github.com/bruno-cadorette/TheLambdaReactor
-license:             BSD3
+license:             MIT
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2010 Author Here
+author:              Bruno Cadorette, Frédéric Branchaud-Charron, Philippe Paul
+maintainer:          bruno.cadorette@usherbrook.ca
+copyright:           2016 Bruno Cadorette, Frédéric Branchaud-Charron, Philippe Paul
 category:            Web
 build-type:          Simple
 -- extra-source-files:
