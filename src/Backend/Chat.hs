@@ -6,15 +6,17 @@
 module Chat (server, ServerState (..),World (..),Message (..),PacketType(..)) where
 
 import Prelude hiding (mapM_)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class
 import Control.Applicative
 import Data.Aeson ((.=), (.:))
 import Data.Foldable (mapM_)
 import Debug.Trace
 import Data.List
+import Control.Monad
 import Data.ByteString.Char8
 import qualified Data.ByteString.Lazy.Char8 as BS
 import GHC.Generics
+import Control.Monad.Reader.Class
 
 import qualified Control.Concurrent.STM as STM
 import qualified Data.Aeson as Aeson
@@ -22,6 +24,7 @@ import qualified Data.Text as Text
 import qualified Data.Map.Strict as Map
 import qualified Network.SocketIO as SocketIO
 import Message (Message (..),decodeMessage)
+import Control.Event.Handler
 
 data PacketType = Emit | Broadcast
 
@@ -70,16 +73,28 @@ data World = World [Int]
 --------------------------------------------------------------------------------
 data ServerState = ServerState { ssNConnected :: STM.TVar Int, world :: STM.TVar World}
 
+registerCallback :: (MonadIO m, Aeson.FromJSON a) => (a -> SocketIO.EventHandler b) -> IO (a -> m ())
+registerCallback f = do
+    (addHandler, fire) <- newAddHandler
+    register addHandler (void . return . f)
+    return $ liftIO . fire
+   
+forUserName :: MonadIO m => STM.TMVar a -> (a -> m b) -> m ()
+forUserName userNameMVar m = liftIO (STM.atomically (STM.tryReadTMVar userNameMVar)) >>= mapM_ m   
 
+onNewMessage :: STM.TMVar Text.Text -> NewMessage -> SocketIO.EventHandler ()
+onNewMessage userNameMVar = (\(NewMessage message) -> forUserName userNameMVar $ (\userName -> SocketIO.broadcast "new message" (Said userName message)))
+ 
+   
 --server :: ServerState -> StateT SocketIO.RoutingTable Snap.Snap ()
 server state = do
   userNameMVar <- liftIO STM.newEmptyTMVarIO
-  let forUserName m = liftIO (STM.atomically (STM.tryReadTMVar userNameMVar)) >>= mapM_ m
-
-  SocketIO.on "new message" $ \(NewMessage message) ->
-    forUserName $ \userName ->
-      SocketIO.broadcast "new message" (Said userName message)
-
+  onNewMessage <- liftIO $ registerCallback $ onNewMessage userNameMVar
+  
+  SocketIO.on "new message" $ onNewMessage
+    
+    
+    
   SocketIO.on "add user" $ \(AddUser text) ->
       case decodeMessage text of
         Just (Message userName body) -> do
@@ -96,7 +111,7 @@ server state = do
 
   SocketIO.on "sendMessage" $ \(AddUser text) ->
     trace ("send " ++ (Text.unpack text))
-    $ forUserName $ \userName -> do
+    $ forUserName userNameMVar $ \userName -> do
       case decodeMessage text of
         Just x -> do 
             SocketIO.broadcast "receiveMessage" x
@@ -116,15 +131,3 @@ server state = do
       Nothing -> return ()
       Just userName ->
         SocketIO.broadcast "user left" (UserJoined userName n)
-
-  SocketIO.on "typing" $
-    forUserName $ \userName ->
-      SocketIO.emit "typing" (UserName userName)
-
-  SocketIO.on "example2" $
-    forUserName $ \userName ->
-      SocketIO.emit "typing" (UserName userName)
-
-  SocketIO.on "stop typing" $
-    forUserName $ \userName ->
-      SocketIO.broadcast "stop typing" (UserName userName)
