@@ -46,17 +46,13 @@ socketIOEvent :: (MonadIO m, FromJSON a, MonadState RoutingTable m) =>
 socketIOEvent = fmap fromAddHandler . createCallback
 
 
-test :: MomentIO (Event AddUser) -> MomentIO ()
-test event = do
-    x <- event
-    reactimate $ print <$> x
-    
-network :: (MonadIO m, MonadState RoutingTable m) => m EventNetwork
+network :: (MonadIO m, MonadState RoutingTable m) => m ()
 network = do
-    newMessage <- socketIOEvent "new message"
+    newMessage <- socketIOEvent "sendMessage"
     addUser <- socketIOEvent "add user"
-    trace "at least it compile" $ liftIO $ compile  $ do
+    n <- liftIO $ compile $ do
         x <- addUser
         y <- newMessage
         reactimate $ (\(AddUser t) -> print t) <$> x
         reactimate $ (\(NewMessage t) -> print t) <$> y
+    liftIO $ actuate n
