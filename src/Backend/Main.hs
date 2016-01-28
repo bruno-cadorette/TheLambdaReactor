@@ -3,6 +3,7 @@
 module Main where
 
 import Chat (server, ServerState (..),World (..),Message (..),PacketType(..))
+import Reactive
 import Control.Applicative
 
 import qualified Network.EngineIO.Snap as EIOSnap
@@ -20,7 +21,7 @@ import Debug.Trace
 main :: IO ()
 main = do
   state <- ServerState <$> STM.newTVarIO 0 <*> STM.newTVarIO (World [])
-  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI (server state)
+  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI (network)
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")
