@@ -1,52 +1,29 @@
-module Sprites(draw, animator, sprite, crops, Animator, updateSprite, nextImage) where
+module Sprites(draw, animator, sprite, Animator, updateSprite, nextImage) where
 
 import Time exposing (..)
 import Dict exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
+import Math.Vector2 exposing (..)
 
 {- Test Values -}
 
 {- Sprites -}
-type alias Image =
-  { image : Element,
-  width : Int,
-  height : Int
-  }
 
 type alias Sprite =
   { length : Int,
-  frames : Dict.Dict Int Image
+  frames : Dict.Dict Int Element
   }
 
-type alias Crop =
-  { top    : Int,
-  left   : Int,
-  width  : Int,
-  height : Int
-  }
+sprite : String -> Int -> Int -> Int -> Sprite
+sprite sheet w h n = toSprite (List.reverse (extractImages sheet w h n))
 
-crops : Crop -> Int -> List Crop
-crops crop n =
-  case n of
-    0 -> []
-    _ -> crop :: (crops {crop | left = crop.left + crop.width} (n - 1))
+extractImages : String -> Int -> Int -> Int -> List Element
+extractImages sheet w h n = if n == 0
+                              then []
+                              else (Graphics.Element.croppedImage (((n - 1) * w), 0) w h sheet) :: (extractImages sheet w h (n - 1))
 
-sprite : Element -> List Crop -> Sprite
-sprite sheet crops = toSprite (spriteHelper (toForm sheet) (sizeOf sheet) crops)
-
-spriteHelper : Form -> (Int, Int) -> List Crop -> List Image
-spriteHelper sheet (width, height) crops =
-  case crops of
-    [] -> []
-    (c::cs) ->
-      let translate = (toFloat (-c.left) + (toFloat (width-c.width)/2),
-                       toFloat c.top - (toFloat (height - c.height)/2) - 0.5 )
-          cropped = collage c.width c.height [move translate sheet]
-          image = { image = cropped, width = c.width, height = c.height }
-      in image :: (spriteHelper sheet (width, height) cs)
-
-toSprite : List Image -> Sprite
+toSprite : List Element -> Sprite
 toSprite imgs =
   let n = List.length imgs
       assocs = zip [0..n] imgs
@@ -56,22 +33,22 @@ toSprite imgs =
 type alias Animator =
   { sprite : Sprite,
   current : Int,
-  rate : Time,
-  last : Time }
+  rate : Int, --Mininmum distnace to change image
+  lastPos : Math.Vector2.Vec2 }
 
-animator : Sprite -> Time -> Animator
-animator sprite rate =
+animator : Sprite -> Int -> Math.Vector2.Vec2 -> Animator
+animator sprite rate pos =
   { sprite = sprite,
   current = 0,
   rate = rate,
-  last = 0 }
+  lastPos = pos }
 
-updateSprite : Animator -> Time -> Animator
-updateSprite animator t =
-  let diff = t - animator.last
-      skip = floor <| diff / animator.rate
+updateSprite : Animator -> Math.Vector2.Vec2 -> Animator
+updateSprite animator newPos =
+  let dist = Math.Vector2.distance newPos animator.lastPos
+      skip = (floor dist) // animator.rate
   in if skip > 0
-    then { animator | current = (animator.current + skip) % (animator.sprite.length), last = t }
+    then { animator | current = (animator.current + skip) % (animator.sprite.length), lastPos = newPos }
     else animator
 
 
@@ -84,7 +61,7 @@ draw : Animator -> Element
 draw animator =
     let maybeElem = Dict.get (animator.current) (animator.sprite.frames) in
     case maybeElem of
-      Just img -> img.image
+      Just img -> img
       Nothing -> show "Illegal current frame"
 
 {- Utility -}
