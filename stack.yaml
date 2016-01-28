@@ -21,6 +21,7 @@ extra-deps:
 - blaze-builder-0.4.0.1
 - blaze-builder-enumerator-0.2.1.0
 - blaze-html-0.8.1.1
+- bytes-0.15.2
 - blaze-markup-0.7.0.3
 - byteable-0.1.1
 - bytestring-builder-0.10.6.0.0
@@ -55,6 +56,7 @@ extra-deps:
 - logict-0.6.0.2
 - map-syntax-0.2
 - memory-0.11
+- linear-1.20.4
 - hspec-2.2.2
 - QuickCheck-2.8.2
 - hspec-core-2.2.2

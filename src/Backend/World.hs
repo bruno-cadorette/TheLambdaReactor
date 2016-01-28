@@ -1,13 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
-module World (Player(..),Vector2d(..),Bullet(..),Ennemy(..),World(..)) where
+module World (Player(..),Vector2d(..),Ennemy(..),World(..)) where
+
+import qualified Data.Aeson as Aeson
+import qualified Data.Text as Text
+import Data.ByteString.Char8
+import qualified Data.ByteString.Lazy.Char8 as BS
+import GHC.Generics
+import Bullet (Bullet(..),moveBullet)
 
 data Vector2d = Vector2d {x :: Float, y :: Float} deriving (Generic,Show)
 data Player = Player {uuid :: Int, hp :: Int, position :: Vector2d, orientation :: Vector2d} deriving (Generic,Show)
-data Bullet = Bullet {uuid :: Int, initialPosition :: Vector2d, orientation :: Vector2d, timeStamp::Int} deriving (Generic,Show)
 data Ennemy = Ennemy {uuid :: Int, hp :: Int, position :: Vector2d, orientation :: Vector2d} deriving (Generic,Show)
 data Hit = Hit {uuid :: Int, player :: Player, bullet :: Bullet} deriving (Generic,Show)
 data World = World {players :: [Player], projectiles :: [Bullet],ennemies :: [Ennemy], hits :: [Hit]} deriving (Generic,Show)
+
+
+
 
 
 
@@ -21,11 +31,6 @@ instance Aeson.FromJSON Vector2d where
 instance Aeson.ToJSON Player
 
 instance Aeson.FromJSON Player where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
---Bullet
-instance Aeson.ToJSON Bullet
-
-instance Aeson.FromJSON Bullet where
   parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
 --Ennemy
 instance Aeson.ToJSON Ennemy
