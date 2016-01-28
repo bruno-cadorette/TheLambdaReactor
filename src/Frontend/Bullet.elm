@@ -23,7 +23,7 @@ displayBullet (w, h) bullet =
 displayBullets (w, h) =
   List.map (displayBullet (w, h))
 
-bulletBody = Graphics.Collage.filled blue (Graphics.Collage.circle 5.0)
+bulletBody = Graphics.Collage.toForm (Graphics.Element.croppedImage (0, 48) 10 10 "../../resources/sheets/character.png")
 
 tickBullets : List Bullet -> List Bullet
 tickBullets = List.map (\b -> {b | position = b.position `add` direction b.orientation b.position, orientation = b.orientation `add` direction b.orientation b.position} |> watchBullet)
