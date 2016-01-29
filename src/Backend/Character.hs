@@ -25,7 +25,7 @@ normalize v = (1/ magnitude) *^ v
               where magnitude = sqrt ((v ^._x) ** 2 + (v ^._y) ** 2)
 
 
-data Player = Player {puuid :: Int, php :: Int, pposition :: V2 Float, porientation :: V2 Float} deriving (Generic,Show)
+data Player = Player {puuid :: Int, php :: Int, pposition :: V2 Float, porientation :: V2 Float} deriving (Generic,Show, Eq)
 
 instance Character Player where
   hp (Player _ health _ _) = health
@@ -37,7 +37,7 @@ instance Character Player where
   isDead (Player _ hp _ _) = hp <= 0
 
 
-data Ennemy = Ennemy {euuid :: Int, ehp :: Int, eposition :: V2 Float, eorientation :: V2 Float} deriving (Generic,Show)
+data Ennemy = Ennemy {euuid :: Int, ehp :: Int, eposition :: V2 Float, eorientation :: V2 Float} deriving (Generic,Show, Eq)
 instance Character Ennemy where
   hp (Ennemy _ health _ _) = health
   position (Ennemy _ _ pos _) = pos

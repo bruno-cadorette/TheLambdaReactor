@@ -11,8 +11,8 @@ import GHC.Generics
 import Bullet (Bullet(..),moveBullet)
 import Character (Player(..),Ennemy(..), Character (..))
 
-data Hit = Hit {uuid :: Int, player :: Player, bullet :: Bullet} deriving (Generic,Show)
-data World = World {players :: [Player], projectiles :: [Bullet],ennemies :: [Ennemy], hits :: [Hit]} deriving (Generic,Show)
+data Hit = Hit {uuid :: Int, player :: Player, bullet :: Bullet} deriving (Generic,Show, Eq)
+data World = World {players :: [Player], projectiles :: [Bullet],ennemies :: [Ennemy], hits :: [Hit]} deriving (Generic,Show,Eq)
 
 
 
