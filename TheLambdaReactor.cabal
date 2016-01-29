@@ -6,7 +6,7 @@ homepage:            https://github.com/bruno-cadorette/TheLambdaReactor
 license:             MIT
 license-file:        LICENSE
 author:              Bruno Cadorette, Frédéric Branchaud-Charron, Philippe Paul
-maintainer:          bruno.cadorette@usherbrook.ca
+maintainer:          bruno.cadorette@usherbrooke.ca
 copyright:           2016 Bruno Cadorette, Frédéric Branchaud-Charron, Philippe Paul
 category:            Web
 build-type:          Simple

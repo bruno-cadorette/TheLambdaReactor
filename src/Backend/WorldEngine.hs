@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module WorldEngine() where
-import World (Player(..),Vector2d(..),Ennemy(..),World(..))
+import World (World(..))
+import Character (Player(..),Ennemy(..), Character (..))
 import Bullet (Bullet(..),moveBullet)
 import import qualified Data.Map.Strict as Map
 import qualified Network.SocketIO as SocketIO
@@ -18,7 +19,7 @@ removePlayer (WorldEngine players bullet ennemy) (Player uuid hp position orient
   (WorldEngine (Map.delete uuid players) bullet ennemy)
 
 removeHpToPlayer (WorldEngine players bullet ennemy) uuid dmg =
-  (WorldEngine (Map.adjust (\ (Player uuid hp position orientation) -> (Player uuid (hp-dmg) position orientation)) uuid players) bullet ennemy)
+  (WorldEngine (Map.adjust (\ p -> hurt p dmg) uuid players) bullet ennemy)
 
 movePlayer (WorldEngine players bullet ennemy) uuid position =
-    (WorldEngine (Map.adjust (\ (Player uuid hp x orientation) -> (Player uuid hp position orientation)) uuid players) bullet ennemy)
+    (WorldEngine (Map.adjust (\ p -> move p position) uuid players) bullet ennemy)
