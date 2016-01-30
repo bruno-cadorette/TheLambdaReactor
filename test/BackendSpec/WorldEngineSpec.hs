@@ -3,7 +3,7 @@ module BackendSpec.WorldEngineSpec (main, spec) where
 
 import Test.Hspec
 import Test.QuickCheck
-import WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..))
+import WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl)
 import World (World(..))
 import Character (Player(..),Ennemy(..), Character (..))
 import Data.Maybe
@@ -23,3 +23,18 @@ spec = describe "WorldEngine" $ do
 
         it "getWorldForJSON player and addPlayer" $ do
           (getWorldForJSON $ addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))) `shouldBe` (World [(Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))] [] [] [])
+
+        it "getPlayerTest true" $ do
+          let x = addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))
+            in
+              (isJust  (getPlayer x 0)) `shouldBe` True
+
+        it "getPlayerTest false" $ do
+          let x = addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))
+            in
+              (isJust  (getPlayer x 23)) `shouldBe` False
+
+        it "movePlayer" $ do
+          let x = addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))
+            in
+              position (fromJust  (getPlayer (handleControl x "w" 0) 0)) `shouldBe` (V2 1.0 2.0)
