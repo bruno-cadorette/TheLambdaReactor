@@ -20,7 +20,7 @@ import Debug.Trace
 
 main :: IO ()
 main = do
-  socketIoHandler <- trace "lol" $ SocketIO.initialize EIOSnap.snapAPI (network)
+  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI network
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")

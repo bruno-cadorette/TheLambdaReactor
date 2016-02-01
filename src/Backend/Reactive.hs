@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Reactive (network) where
+module Reactive (createSocketEvent, toOutput) where
 
 import Control.Monad
 import Control.Monad.IO.Class
@@ -15,18 +15,6 @@ import Debug.Trace
 import Data.Text
 import Network.SocketIO
 import Message
-
-data AddUser = AddUser Text deriving (Show)
-
-instance FromJSON AddUser where
-  parseJSON = withText "AddUser" $ pure . AddUser
-  
-data NewMessage = NewMessage Text deriving (Show)
-
-instance FromJSON NewMessage where
-  parseJSON = withText "NewMessage" $ pure . NewMessage
-  
-type SocketEvent a = Event (EventHandler a)
   
 handler :: ((Socket, a) -> IO ()) -> a -> ReaderT Socket IO ()
 handler f x = ReaderT (\r -> f (r, x))
@@ -43,7 +31,7 @@ createCallback text = do
 registerCallback :: (MonadIO m, FromJSON a) => IO (AddHandler (Socket, a), (Socket, a) -> m ())
 registerCallback = do
     (addHandler, fire) <- newAddHandler
-    void $ register addHandler (trace "test" $ const $ pure ())
+    void $ register addHandler (const $ pure ())
     return (addHandler, liftIO . fire)
 
 createSocketEvent :: (MonadIO m, FromJSON a, MonadState RoutingTable m) => 
@@ -66,12 +54,9 @@ toOutput event (r, a) = runReaderT (event a) r
     
 network :: (MonadIO m, MonadState RoutingTable m) => m ()
 network =  do
-    newMessage <- trace "network" $ createSocketEvent "sendMessage"
-    --addUser <- socketIOEvent "add user"
+    newMessage <- createSocketEvent "sendMessage"
     liftIO $ do
         n <- compile $ do
-      --      x <-  addUser
-            y <- newMessage
-            --reactimate $ (void . return) <$> (\(AddUser t) -> broadcastAll "receiveMessage" t) <$> x
-            reactimate $ (toOutput sendMessage) <$> (trace "it work") <$> y
+            x <-  newMessage
+            reactimate $ (toOutput sendMessage) <$> x
         actuate n 
