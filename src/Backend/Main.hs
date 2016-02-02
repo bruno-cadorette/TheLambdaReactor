@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Chat (server, ServerState (..),World (..),Message (..),PacketType(..))
+import Chat
 import Reactive
 import Control.Applicative
 
@@ -20,7 +20,7 @@ import Debug.Trace
 
 main :: IO ()
 main = do
-  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI network
+  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI server
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")
