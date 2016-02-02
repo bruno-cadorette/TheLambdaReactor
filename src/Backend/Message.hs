@@ -14,7 +14,7 @@ data Message = Message
     , body :: Text.Text
     } deriving (Generic,Show)
 
-data ServerMessage Text.Text
+type ServerMessage =  Text.Text
     
 instance Aeson.ToJSON Message
 
