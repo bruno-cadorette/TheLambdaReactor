@@ -5,7 +5,7 @@ import Test.Hspec
 import Test.QuickCheck
 import WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl)
 import World (World(..))
-import Character (Player(..),Ennemy(..), Character (..))
+import Character (Player(..),Enemy(..), Character (..))
 import Data.Maybe
 import Debug.Trace
 import qualified Data.Text as Text

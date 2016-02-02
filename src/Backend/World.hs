@@ -9,10 +9,10 @@ import Data.ByteString.Char8
 import qualified Data.ByteString.Lazy.Char8 as BS
 import GHC.Generics
 import Bullet (Bullet(..),moveBullet)
-import Character (Player(..),Ennemy(..), Character (..))
+import Character (Player(..),Enemy(..), Character (..))
 
 data Hit = Hit {uuid :: Int, player :: Player, bullet :: Bullet} deriving (Generic,Show, Eq)
-data World = World {players :: [Player], projectiles :: [Bullet],ennemies :: [Ennemy], hits :: [Hit]} deriving (Generic,Show,Eq)
+data World = World {players :: [Player], projectiles :: [Bullet],ennemies :: [Enemy], hits :: [Hit]} deriving (Generic,Show,Eq)
 
 
 
@@ -25,10 +25,10 @@ instance Aeson.ToJSON Player
 
 instance Aeson.FromJSON Player where
   parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
---Ennemy
-instance Aeson.ToJSON Ennemy
+--Enemy
+instance Aeson.ToJSON Enemy
 
-instance Aeson.FromJSON Ennemy where
+instance Aeson.FromJSON Enemy where
   parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
 --World
 instance Aeson.ToJSON World

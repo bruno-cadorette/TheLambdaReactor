@@ -3,7 +3,7 @@ module BackendSpec.CharacterSpec (main, spec) where
 
 import Test.Hspec
 import Test.QuickCheck
-import Character (Player(..),Ennemy(..), Character (..))
+import Character (Player(..),Enemy(..), Character (..))
 import Data.Maybe
 import Debug.Trace
 import qualified Data.Text as Text

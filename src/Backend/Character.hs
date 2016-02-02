@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Character (Player(..),Ennemy(..), Character (..)) where
+module Character (Player(..),Enemy(..), Character (..)) where
 
 import Linear.V2
 import Linear.Vector  ((^+^),unit, (*^))
@@ -37,12 +37,12 @@ instance Character Player where
   isDead (Player _ hp _ _) = hp <= 0
 
 
-data Ennemy = Ennemy {euuid :: Int, ehp :: Int, eposition :: V2 Float, eorientation :: V2 Float} deriving (Generic,Show, Eq)
-instance Character Ennemy where
-  hp (Ennemy _ health _ _) = health
-  position (Ennemy _ _ pos _) = pos
-  orientation (Ennemy _ _ _ orientation) = orientation
-  uuid (Ennemy uid _ _ _) = uid
+data Enemy = Enemy {euuid :: Int, ehp :: Int, eposition :: V2 Float, eorientation :: V2 Float} deriving (Generic,Show, Eq)
+instance Character Enemy where
+  hp (Enemy _ health _ _) = health
+  position (Enemy _ _ pos _) = pos
+  orientation (Enemy _ _ _ orientation) = orientation
+  uuid (Enemy uid _ _ _) = uid
   hurt p dmg = p {ehp = ((hp p)  - dmg)}
   move p pos = p {eposition = (position p) ^+^ pos , eorientation = (normalize pos) :: V2 Float }
-  isDead (Ennemy _ hp _ _) = hp <= 0
+  isDead (Enemy _ hp _ _) = hp <= 0
