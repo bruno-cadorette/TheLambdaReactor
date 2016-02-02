@@ -82,10 +82,9 @@ port sendMessage = Signal.map (\s ->
     SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" (encodeMessage (Message m m))
     BuildString s -> Task.succeed ()) buildWord
 
-
 -- send a value once at program start
 port initial : Task x ()
-port initial = socket `andThen` SocketIO.emit "add user" (encodeMessage (Message "allo" "allo"))
+port initial = socket `andThen` SocketIO.emit "newUser" "JOHN CENA"
 
 sendMailbox : Signal.Mailbox String
 sendMailbox = Signal.mailbox ""

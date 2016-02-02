@@ -75,6 +75,6 @@ server = do
         network <- compile $ do
             sendMessageEvent <- sendMessageSocket
             (connectionEvent, connectedPlayers) <- usersSocket
-            --a <- (connectionMessageSender) <$> connectedPlayers <@> connectionEvent
+            reactimate $ (\n -> toOutput (connectionMessageSender n)) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput sendMessage) <$> sendMessageEvent
         actuate network

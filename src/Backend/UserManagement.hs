@@ -19,7 +19,7 @@ instance GetSocket UserConnection where
     getSocket (Both _ s _) = s
 
 
-connectionManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserConnection, Behavior (Map.Map Socket String)))
+connectionManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserConnection, Behavior PlayerNames))
 connectionManager = do
     userConnectedSocket <- createSocketEvent "newUser"
     disconnectSocket    <- disconnectEvent
@@ -41,12 +41,12 @@ joinGame n   = broadcastAll "receiveMessage" (n ++ " has join the game")
 leftGame s m = 
     case Map.lookup s m of
         Just x -> broadcastAll "receiveMessage" (x ++ " has left the game")
-        Nothing -> return () -- TODO log
+        Nothing -> broadcastAll "receiveMessage" ("Someone has left the game" :: String) -- return () -- TODO log
         
-connectionMessageSender :: (MonadIO m) => UserConnection -> PlayerNames -> ReaderT Socket m ()
-connectionMessageSender (EnterGame n s) m = joinGame n
-connectionMessageSender (LeaveGame s) m = leftGame s m
-connectionMessageSender (Both n _ s) m = do
+connectionMessageSender :: (MonadIO m) => PlayerNames -> UserConnection -> ReaderT Socket m ()
+connectionMessageSender m (EnterGame n s) = joinGame n
+connectionMessageSender m (LeaveGame s) = leftGame s m
+connectionMessageSender m (Both n _ s) = do
     joinGame n
     leftGame s m
 
