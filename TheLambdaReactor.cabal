@@ -6,7 +6,7 @@ homepage:            https://github.com/bruno-cadorette/TheLambdaReactor
 license:             MIT
 license-file:        LICENSE
 author:              Bruno Cadorette, Frédéric Branchaud-Charron, Philippe Paul
-maintainer:          bruno.cadorette@usherbrook.ca
+maintainer:          bruno.cadorette@usherbrooke.ca
 copyright:           2016 Bruno Cadorette, Frédéric Branchaud-Charron, Philippe Paul
 category:            Web
 build-type:          Simple
@@ -22,6 +22,8 @@ executable the-lamba-reactor-exe
                     snap >= 0.14.0.6,
                     containers,
                     aeson,
+                    linear,
+                    lens,
                     text,
                     transformers,
                     stm,
@@ -41,6 +43,8 @@ test-suite spec
                   text,
                   transformers,
                   stm,
+                  linear,
+                  lens,
                   snap-core,
                   snap-server,
                   socket-io,
