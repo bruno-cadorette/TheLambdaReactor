@@ -3,16 +3,14 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 
-module Chat (server, World (..),Message (..),PacketType(..)) where
+module Chat (server) where
 
 import Reactive 
 import Control.Monad.State.Strict
 import UserManagement
 import Data.Aeson
 import Data.Text
-import Message
 import qualified Data.Aeson as Aeson
-import qualified Data.Map as Map
 import Network.SocketIO
 
 data AddUser = AddUser Text
@@ -54,14 +52,6 @@ instance Aeson.ToJSON UserJoined where
     [ "username" .= un
     , "numUsers" .= n
     ]
-
-data World = World [Int]
-
---------------------------------------------------------------------------------
-
-
-
-
         
 sendMessage :: (a, Text) -> EventHandler ()
 sendMessage  = broadcastAll "receiveMessage" . snd

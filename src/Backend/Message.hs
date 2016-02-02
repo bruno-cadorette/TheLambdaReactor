@@ -6,7 +6,6 @@ module Message (Message (..),decodeMessage) where
 
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
-import Data.ByteString.Char8
 import qualified Data.ByteString.Lazy.Char8 as BS
 import GHC.Generics
 
@@ -15,6 +14,8 @@ data Message = Message
     , body :: Text.Text
     } deriving (Generic,Show)
 
+data ServerMessage Text.Text
+    
 instance Aeson.ToJSON Message
 
 instance Aeson.FromJSON Message where
