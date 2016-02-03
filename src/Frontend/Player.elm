@@ -29,7 +29,7 @@ movePlayer p player = { player | direction = p }
 
 tickPlayer : Player -> Player
 tickPlayer player =
-  if player.direction ==  initPoint
+  if player.direction == initPoint
     then { player | position = (player.position `add` player.direction) }
     else { player | position = (player.position `add` player.direction), anim = updateSprite player.anim player.position }
 
@@ -38,5 +38,4 @@ initialPlayer = { position = origin, direction = origin, orientation = origin, a
 --displayPlayer : (Int, Int) -> Player -> Element
 displayPlayer (w, h) movable =
   [Graphics.Collage.rotate (getOrientation movable.position movable.orientation - 90)
-    <| Graphics.Collage.move (watch "position" (getX movable.position, getY movable.position))
     <| Graphics.Collage.toForm (Sprites.draw movable.anim)]
