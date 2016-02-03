@@ -46,20 +46,9 @@ writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>leftAligne
 
 timeToClear = Time.every <| 10 * Time.second
 
-showMessage : String -> Text
-showMessage x =
-  let
-    message =
-        decodeMessage x |>
-        Result.map (\{name, body} -> Text.join (Text.fromString ": ") [Text.fromString name, Text.fromString body] )
-  in
-    case message of
-      Ok m  -> m
-      Err e -> Text.fromString e
-
 receiveMessage : Signal Time -> Signal String -> Signal (List Element)
 receiveMessage removeMessage newStr=
-  Signal.merge (Signal.map (showMessage>>Just) newStr) (Signal.map (always Nothing) removeMessage)
+  Signal.merge (Signal.map (Text.fromString>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
       Just x' -> xs ++ [leftAligned x']
@@ -68,8 +57,6 @@ receiveMessage removeMessage newStr=
 chat : Signal Element
 chat = Signal.map2(\writting received -> flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
 
-canvas : Signal Element
-canvas = Signal.map2(\(w, h) t -> Collage.collage w h [Collage.toForm t]) Window.dimensions chat
 
 socket : Task x SocketIO.Socket
 socket = SocketIO.io "http://localhost:8001" SocketIO.defaultOptions
@@ -79,7 +66,7 @@ eventName = "example"
 port sendMessage : Signal (Task String ())
 port sendMessage = Signal.map (\s ->
   case s of
-    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" (encodeMessage (Message m m))
+    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" m
     BuildString s -> Task.succeed ()) buildWord
 
 -- send a value once at program start
@@ -92,14 +79,18 @@ sendMailbox = Signal.mailbox ""
 received : Signal.Mailbox String
 received = Signal.mailbox "null"
 
-port receiveMessageFromServer : Task.Task a ()
-port receiveMessageFromServer = socket `Task.andThen` SocketIO.on "receiveMessage" received.address
 
--- set up the receiving of data
-port responses : Task x ()
-port responses = socket `andThen` SocketIO.on "example1" received.address
+forwardMessage = Signal.forwardTo received.address
+  (\x -> case decodeMessage x of
+      Ok {name, body} -> name ++  ": " ++ body
+      Err e -> e)
 
-port login : Task.Task a ()
-port login = socket `Task.andThen` SocketIO.on "login" received.address
+port receiveMessagePort : Task.Task a ()
+port receiveMessagePort =
+    socket `Task.andThen` \x ->
+    SocketIO.on "receiveServerMessage" received.address x `Task.andThen` \_ ->
+    SocketIO.on "receiveMessage" forwardMessage x
 
-main = canvas
+
+
+main = Signal.map2(\(w, h) t -> Collage.collage w h [Collage.toForm t]) Window.dimensions chat
