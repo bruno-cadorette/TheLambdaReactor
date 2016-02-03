@@ -61,18 +61,23 @@ registerCallback = do
     void $ register addHandler (const $ pure ())
     return (addHandler, liftIO . fire)
 
+    
+{- Create an Event from an 'on' EventHandler -}
 createSocketEvent :: (MonadIO m, FromJSON a, MonadState RoutingTable m) => 
     Text -> m (MomentIO (Event (Socket, a)))
 createSocketEvent = fmap fromAddHandler . createCallback 
 
+{- Create an Event from the disconnect EventHandler -}
 disconnectEvent :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event (Socket, ())))
 disconnectEvent = fmap fromAddHandler disconnectCallback
 
+{- Broadcast to every socket, including the current socket -}
 broadcastAll :: (MonadIO m, MonadReader Socket m, ToJSON a) => Text -> a -> m ()
 broadcastAll text x = do
     emit text x
     broadcast text x
     
+{- This function should be used just before reactimate to map your output. -}
 toOutput :: GetSocket s => (s -> ReaderT Socket m a) -> s -> m a
 toOutput event a = runReaderT (event a) $ getSocket a
 
