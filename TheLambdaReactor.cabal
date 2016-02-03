@@ -32,7 +32,9 @@ executable the-lamba-reactor-exe
                     socket-io,
                     engine-io-snap,
                     snap-cors,
-                    bytestring
+                    bytestring,
+                    mtl,
+                    reactive-banana >= 1.1.0.0
   default-language:    Haskell2010
 
 test-suite spec
