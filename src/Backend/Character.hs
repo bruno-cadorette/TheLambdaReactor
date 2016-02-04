@@ -16,7 +16,7 @@ class Character a where
   hp ::      a -> Int
   position :: a -> V2 Float
   orientation :: a -> V2 Float
-  uuid :: a -> Int
+  uuid :: a -> Text.Text
   hurt :: a -> Int -> a
   move :: a -> V2 Float -> a -- Move is the deplacement vector
   isDead :: a -> Bool
@@ -25,7 +25,7 @@ normalize v = (1/ magnitude) *^ v
               where magnitude = sqrt ((v ^._x) ** 2 + (v ^._y) ** 2)
 
 
-data Player = Player {puuid :: Int, php :: Int, pposition :: V2 Float, porientation :: V2 Float} deriving (Generic,Show, Eq)
+data Player = Player {puuid :: Text.Text, php :: Int, pposition :: V2 Float, porientation :: V2 Float} deriving (Generic,Show, Eq)
 
 instance Character Player where
   hp (Player _ health _ _) = health
@@ -37,7 +37,7 @@ instance Character Player where
   isDead (Player _ hp _ _) = hp <= 0
 
 
-data Enemy = Enemy {euuid :: Int, ehp :: Int, eposition :: V2 Float, eorientation :: V2 Float} deriving (Generic,Show, Eq)
+data Enemy = Enemy {euuid :: Text.Text, ehp :: Int, eposition :: V2 Float, eorientation :: V2 Float} deriving (Generic,Show, Eq)
 instance Character Enemy where
   hp (Enemy _ health _ _) = health
   position (Enemy _ _ pos _) = pos

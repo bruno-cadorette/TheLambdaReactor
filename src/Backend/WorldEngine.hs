@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
-module WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl) where
+module WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl,handleControlV2) where
 import World (World(..))
 import Character (Player(..),Enemy(..), Character (..))
 import Bullet (Bullet(..),moveBullet)
 import qualified Data.Map.Strict as Map
 import qualified Network.SocketIO as SocketIO
 import qualified Control.Concurrent.STM as STM
+import Data.Text
+import Network.EngineIO (SocketId) --SocketID
 import Linear.V2
 
-data WorldEngine = WorldEngine (Map.Map Int Player) (Map.Map Int Bullet) (Map.Map Int Enemy) deriving (Eq)
+data WorldEngine = WorldEngine (Map.Map Text Player) (Map.Map Text Bullet) (Map.Map Text Enemy) deriving (Eq)
 
 getWorldForJSON :: WorldEngine -> World
 getWorldForJSON (WorldEngine players bullet enemy) = (World (Map.elems players) (Map.elems bullet) (Map.elems enemy) [])
@@ -30,7 +32,7 @@ movePlayer (WorldEngine players bullet enemy) uuid position =
 
 
 --Should not use this too often, just a helper function
-getPlayer :: WorldEngine -> Int -> Maybe(Player)
+getPlayer :: WorldEngine -> Text -> Maybe(Player)
 getPlayer (WorldEngine players bullet enemy) uuid = Map.lookup uuid players
 
     --TODO CRUD Bullet and Enemy
@@ -48,5 +50,8 @@ movement x = case x of
                "sd" -> V2   1.0  (-1.0)
                otherwise -> V2 0.0 0.0
 
-handleControl :: WorldEngine -> String -> Int -> WorldEngine
+handleControl :: WorldEngine -> String -> Text -> WorldEngine
 handleControl world x uuid = movePlayer world uuid (movement x)
+
+handleControlV2 :: WorldEngine -> V2 Float -> Text -> WorldEngine
+handleControlV2 world x uuid = movePlayer world uuid x
