@@ -14,14 +14,15 @@ import Data.ByteString.Char8
 import Linear.V2
 import Linear.V
 import Data.Text.Encoding
+import Character
 import WorldEngine
 
 type Move = V2 Float
 type WorldObject = WorldEngine
 
 --TODO move to helper
-encodeToText :: ByteString -> Text
-encodeToText = decodeUtf8
+toId :: ByteString -> Id
+toId = decodeUtf8
 
 --TODO do shooter
 data UserInput = Movement Move Socket | Shoot Socket | Both Move Socket Socket
@@ -41,7 +42,7 @@ worldManager = do
 
         mapAccum getNewWorld $ fmap input $ inputEvent
     where
-        input (Movement n s) m = ((Movement n s), handleControlV2 m n (encodeToText (socketId s)))
+        input (Movement n s) m = ((Movement n s), handleControlV2 m n (toId (socketId s)))
         --input (Shoot s) m = ((Shoot s), Map.delete s m)
         --input (Both n s s') m = ((Both n s s'), Map.insert s n $ Map.delete s' m)
 
