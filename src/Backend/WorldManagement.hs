@@ -18,6 +18,7 @@ import Character
 import WorldEngine
 
 type Move = V2 Float
+type Direction = V2 Float
 type WorldObject = WorldEngine
 
 --TODO move to helper
@@ -25,26 +26,28 @@ toId :: ByteString -> Id
 toId = decodeUtf8
 
 --TODO do shooter
-data UserInput = Movement Move Socket | Shoot Socket | Both Move Socket Socket
+data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Direction Socket Socket
 instance GetSocket UserInput where
     getSocket (Movement _ s) = s
-    getSocket (Shoot s) = s
-    getSocket (Both _ s _) = s
+    getSocket (Shoot d s) = s
+    getSocket (Both _ d s _) = s
 
 
 worldManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserInput, Behavior WorldObject))
 worldManager = do
     userInputSocket <- createSocketEvent "userInput"
+    userShootSocket <- createSocketEvent "userShoot"
     return $ do
         userInput  <-  userInputSocket
-
+        userShoot <- userShootSocket
         let inputEvent = (\(s, n) -> Movement n s) <$> userInput
+        let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
 
-        mapAccum getNewWorld $ fmap input $ inputEvent
+        mapAccum getNewWorld $ fmap input $ unionWith (\(Movement n s) (Shoot d s') -> Both n d s s') inputEvent shootEvent
     where
         input (Movement n s) m = ((Movement n s), handleControlV2 m n (toId (socketId s)))
-        --input (Shoot s) m = ((Shoot s), Map.delete s m)
-        --input (Both n s s') m = ((Both n s s'), Map.insert s n $ Map.delete s' m)
+        input (Shoot d s) m = ((Shoot d s), handleShoot d (toId (socketId s)) m)
+        input (Both n d s s') m = ((Both n d s s'), handleShoot d (toId (socketId s')) $ handleControlV2 m n (toId (socketId s)))
 
 --Dont really need it right now
 notifyMove n = broadcastAll "ACK" n
