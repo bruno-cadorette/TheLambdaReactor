@@ -14,7 +14,10 @@ import Data.Text
 import qualified Data.Aeson as Aeson
 import Message
 import Network.SocketIO
+import World
 import WorldManagement
+import WorldEngine
+import Data.Time.Clock
 
 data AddUser = AddUser Text
 
@@ -62,7 +65,6 @@ sendMessage p (s, n) =
         Just x -> broadcastAll "receiveMessage" $ Message (pack x) n
         Nothing -> broadcastAll "receiveMessage" $ Message "ERROR USER" n
 
-
 server :: (MonadIO m, MonadState RoutingTable m) => m ()
 server = do
     sendMessageSocket   <- createSocketEvent "sendMessage"
@@ -70,8 +72,10 @@ server = do
     inputSocket <- worldManager
     liftIO $ do
         network <- compile $ do
+
             sendMessageEvent <- sendMessageSocket
             (connectionEvent, connectedPlayers) <- usersSocket
+            fpsEvent <- fps 30
             (inputEvent,worldObject) <- inputSocket
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-module WorldManagement (worldManager,worldSender, UserInput, WorldObject) where
+module WorldManagement (worldManager,worldSender, UserInput) where
 
 import Reactive
 import qualified Data.Map as Map
@@ -19,7 +19,6 @@ import WorldEngine
 
 type Move = V2 Float
 type Direction = V2 Float
-type WorldObject = WorldEngine
 
 --TODO move to helper
 toId :: ByteString -> Id
@@ -29,11 +28,11 @@ toId = decodeUtf8
 data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Direction Socket Socket
 instance GetSocket UserInput where
     getSocket (Movement _ s) = s
-    getSocket (Shoot d s) = s
-    getSocket (Both _ d s _) = s
+    getSocket (Shoot _ s) = s
+    getSocket (Both _ _ s _) = s
 
 
-worldManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserInput, Behavior WorldObject))
+worldManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserInput, Behavior WorldEngine))
 worldManager = do
     userInputSocket <- createSocketEvent "userInput"
     userShootSocket <- createSocketEvent "userShoot"
@@ -50,7 +49,8 @@ worldManager = do
         input (Both n d s s') m = ((Both n d s s'), handleShoot d (toId (socketId s')) $ handleControlV2 m n (toId (socketId s)))
 
 --Dont really need it right now
-notifyMove n = broadcastAll "ACK" n
+notifyMove :: (MonadIO m) => WorldEngine -> ReaderT Socket m ()
+notifyMove n = broadcastAll "updateWorld" (getWorldForJSON n)
 
-worldSender :: (MonadIO m) => WorldObject -> UserInput -> ReaderT Socket m ()
-worldSender x (Movement n s) = notifyMove n
+worldSender :: (MonadIO m) => WorldEngine -> UserInput -> ReaderT Socket m ()
+worldSender x _ = notifyMove x
