@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl,handleControlV2,handleShoot) where
+module WorldEngine(getWorldForJSON, getNewWorld, addBullet, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl,handleControlV2,handleShoot,getPlayersHit) where
 import World (World(..))
 import Character
 import Bullet (Bullet(..),moveBullet)
@@ -11,6 +11,7 @@ import Network.EngineIO (SocketId) --SocketID
 import Linear.V2
 import System.Random
 import Data.Maybe
+import Game.BoundingSphere
 
 randomGen = mkStdGen 50
 
@@ -37,6 +38,11 @@ movePlayer (WorldEngine players bullet enemy) uuid position =
 addBullet (WorldEngine players bullet enemy) position orientation uuid =
     (WorldEngine players (Map.insert uuid (Bullet uuid position orientation 1.0 0) bullet) enemy)
 
+getPlayersHit :: WorldEngine -> [Player]
+getPlayersHit (WorldEngine players bullet _) =
+  let bulletBounding = fmap (\ x -> (BoundingSphere (Bullet.position x) 0.5) ) $ Map.elems bullet
+  in
+   Prelude.filter (\x -> intersectingMany (BoundingSphere (Character.position x) 1.0) bulletBounding) $ Map.elems players
 
 --Should not use this too often, just a helper function
 getPlayer :: WorldEngine -> Text -> Maybe(Player)

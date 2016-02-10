@@ -87,7 +87,8 @@ fps frame = do
     (eTime, fireTime) <- newEvent
     liftIO . forkIO . forever $
             threadDelay (frame) >> getCurrentTime >>= fireTime
-    return eTime
+    bTime <- flip stepper eTime <$> liftIO getCurrentTime
+    return (bTime,eTime)
 
 {- This function should be used just before reactimate to map your output. -}
 toOutput :: GetSocket s => (s -> ReaderT Socket m a) -> s -> m a

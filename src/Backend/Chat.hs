@@ -75,7 +75,6 @@ server = do
 
             sendMessageEvent <- sendMessageSocket
             (connectionEvent, connectedPlayers) <- usersSocket
-            fpsEvent <- fps 30
             (inputEvent,worldObject) <- inputSocket
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent

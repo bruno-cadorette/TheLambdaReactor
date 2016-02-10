@@ -3,7 +3,7 @@ module BackendSpec.WorldEngineSpec (main, spec) where
 
 import Test.Hspec
 import Test.QuickCheck
-import WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl)
+import WorldEngine
 import World (World(..))
 import Character (Player(..),Enemy(..), Character (..))
 import Data.Maybe
@@ -38,3 +38,8 @@ spec = describe "WorldEngine" $ do
           let x = addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))
             in
               position (fromJust  (getPlayer (handleControl x "w" "0") "0")) `shouldBe` (V2 1.0 2.0)
+
+        it "intersecPlayer" $ do
+          let y = addBullet  (addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))) (V2 1.0 1.0) (V2 1.0 1.0) 50
+            in
+              (length $ getPlayersHit y) `shouldBe` 1
