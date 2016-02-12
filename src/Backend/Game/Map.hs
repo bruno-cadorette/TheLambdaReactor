@@ -28,6 +28,4 @@ module Game.Map (Point2d(..), createMap,findNearestWall) where
   findNearestWall x tree =
     let point2d = v2FloatToPoint2d x
     in
-     case nearestNeighbor tree point2d of
-       (Just x) -> (Just $ point2dToV2Float x)
-       Nothing -> Nothing
+      fmap point2dToV2Float (nearestNeighbor tree point2d)
