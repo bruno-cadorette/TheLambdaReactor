@@ -12,6 +12,7 @@ import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
 import Linear.V2
 import qualified Linear.Vector as LV
+import qualified Data.Map.Strict as M
 
 main :: IO()
 main = hspec spec
@@ -19,10 +20,10 @@ main = hspec spec
 spec :: Spec
 spec = describe "WorldEngine" $ do
         it "getWorldForJSON empty" $ do
-          (getWorldForJSON getNewWorld) `shouldBe` (World [] [] [] [])
+          (getWorldForJSON getNewWorld) `shouldBe` (World M.empty [] [] [])
 
         it "getWorldForJSON player and addPlayer" $ do
-          (getWorldForJSON $ addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))) `shouldBe` (World [(Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))] [] [] [])
+          (getWorldForJSON $ addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))) `shouldBe` (World  (M.fromList [(Text.pack "0",(Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0)))]) [] [] [])
 
         it "getPlayerTest true" $ do
           let x = addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))

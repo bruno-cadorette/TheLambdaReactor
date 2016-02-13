@@ -18,7 +18,7 @@ randomGen = mkStdGen 50
 data WorldEngine = WorldEngine (Map.Map Text Player) (Map.Map Int Bullet) (Map.Map Text Enemy) deriving (Eq)
 
 getWorldForJSON :: WorldEngine -> World
-getWorldForJSON (WorldEngine players bullet enemy) = (World (Map.elems players) (Map.elems bullet) (Map.elems enemy) [])
+getWorldForJSON (WorldEngine players bullet enemy) = (World players (Map.elems bullet) (Map.elems enemy) [])
 
 getNewWorld = (WorldEngine Map.empty Map.empty Map.empty);
 
