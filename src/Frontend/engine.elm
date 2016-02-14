@@ -10,11 +10,12 @@ import Graphics.Element exposing (show)
 import Player exposing (..)
 import Bullet exposing (..)
 import Window
+import Map exposing (..)
 
 type EngineEvent = Tick | Click | Move Point | Orientation Point
-type alias GameState = {player : Player, bullets : List Bullet}
+type alias GameState = {player : Player, bullets : List Bullet, field : Map}
 
-initialGameState = {player = initialPlayer, bullets = []}
+initialGameState = {player = initialPlayer, bullets = [], field = initialMap}
 
 getEvents : Signal Point -> Signal Point -> Signal Time -> Signal (Int, Int) -> Signal () -> Signal EngineEvent
 getEvents moveVelocity orientation frames dimensions click =
@@ -29,12 +30,12 @@ playerInput = Signal.map(\{x, y} -> fromRecord {x = toFloat x, y = toFloat y }) 
 mouseInput = Signal.map(\(x, y) -> fromRecord {x = toFloat x, y = toFloat y }) Mouse.position
 
 turn : EngineEvent -> GameState -> GameState
-turn event {player, bullets} =
+turn event {player, bullets, field} =
   case event of
-    Tick   -> {player = tickPlayer player, bullets = tickBullets bullets}
-    Click  -> {player = player, bullets = shootBullet player bullets}
-    Move p -> {player = movePlayer p player, bullets = bullets}
-    Orientation p -> {player = changePlayerOrientation p player, bullets = bullets}
+    Tick -> {player = tickPlayer player, bullets = tickBullets bullets, field = tickMap field player.direction}
+    Click  -> {player = player, bullets = shootBullet player bullets, field = field}
+    Move p -> {player = movePlayer p player, bullets = bullets, field = field}
+    Orientation p -> {player = changePlayerOrientation p player, bullets = bullets, field = field}
 
 run : Signal EngineEvent -> Signal GameState
 run = Signal.foldp turn initialGameState
