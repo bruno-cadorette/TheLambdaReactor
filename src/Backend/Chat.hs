@@ -3,29 +3,19 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 
-module Chat (server, ServerState (..),World (..),Message (..),PacketType(..)) where
+module Chat (server) where
 
-import Prelude hiding (mapM_)
-import Control.Monad.IO.Class (liftIO)
-import Control.Applicative
-import Data.Aeson ((.=), (.:))
-import Data.Foldable (mapM_)
-import Debug.Trace
-import Data.List
-import Data.ByteString.Char8
-import qualified Data.ByteString.Lazy.Char8 as BS
-import GHC.Generics
-
-import qualified Control.Concurrent.STM as STM
+import Reactive 
+import qualified Data.Map as Map
+import Control.Monad.State.Strict
+import UserManagement
+import Data.Aeson
+import Data.Text
 import qualified Data.Aeson as Aeson
-import qualified Data.Text as Text
-import qualified Data.Map.Strict as Map
-import qualified Network.SocketIO as SocketIO
-import Message (Message (..),decodeMessage)
+import Message
+import Network.SocketIO
 
-data PacketType = Emit | Broadcast
-
-data AddUser = AddUser Text.Text
+data AddUser = AddUser Text
 
 instance Aeson.FromJSON AddUser where
   parseJSON = Aeson.withText "AddUser" $ pure . AddUser
@@ -37,13 +27,13 @@ instance Aeson.ToJSON NumConnected where
   toJSON (NumConnected n) = Aeson.object [ "numUsers" .= n]
 
 
-data NewMessage = NewMessage Text.Text
+data NewMessage = NewMessage Text
 
 instance Aeson.FromJSON NewMessage where
   parseJSON = Aeson.withText "NewMessage" $ pure . NewMessage
 
 
-data Said = Said Text.Text Text.Text
+data Said = Said Text Text
 
 instance Aeson.ToJSON Said where
   toJSON (Said username message) = Aeson.object
@@ -51,80 +41,35 @@ instance Aeson.ToJSON Said where
     , "message" .= message
     ]
 
-data UserName = UserName Text.Text
+data UserName = UserName Text
 
 instance Aeson.ToJSON UserName where
   toJSON (UserName un) = Aeson.object [ "username" .= un ]
 
 
-data UserJoined = UserJoined Text.Text Int
+data UserJoined = UserJoined Text Int
 
 instance Aeson.ToJSON UserJoined where
   toJSON (UserJoined un n) = Aeson.object
     [ "username" .= un
     , "numUsers" .= n
     ]
-
-data World = World [Int]
-
---------------------------------------------------------------------------------
-data ServerState = ServerState { ssNConnected :: STM.TVar Int, world :: STM.TVar World}
-
-
---server :: ServerState -> StateT SocketIO.RoutingTable Snap.Snap ()
-server state = do
-  userNameMVar <- liftIO STM.newEmptyTMVarIO
-  let forUserName m = liftIO (STM.atomically (STM.tryReadTMVar userNameMVar)) >>= mapM_ m
-
-  SocketIO.on "new message" $ \(NewMessage message) ->
-    forUserName $ \userName ->
-      SocketIO.broadcast "new message" (Said userName message)
-
-  SocketIO.on "add user" $ \(AddUser text) ->
-      case decodeMessage text of
-        Just (Message userName body) -> do
-                      n <- liftIO $ STM.atomically $ do
-                        n <- (+ 1) <$> STM.readTVar (ssNConnected state)
-                        STM.putTMVar userNameMVar userName
-                        STM.writeTVar (ssNConnected state) n
-                        return n
-
-                      SocketIO.emit "login" (NumConnected n)
-                      SocketIO.broadcast "login" (UserJoined userName n)
-        Nothing -> SocketIO.emit "error" (Message "Couldn't parse Message on AddUser " text)
-  --SocketIO.on "sendMessage" $ \(AddUser text) -> trace ("send " ++ (Text.unpack text)) $ return text
-
-  SocketIO.on "sendMessage" $ \(AddUser text) ->
-    trace ("send " ++ (Text.unpack text))
-    $ forUserName $ \userName -> do
-      case decodeMessage text of
-        Just x -> do 
-            SocketIO.broadcast "receiveMessage" x
-            SocketIO.emit "receiveMessage" x
-        Nothing -> SocketIO.emit "error" (Message  "Couldn't parse Message on sendMessage"  text)
+        
+sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
+sendMessage p (s, n) = 
+    case Map.lookup s p of
+        Just x -> broadcastAll "receiveMessage" $ Message (pack x) n
+        Nothing -> broadcastAll "receiveMessage" $ Message "ERROR USER" n
 
 
-
-  SocketIO.appendDisconnectHandler $ do
-    (n, mUserName) <- liftIO $ STM.atomically $ do
-      n <- (+ (-1)) <$> STM.readTVar (ssNConnected state)
-      mUserName <- STM.tryReadTMVar userNameMVar
-      STM.writeTVar (ssNConnected state) n
-      return (n, mUserName)
-
-    case mUserName of
-      Nothing -> return ()
-      Just userName ->
-        SocketIO.broadcast "user left" (UserJoined userName n)
-
-  SocketIO.on "typing" $
-    forUserName $ \userName ->
-      SocketIO.emit "typing" (UserName userName)
-
-  SocketIO.on "example2" $
-    forUserName $ \userName ->
-      SocketIO.emit "typing" (UserName userName)
-
-  SocketIO.on "stop typing" $
-    forUserName $ \userName ->
-      SocketIO.broadcast "stop typing" (UserName userName)
+server :: (MonadIO m, MonadState RoutingTable m) => m ()
+server = do
+    sendMessageSocket   <- createSocketEvent "sendMessage"
+    usersSocket <- connectionManager
+    liftIO $ do
+        network <- compile $ do
+            sendMessageEvent <- sendMessageSocket
+            (connectionEvent, connectedPlayers) <- usersSocket
+            reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
+            reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
+        actuate network
