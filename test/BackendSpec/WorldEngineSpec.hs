@@ -3,7 +3,7 @@ module BackendSpec.WorldEngineSpec (main, spec) where
 
 import Test.Hspec
 import Test.QuickCheck
-import WorldEngine(getWorldForJSON, getNewWorld, addPlayer,removePlayer,damageToPlayer,movePlayer, WorldEngine (..),getPlayer,handleControl)
+import WorldEngine
 import World (World(..))
 import Character (Player(..),Enemy(..), Character (..))
 import Data.Maybe
@@ -12,6 +12,7 @@ import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
 import Linear.V2
 import qualified Linear.Vector as LV
+import qualified Data.Map.Strict as M
 
 main :: IO()
 main = hspec spec
@@ -19,22 +20,27 @@ main = hspec spec
 spec :: Spec
 spec = describe "WorldEngine" $ do
         it "getWorldForJSON empty" $ do
-          (getWorldForJSON getNewWorld) `shouldBe` (World [] [] [] [])
+          (getWorldForJSON getNewWorld) `shouldBe` (World M.empty [] [] [])
 
         it "getWorldForJSON player and addPlayer" $ do
-          (getWorldForJSON $ addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))) `shouldBe` (World [(Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))] [] [] [])
+          (getWorldForJSON $ addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))) `shouldBe` (World  (M.fromList [(Text.pack "0",(Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0)))]) [] [] [])
 
         it "getPlayerTest true" $ do
-          let x = addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))
+          let x = addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))
             in
-              (isJust  (getPlayer x 0)) `shouldBe` True
+              (isJust  (getPlayer x "0")) `shouldBe` True
 
         it "getPlayerTest false" $ do
-          let x = addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))
+          let x = addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))
             in
-              (isJust  (getPlayer x 23)) `shouldBe` False
+              (isJust  (getPlayer x "23")) `shouldBe` False
 
         it "movePlayer" $ do
-          let x = addPlayer getNewWorld (Player 0 15 (V2 1.0 1.0) (V2 1.0 1.0))
+          let x = addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))
             in
-              position (fromJust  (getPlayer (handleControl x "w" 0) 0)) `shouldBe` (V2 1.0 2.0)
+              position (fromJust  (getPlayer (handleControl x "w" "0") "0")) `shouldBe` (V2 1.0 2.0)
+
+        it "intersecPlayer" $ do
+          let y = addBullet  (addPlayer getNewWorld (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))) (V2 1.0 1.0) (V2 1.0 1.0) 50
+            in
+              (length $ getPlayersHit y) `shouldBe` 1
