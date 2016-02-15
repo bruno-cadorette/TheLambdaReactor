@@ -1,6 +1,11 @@
+module Input (worldUpdate, currentPlayerId, gameSocket, safeKeyboardPresses) where
+
 import Signal
+import Signal.Extra exposing (foldps)
+import Char exposing (KeyCode)
 import Debug exposing (..)
 import Keyboard
+import Keyboard.Keys exposing (t, enter, Key)
 import SocketIO exposing (..)
 import Task exposing (Task, andThen)
 import Math.Vector2 exposing (..)
@@ -10,10 +15,9 @@ import Json.Decode as Decode exposing ((:=))
 import Json.Encode as Encode
 import Result exposing (Result)
 import Dict exposing (Dict)
+import Protocol exposing (..)
 
-type alias PlayerPosition = { position : Point, orientation : Point }
-type alias World = { players : Dict PlayerId PlayerPosition }
-type alias PlayerId = String
+gameSocket = serverSocket
 
 port serverSocket : Task x Socket
 port serverSocket = io "http://localhost:8001" defaultOptions
@@ -23,11 +27,20 @@ port communication = serverSocket `andThen` \socket ->
     on "worldUpdate" decodeSignal socket `andThen` \_ ->
     on "initialConnection" playerIdMailbox.address socket
 
+port input : Signal (Task x ())
+port input = Signal.map (\x ->
+  case x of
+    Movement m -> sendMovement m
+    Typing t   -> Signal.send keyboardInputMailbox.address t) <| gameInput Keyboard.wasd
+
 worldUpdate : Signal World
 worldUpdate = Signal.filterMap Result.toMaybe defaultWorld worldMailbox.signal
 
 currentPlayerId : Signal PlayerId
 currentPlayerId = playerIdMailbox.signal
+
+safeKeyboardPresses : Signal KeyCode
+safeKeyboardPresses = keyboardInputMailbox.signal
 
 movePlayer : Signal PlayerId -> Signal World -> Signal Point
 movePlayer playerId =
@@ -45,20 +58,8 @@ worldMailbox = Signal.mailbox (Ok defaultWorld)
 playerIdMailbox : Signal.Mailbox PlayerId
 playerIdMailbox = Signal.mailbox "null"
 
-vec2Decoder = Decode.object2 vec2
-  ("x" := Decode.float)
-  ("y" := Decode.float)
-
-vec2Encoder vector =
-  let (x,y) = toTuple vector
-  in  Encode.object [("x", Encode.float x), ("y", Encode.float y)]
-
-playerPositionDecoder =
-  Decode.object2 PlayerPosition
-    ("position" := vec2Decoder)
-    ("orientation" := vec2Decoder)
-
-worldDecoder = Decode.object1 World ("players" := Decode.dict playerPositionDecoder)
+keyboardInputMailbox : Signal.Mailbox KeyCode
+keyboardInputMailbox = Signal.mailbox 0
 
 logError : Result String a -> Result String a
 logError r =
@@ -66,13 +67,32 @@ logError r =
     Ok _ -> r
     Err err -> log err r
 
+type Input = Movement Vec2 | Typing KeyCode
+
+gameInput : Signal {x : Int, y : Int} -> Signal Input
+gameInput m =
+    let
+      movement = Signal.map Movement <| playerInput m
+      typing = Signal.map Typing Keyboard.presses
+    in
+      Signal.filterMap identity (Movement (vec2 0 0)) <| foldps inputHandler (Nothing, True) <| Signal.merge movement typing
+
+inputHandler : Input -> Bool -> (Maybe Input, Bool)
+inputHandler input isMovement =
+  case input of
+    Movement m -> if isMovement then (Just (Movement m), isMovement) else (Nothing, isMovement)
+    Typing k   ->
+      if isMovement && k == t.keyCode then (Just (Typing 0), False)
+      else if not isMovement && k == enter.keyCode then (Just (Typing enter.keyCode), True)
+      else (Nothing, isMovement)
+
 playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 
 sendFromSignal : (a -> Encode.Value) -> String -> Signal a -> Signal (Task x ())
 sendFromSignal encodeFunc emitTo = Signal.map(\s -> serverSocket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
 
-sendMovement : Signal {x:Int, y:Int} -> Signal (Task x ())
-sendMovement = sendFromSignal vec2Encoder "userInput" << playerInput
+sendMovement : Vec2-> Task x ()
+sendMovement v = serverSocket `andThen` emit "userInput" (Encode.encode 0 <| vec2Encoder v)
 
 sendShot : Signal Vec2 -> Signal (Task x ())
 sendShot = sendFromSignal vec2Encoder "shootInput"

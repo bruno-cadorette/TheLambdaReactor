@@ -1,5 +1,6 @@
 module Chat where
 
+import Input exposing (gameSocket, safeKeyboardPresses)
 import Char exposing (fromCode, KeyCode)
 import Debug exposing (..)
 import Graphics.Collage as Collage
@@ -28,7 +29,7 @@ sendToString x =
 
 ----Write a message----
 buildWord : Signal MessageToSend
-buildWord = Signal.foldp (stringBuilder) (BuildString "") (Keyboard.presses)
+buildWord = Signal.foldp (stringBuilder) (BuildString "") safeKeyboardPresses
 
 stringBuilder : KeyCode -> MessageToSend -> MessageToSend
 stringBuilder key m =
@@ -58,20 +59,17 @@ chat : Signal Element
 chat = Signal.map2(\writting received -> flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
 
 
-socket : Task x SocketIO.Socket
-socket = SocketIO.io "http://localhost:8001" SocketIO.defaultOptions
-
 eventName = "example"
 
 port sendMessage : Signal (Task String ())
 port sendMessage = Signal.map (\s ->
   case s of
-    SendMessage m -> socket `andThen` SocketIO.emit "sendMessage" m
+    SendMessage m -> gameSocket `andThen` SocketIO.emit "sendMessage" m
     BuildString s -> Task.succeed ()) buildWord
 
 -- send a value once at program start
 port initial : Task x ()
-port initial = socket `andThen` SocketIO.emit "newUser" "JOHN CENA"
+port initial = gameSocket `andThen` SocketIO.emit "newUser" "JOHN CENA"
 
 sendMailbox : Signal.Mailbox String
 sendMailbox = Signal.mailbox ""
@@ -87,7 +85,7 @@ forwardMessage = Signal.forwardTo received.address
 
 port receiveMessagePort : Task.Task a ()
 port receiveMessagePort =
-    socket `Task.andThen` \x ->
+    gameSocket `Task.andThen` \x ->
     SocketIO.on "receiveServerMessage" received.address x `Task.andThen` \_ ->
     SocketIO.on "receiveMessage" forwardMessage x
 
