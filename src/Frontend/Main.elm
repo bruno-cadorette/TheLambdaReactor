@@ -6,12 +6,13 @@ import Player exposing (..)
 import Bullet exposing (..)
 import Time exposing (fps)
 import Graphics.Collage
+import Graphics.Element
 import Mouse
 import Map exposing (..)
 
 
 --display : Signal (Int, Int) -> Signal Bullet -> Signal Player -> Graphics.Collage.Element
-display = Signal.map2 (\(w,h) {player, bullets, field} -> Graphics.Collage.collage w h <| displayMap player.position field ++ displayBullets (w,h) bullets ++ displayPlayer (w,h) player)
+display = Signal.map2 (\(w,h) {player, bullets, field} -> Graphics.Collage.collage w h <| displayMap player.position field ++ displayBullets (w,h) bullets ++ displayPlayer (w,h) player ++ [(Graphics.Collage.toForm (Graphics.Element.show player.position))])
 
 main =
   display dimensions <| run <| getEvents playerInput mouseInput (fps 30) dimensions Mouse.clicks

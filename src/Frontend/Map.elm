@@ -64,7 +64,13 @@ sectionByPosition : (Int, Int) -> Map -> Int
 sectionByPosition (x, y) field = (x // 32)
 
 --displayMap : Map -> List Graphics.Collage.Form
-displayMap pos field = [ toForm (Graphics.Element.container 320 192 (middleAt (absolute (160 - ((floor (getX pos)) % 32))) (absolute (96 + ((floor (getY pos)) % 32)))) (getCurrentTiles 12 8 (((floor (getX pos)) // 32) - 6) (((floor (getY pos)) // 32) - 4) field.tiles))]
+displayMap pos field =
+  let x = (floor (getX pos))
+      y = (floor (getY pos))
+  in if x > 0 then
+        [toForm (Graphics.Element.container 320 192 (middleAt (absolute (160 - (x % 32))) (absolute (96 + (y % 32)))) (getCurrentTiles 12 8 ((x // 32) + 6) ((y // 32) + 4) field.tiles))]
+     else
+        [toForm (Graphics.Element.container 320 192 (middleAt (absolute (160 - (Basics.negate ((abs x) % 32)))) (absolute (96 + (y % 32)))) (getCurrentTiles 12 8 ((x // 32) + 6) ((y // 32) + 4) field.tiles))]
 
 --Utility
 zip : List a -> List b -> List (a,b)
