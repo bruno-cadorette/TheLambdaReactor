@@ -29,7 +29,7 @@ sendToString x =
 
 ----Write a message----
 buildWord : Signal MessageToSend
-buildWord = Signal.foldp (stringBuilder) (BuildString "") safeKeyboardPresses
+buildWord = Signal.foldp (stringBuilder) (BuildString "") safeKeyboardPresses 
 
 stringBuilder : KeyCode -> MessageToSend -> MessageToSend
 stringBuilder key m =
@@ -89,6 +89,7 @@ port receiveMessagePort =
     SocketIO.on "receiveServerMessage" received.address x `Task.andThen` \_ ->
     SocketIO.on "receiveMessage" forwardMessage x
 
-
+port input : Signal (Task x ())
+port input = Input.initializeInput
 
 main = Signal.map2(\(w, h) t -> Collage.collage w h [Collage.toForm t]) Window.dimensions chat
