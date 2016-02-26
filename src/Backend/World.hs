@@ -25,14 +25,12 @@ data World = World {players :: Map Text.Text Player, projectiles :: [Bullet],enn
 instance Aeson.ToJSON Player where
 toJSON (Player uuid hp position orientation) = Aeson.object [ "uuid"  Aeson..= uuid , "hp"  Aeson..= hp, "position"  Aeson..= position ]
 
-instance Aeson.FromJSON Player where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+instance Aeson.FromJSON Player
 --Enemy
 instance Aeson.ToJSON Enemy where
   toJSON (Enemy uuid hp position orientation) = Aeson.object [ "uuid"  Aeson..= uuid , "hp"  Aeson..= hp, "position"  Aeson..= position ]
 
-instance Aeson.FromJSON Enemy where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+instance Aeson.FromJSON Enemy
 --World
 instance Aeson.ToJSON World where
   toJSON (World players projectiles enemies hits) = Aeson.object ["players" Aeson..= Aeson.toJSON (toList players),
@@ -40,11 +38,9 @@ instance Aeson.ToJSON World where
                                                                    "enemies" Aeson..= Aeson.toJSON enemies,
                                                                    "hits" Aeson..= Aeson.toJSON hits]
 
-instance Aeson.FromJSON World where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+instance Aeson.FromJSON World
 
 --Hit
 instance Aeson.ToJSON Hit
 
-instance Aeson.FromJSON Hit where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+instance Aeson.FromJSON Hit

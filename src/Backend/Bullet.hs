@@ -18,8 +18,7 @@ moveBullet (Bullet uuid position orientation velocity timestamp) = (Bullet uuid 
 --Bullet
 instance Aeson.ToJSON Bullet
 
-instance Aeson.FromJSON Bullet where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
+instance Aeson.FromJSON Bullet
 
 instance (Aeson.ToJSON a) => Aeson.ToJSON (V2 a)  where
  toJSON x =
