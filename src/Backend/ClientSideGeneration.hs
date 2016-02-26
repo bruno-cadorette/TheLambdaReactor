@@ -12,14 +12,16 @@ Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''World
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Player
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Enemy
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Bullet
+Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Hit
 
-generateWorld :: IO ()
+generateWorld :: String
 generateWorld =
-    putStrLn $ moduleHeader "World" ++ vec2Json ++ makeModuleContentWithAlterations (defaultAlterations . myAlteration)
+    moduleHeader "World" ++ vec2Json ++ makeModuleContentWithAlterations (defaultAlterations . myAlteration)
     [ DefineElm (Proxy :: Proxy World),
       DefineElm (Proxy :: Proxy Player),
       DefineElm (Proxy :: Proxy Enemy),
-      DefineElm (Proxy :: Proxy Bullet)
+      DefineElm (Proxy :: Proxy Bullet),
+      DefineElm (Proxy :: Proxy Hit)
     ] 
     
 myAlteration :: ETypeDef -> ETypeDef
@@ -32,13 +34,13 @@ myAlteration = recAlterType $ \t -> case t of
 --I don't thing there is a better way of doing that, since we're not creating the datatype       
 --Might break if the package update  
 vec2Json :: String 
-vec2Json = unlines ["jsonDecVec2 = Decode.object2 vec2",
-    "  (\"x\" := Decode.float)",
-    "  (\"y\" := Decode.float)",
+vec2Json = unlines ["jsonDecVec2 = Json.Decode.object2 vec2",
+    "  (\"x\" := Json.Decode.float)",
+    "  (\"y\" := Json.Decode.float)",
     "",
     "jsonEncVec2 vector =",
     "  let (x,y) = toTuple vector",
-    "  in  Encode.object [(\"x\", Encode.float x), (\"y\", Encode.float y)]",
+    "  in  Json.Encode.object [(\"x\", Json.Encode.float x), (\"y\", Json.Encode.float y)]",
     ""]
     
 moduleHeader :: String -> String
@@ -51,7 +53,8 @@ moduleHeader moduleName = unlines
      , "import Json.Encode exposing (Value)"
      , "-- The following module comes from bartavelle/json-helpers"
      , "import Json.Helpers exposing (..)"
-     , "import Vec2 exposing (..)"
+     , "import Math.Vector2 exposing (..)"
+     , "import Dict exposing (Dict)"
      , ""
      , ""
      ]

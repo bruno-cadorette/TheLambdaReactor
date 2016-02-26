@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module World (World(..)) where
+module World (World(..), Hit(..)) where
 
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text

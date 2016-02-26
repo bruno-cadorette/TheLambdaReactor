@@ -14,7 +14,7 @@ import qualified Snap.CORS as CORS
 
 main :: IO ()
 main = do
-  generateWorld
+  writeFile "World.elm" generateWorld
   socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI server
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
