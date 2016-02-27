@@ -1,4 +1,4 @@
-module Input (worldUpdate, currentPlayerId, gameSocket, safeKeyboardPresses, initializeInput) where
+module Input (gameStateUpdate, currentPlayerId, gameSocket, safeKeyboardPresses, initializeInput) where
 
 import Signal
 import Signal.Extra exposing (foldps)
@@ -24,7 +24,7 @@ serverSocket = io "http://localhost:8001" defaultOptions
 
 communication : Socket -> Task x ()
 communication socket =
-    on "worldUpdate" decodeSignal socket `andThen` \_ ->
+    on "gameStateUpdate" decodeSignal socket `andThen` \_ ->
     on "initialConnection" playerIdMailbox.address socket
 
 initializeInput : Signal (Task x ())
@@ -33,8 +33,8 @@ initializeInput = Signal.map (\x ->
     Movement m -> sendMovement m
     Typing t   -> Signal.send keyboardInputMailbox.address (log "initializeInput" t)) <| gameInput Keyboard.wasd
 
-worldUpdate : Signal World
-worldUpdate = Signal.filterMap Result.toMaybe defaultWorld worldMailbox.signal
+gameStateUpdate : Signal GameState
+gameStateUpdate = Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
 
 currentPlayerId : Signal PlayerId
 currentPlayerId = playerIdMailbox.signal
@@ -42,18 +42,18 @@ currentPlayerId = playerIdMailbox.signal
 safeKeyboardPresses : Signal KeyCode
 safeKeyboardPresses = Signal.map (log "safeKeyboardPresses") keyboardInputMailbox.signal
 
-movePlayer : Signal PlayerId -> Signal World -> Signal Point
+movePlayer : Signal PlayerId -> Signal GameState -> Signal Point
 movePlayer playerId =
   Signal.foldp (flip sub) (vec2 0 0)
   << Signal.map2 (\id w -> Dict.get id (w.players) |> Maybe.map(.position) |> Maybe.withDefault (vec2 0 0)) playerId
 
 decodeSignal : Signal.Address String
-decodeSignal = Signal.forwardTo worldMailbox.address (Decode.decodeString worldDecoder >> logError)
+decodeSignal = Signal.forwardTo gameStateMailbox.address (Decode.decodeString gameStateDecoder >> logError)
 
-defaultWorld = { players = Dict.empty }
+defaultGameState = { players = Dict.empty }
 
-worldMailbox : Signal.Mailbox (Result String World)
-worldMailbox = Signal.mailbox (Ok defaultWorld)
+gameStateMailbox : Signal.Mailbox (Result String GameState)
+gameStateMailbox = Signal.mailbox (Ok defaultGameState)
 
 playerIdMailbox : Signal.Mailbox PlayerId
 playerIdMailbox = Signal.mailbox "null"

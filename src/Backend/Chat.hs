@@ -14,9 +14,9 @@ import Data.Text
 import qualified Data.Aeson as Aeson
 import Message
 import Network.SocketIO
-import World
-import WorldManagement
-import WorldEngine
+import GameState
+import GameStateManagement
+import GameEngine
 import Data.Time.Clock
 
 data AddUser = AddUser Text
@@ -69,14 +69,14 @@ server :: (MonadIO m, MonadState RoutingTable m) => m ()
 server = do
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
-    inputSocket <- worldManager
+    inputSocket <- gameStateManager
     liftIO $ do
         network <- compile $ do
 
             sendMessageEvent <- sendMessageSocket
             (connectionEvent, connectedPlayers) <- usersSocket
-            (inputEvent,worldObject) <- inputSocket
+            (inputEvent,gameStateObject) <- inputSocket
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
-            reactimate $ (toOutput . worldSender) <$> worldObject <@> inputEvent
+            reactimate $ (toOutput . gameStateSender) <$> gameStateObject <@> inputEvent
         actuate network
