@@ -21,7 +21,7 @@ sprite sheet w h n = toSprite (List.reverse (extractImages sheet w h n))
 extractImages : String -> Int -> Int -> Int -> List Element
 extractImages sheet w h n = if n == 0
                               then []
-                              else (Graphics.Element.croppedImage (((n - 1) * w), 0) w h sheet) :: (extractImages sheet w h (n - 1))
+                              else collage w h [(Graphics.Collage.sprite w h ((n - 1) * 48, 0) sheet)] :: (extractImages sheet w h (n - 1))
 
 toSprite : List Element -> Sprite
 toSprite imgs =
