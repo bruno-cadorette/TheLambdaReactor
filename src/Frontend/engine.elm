@@ -32,8 +32,8 @@ mouseInput = Signal.map(\(x, y) -> fromRecord {x = toFloat x, y = toFloat y }) M
 turn : EngineEvent -> GameState -> GameState
 turn event {player, bullets, field} =
   case event of
-    Tick -> {player = tickPlayer player, bullets = tickBullets bullets, field = tickMap field player.direction}
-    Click  -> {player = player, bullets = shootBullet player bullets, field = field}
+    Tick -> {player = tickPlayer player, bullets = tickBullets bullets, field = field}
+    Click  -> {player = player, bullets = shootBullet player field bullets, field = field}
     Move p -> {player = movePlayer p player, bullets = bullets, field = field}
     Orientation p -> {player = changePlayerOrientation p player, bullets = bullets, field = field}
 
