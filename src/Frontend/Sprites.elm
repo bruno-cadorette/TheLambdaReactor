@@ -1,4 +1,4 @@
-module Sprites(draw, animator, sprite, Animator, updateSprite, nextImage) where
+module Sprites(draw, animator, sprite, Animator, update, nextImage) where
 
 import Time exposing (..)
 import Dict exposing (..)
@@ -15,13 +15,13 @@ type alias Sprite =
   frames : Dict.Dict Int Element
   }
 
-sprite : String -> Int -> Int -> Int -> Sprite
-sprite sheet w h n = toSprite (List.reverse (extractImages sheet w h n))
+sprite : String -> Int -> Int -> (Int, Int) -> Int -> Sprite
+sprite sheet w h (x, y) n = toSprite (List.reverse (extractImages sheet w h x y n))
 
-extractImages : String -> Int -> Int -> Int -> List Element
-extractImages sheet w h n = if n == 0
+extractImages : String -> Int -> Int -> Int -> Int -> Int -> List Element
+extractImages sheet w h x y n = if n == 0
                               then []
-                              else collage w h [(Graphics.Collage.sprite w h ((n - 1) * 48, 0) sheet)] :: (extractImages sheet w h (n - 1))
+                              else collage w h [(Graphics.Collage.sprite w h ((n - 1) * 48, y) sheet)] :: (extractImages sheet w h x y (n - 1))
 
 toSprite : List Element -> Sprite
 toSprite imgs =
@@ -43,8 +43,8 @@ animator sprite rate pos =
   rate = rate,
   lastPos = pos }
 
-updateSprite : Animator -> Math.Vector2.Vec2 -> Animator
-updateSprite animator newPos =
+update : Animator -> Math.Vector2.Vec2 -> Animator
+update animator newPos =
   let dist = Math.Vector2.distance newPos animator.lastPos
       skip = (floor dist) // animator.rate
   in if skip > 0
