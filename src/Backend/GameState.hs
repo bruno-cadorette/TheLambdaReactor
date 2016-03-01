@@ -15,11 +15,6 @@ import Character (Player(..),Enemy(..), Character (..))
 data Hit = Hit {uuid :: Int, player :: Player, bullet :: Bullet} deriving (Generic,Show, Eq)
 data GameState = GameState {players :: Map Text.Text Player, projectiles :: [Bullet],ennemies :: [Enemy], hits :: [Hit]} deriving (Generic,Show,Eq)
 
-
-
-
-
-
 --JSON stuff
 --Player
 instance Aeson.ToJSON Player where

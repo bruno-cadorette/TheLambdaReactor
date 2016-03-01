@@ -94,8 +94,8 @@ fps frame = do
 toOutput :: GetSocket s => (s -> ReaderT Socket m a) -> s -> m a
 toOutput event a = runReaderT (event a) $ getSocket a
 
-toOutputTime :: GetSocket s => (s -> ReaderT Socket m a) -> s -> Event UTCTime -> m a
-toOutputTime event a x = runReaderT (event a) $ getSocket a
+toOutputTime :: GetSocket s => (s -> UTCTime -> ReaderT Socket m a) -> s -> UTCTime -> m a
+toOutputTime event a b  = runReaderT (event a b) $ getSocket a
 
 foldp :: MonadMoment m => (a -> b -> b) -> b -> Event a -> m (Event b)
 foldp f z e = accumE z (fmap f e)

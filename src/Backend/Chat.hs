@@ -70,13 +70,16 @@ server = do
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
     inputSocket <- gameStateManager
+
     liftIO $ do
         network <- compile $ do
-
             sendMessageEvent <- sendMessageSocket
             (connectionEvent, connectedPlayers) <- usersSocket
-            (inputEvent,gameStateObject) <- inputSocket
+            (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
+            gameStateObject <- inputSocket
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
-            reactimate $ (toOutput . gameStateSender) <$> gameStateObject <@> inputEvent
+
+            reactimate $ (toOutputTime . gameStateSender) <$> gameStateObject <*> sockBehavior <@> fpsEvent
+
         actuate network

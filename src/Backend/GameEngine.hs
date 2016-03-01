@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module GameEngine(getGameStateForJSON, getNewGameState, addBullet, addPlayer,removePlayer,damageToPlayer,movePlayer, GameEngine (..),getPlayer,handleControl,handleControlV2,handleShoot,getPlayersHit) where
+module GameEngine(getGameStateForJSON, getNewGameState, addBullet, addPlayer,removePlayer,damageToPlayer,movePlayer, GameEngine (..),getPlayer,handleControl,handleControlV2,handleShoot,getPlayersHit,updateBullets) where
 import GameState (GameState(..))
 import Character
 import Bullet (Bullet(..),moveBullet)
@@ -37,6 +37,10 @@ movePlayer (GameEngine players bullet enemy) uuid position =
 
 addBullet (GameEngine players bullet enemy) position orientation uuid =
     (GameEngine players (Map.insert uuid (Bullet uuid position orientation 1.0 0) bullet) enemy)
+
+updateBullets :: GameEngine -> GameEngine
+updateBullets (GameEngine players bullets ennemies) = GameEngine players  (Map.map moveBullet bullets) ennemies
+
 
 getPlayersHit :: GameEngine -> [Player]
 getPlayersHit (GameEngine players bullet _) =
