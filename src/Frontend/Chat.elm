@@ -1,6 +1,6 @@
 module Chat where
 
-import Input exposing (gameSocket, safeKeyboardPresses)
+import Input exposing (safeKeyboardPresses)
 import Char exposing (fromCode, KeyCode)
 import Debug exposing (..)
 import Graphics.Collage as Collage
@@ -29,7 +29,7 @@ sendToString x =
 
 ----Write a message----
 buildWord : Signal MessageToSend
-buildWord = Signal.foldp (stringBuilder) (BuildString "") safeKeyboardPresses 
+buildWord = Signal.foldp (stringBuilder) (BuildString "") safeKeyboardPresses
 
 stringBuilder : KeyCode -> MessageToSend -> MessageToSend
 stringBuilder key m =
@@ -55,21 +55,18 @@ receiveMessage removeMessage newStr=
       Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
-chat : Signal Element
-chat = Signal.map2(\writting received -> flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
+chat : Signal Collage.Form
+chat = Signal.map2(\writting received -> Collage.toForm <| flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
 
-
-eventName = "example"
-
-port sendMessage : Signal (Task String ())
-port sendMessage = Signal.map (\s ->
+sendMessage : Socket -> Signal (Task String ())
+sendMessage socket = Signal.map (\s ->
   case s of
-    SendMessage m -> gameSocket `andThen` SocketIO.emit "sendMessage" m
+    SendMessage m -> emit "sendMessage" m socket
     BuildString s -> Task.succeed ()) buildWord
 
 -- send a value once at program start
-port initial : Task x ()
-port initial = gameSocket `andThen` SocketIO.emit "newUser" "JOHN CENA"
+initialMessage : Socket -> Task x ()
+initialMessage = emit "newUser" "JOHN CENA"
 
 sendMailbox : Signal.Mailbox String
 sendMailbox = Signal.mailbox ""
@@ -83,13 +80,7 @@ forwardMessage = Signal.forwardTo received.address
       Ok {name, body} -> name ++  ": " ++ body
       Err e -> e)
 
-port receiveMessagePort : Task.Task a ()
-port receiveMessagePort =
-    gameSocket `Task.andThen` \x ->
-    SocketIO.on "receiveServerMessage" received.address x `Task.andThen` \_ ->
-    SocketIO.on "receiveMessage" forwardMessage x
-
-port input : Signal (Task x ())
-port input = Input.initializeInput
-
-main = Signal.map2(\(w, h) t -> Collage.collage w h [Collage.toForm t]) Window.dimensions chat
+chatCommunication : Socket -> Task.Task a ()
+chatCommunication socket =
+    on "receiveServerMessage" received.address socket `Task.andThen` \_ ->
+    on "receiveMessage" forwardMessage socket

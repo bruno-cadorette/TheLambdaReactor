@@ -1,4 +1,4 @@
-module Input (worldUpdate, currentPlayerId, gameSocket, safeKeyboardPresses, initializeInput) where
+module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput) where
 
 import Signal
 import Signal.Extra exposing (foldps)
@@ -15,16 +15,13 @@ import Json.Decode as Decode exposing ((:=))
 import Json.Encode as Encode
 import Result exposing (Result)
 import Dict exposing (Dict)
-import Protocol exposing (..)
+import GameState exposing (..)
 
-gameSocket = serverSocket
+type alias PlayerId = String
 
-serverSocket : Task x Socket
-serverSocket = io "http://localhost:8001" defaultOptions
-
-communication : Socket -> Task x ()
-communication socket =
-    on "worldUpdate" decodeSignal socket `andThen` \_ ->
+gameInputCommunication : Socket -> Task x ()
+gameInputCommunication socket =
+    on "gameStateUpdate" decodeSignal socket `andThen` \_ ->
     on "initialConnection" playerIdMailbox.address socket
 
 initializeInput : Signal (Task x ())
@@ -33,8 +30,8 @@ initializeInput = Signal.map (\x ->
     Movement m -> sendMovement m
     Typing t   -> Signal.send keyboardInputMailbox.address (log "initializeInput" t)) <| gameInput Keyboard.wasd
 
-worldUpdate : Signal World
-worldUpdate = Signal.filterMap Result.toMaybe defaultWorld worldMailbox.signal
+gameStateUpdate : Signal GameState
+gameStateUpdate = Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
 
 currentPlayerId : Signal PlayerId
 currentPlayerId = playerIdMailbox.signal
@@ -42,18 +39,18 @@ currentPlayerId = playerIdMailbox.signal
 safeKeyboardPresses : Signal KeyCode
 safeKeyboardPresses = Signal.map (log "safeKeyboardPresses") keyboardInputMailbox.signal
 
-movePlayer : Signal PlayerId -> Signal World -> Signal Point
+movePlayer : Signal PlayerId -> Signal GameState -> Signal Point
 movePlayer playerId =
   Signal.foldp (flip sub) (vec2 0 0)
-  << Signal.map2 (\id w -> Dict.get id (w.players) |> Maybe.map(.position) |> Maybe.withDefault (vec2 0 0)) playerId
+  << Signal.map2 (\id w -> Dict.get id (w.players) |> Maybe.map(.pposition) |> Maybe.withDefault (vec2 0 0)) playerId
 
 decodeSignal : Signal.Address String
-decodeSignal = Signal.forwardTo worldMailbox.address (Decode.decodeString worldDecoder >> logError)
+decodeSignal = Signal.forwardTo gameStateMailbox.address (Decode.decodeString jsonDecGameState >> logError)
 
-defaultWorld = { players = Dict.empty }
+defaultGameState = { players = Dict.empty, projectiles =  [], ennemies = [], hits = [] }
 
-worldMailbox : Signal.Mailbox (Result String World)
-worldMailbox = Signal.mailbox (Ok defaultWorld)
+gameStateMailbox : Signal.Mailbox (Result String GameState)
+gameStateMailbox = Signal.mailbox (Ok defaultGameState)
 
 playerIdMailbox : Signal.Mailbox PlayerId
 playerIdMailbox = Signal.mailbox "null"
@@ -89,11 +86,11 @@ inputHandler input isMovement =
 
 playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 
-sendFromSignal : (a -> Encode.Value) -> String -> Signal a -> Signal (Task x ())
-sendFromSignal encodeFunc emitTo = Signal.map(\s -> serverSocket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
+--sendFromSignal : (a -> Encode.Value) -> String -> Signal a -> Signal (Task x ())
+--sendFromSignal encodeFunc emitTo = Signal.map(\s -> serverSocket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
 
 sendMovement : Vec2-> Task x ()
 sendMovement v = Task.succeed ()--serverSocket `andThen` emit "userInput" (Encode.encode 0 <| vec2Encoder v)
 
-sendShot : Signal Vec2 -> Signal (Task x ())
-sendShot = sendFromSignal vec2Encoder "shootInput"
+--sendShot : Signal Vec2 -> Signal (Task x ())
+--sendShot = sendFromSignal vec2Encoder "shootInput"

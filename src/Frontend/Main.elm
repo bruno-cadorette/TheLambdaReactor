@@ -1,13 +1,29 @@
 import Signal
---import Chat
+import Keyboard
+import Input exposing(..)
+import Chat exposing (..)
 import Window exposing (dimensions)
 import Engine exposing (..)
 import Player exposing (..)
 import Bullet exposing (..)
 import Time exposing (fps)
+import SocketIO exposing (..)
 import Graphics.Collage
 import Mouse
+import Task exposing (Task, andThen)
 import Map exposing (..)
+
+gameSocket : Task x Socket
+gameSocket = io "http://localhost:8001" defaultOptions
+
+port communication : Task a ()
+port communication =
+  gameSocket `andThen` \socket ->
+  chatCommunication socket `andThen`
+  always (gameInputCommunication socket) `andThen`
+  always (initialMessage socket)
+
+
 
 
 --display : Signal (Int, Int) -> Signal Bullet -> Signal Player -> Graphics.Collage.Element
