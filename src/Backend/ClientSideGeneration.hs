@@ -1,23 +1,23 @@
 {-# LANGUAGE TemplateHaskell #-}
-module ClientSideGeneration (generateWorld) where
+module ClientSideGeneration (generateGameState) where
 import Elm.Module
 import Elm.Derive
 import Elm.TyRep
-import World
+import GameState
 import Data.Proxy
 import Character
 import Bullet
 
-Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''World
+Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''GameState
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Player
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Enemy
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Bullet
 Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Hit
 
-generateWorld :: String
-generateWorld =
-    moduleHeader "World" ++ vec2Json ++ makeModuleContentWithAlterations (defaultAlterations . myAlteration)
-    [ DefineElm (Proxy :: Proxy World),
+generateGameState :: String
+generateGameState =
+    moduleHeader "GameState" ++ vec2Json ++ makeModuleContentWithAlterations (defaultAlterations . myAlteration)
+    [ DefineElm (Proxy :: Proxy GameState),
       DefineElm (Proxy :: Proxy Player),
       DefineElm (Proxy :: Proxy Enemy),
       DefineElm (Proxy :: Proxy Bullet),

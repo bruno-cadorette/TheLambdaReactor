@@ -83,19 +83,19 @@ broadcastAll text x = do
 
 
 {-FPS method-}
+fps:: Int -> MomentIO (Event UTCTime)
 fps frame = do
     (eTime, fireTime) <- newEvent
     liftIO . forkIO . forever $
-            threadDelay (frame) >> getCurrentTime >>= fireTime
-    bTime <- flip stepper eTime <$> liftIO getCurrentTime
-    return (bTime,eTime)
+            threadDelay frame >> getCurrentTime >>= fireTime
+    return eTime
 
 {- This function should be used just before reactimate to map your output. -}
 toOutput :: GetSocket s => (s -> ReaderT Socket m a) -> s -> m a
 toOutput event a = runReaderT (event a) $ getSocket a
 
-toOutputTime :: GetSocket s => (s -> ReaderT Socket m a) -> s -> Event UTCTime -> m a
-toOutputTime event a x = runReaderT (event a) $ getSocket a
+toOutputTime :: GetSocket s => (s -> UTCTime -> ReaderT Socket m a) -> s -> UTCTime -> m a
+toOutputTime event a b  = runReaderT (event a b) $ getSocket a
 
 foldp :: MonadMoment m => (a -> b -> b) -> b -> Event a -> m (Event b)
 foldp f z e = accumE z (fmap f e)

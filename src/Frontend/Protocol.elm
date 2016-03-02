@@ -10,7 +10,7 @@ import Point exposing (..)
 import Dict exposing (Dict)
 
 type alias PlayerPosition = { position : Point, orientation : Point }
-type alias World = { players : Dict PlayerId PlayerPosition }
+type alias GameState = { players : Dict PlayerId PlayerPosition }
 type alias PlayerId = String
 
 type alias Message =
@@ -44,4 +44,4 @@ playerPositionDecoder =
     ("position" := vec2Decoder)
     ("orientation" := vec2Decoder)
 
-worldDecoder = Decode.object1 World ("players" := Decode.dict playerPositionDecoder)
+gameStateDecoder = Decode.object1 GameState ("players" := Decode.dict playerPositionDecoder)
