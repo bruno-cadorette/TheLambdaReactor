@@ -30,8 +30,8 @@ movePlayer p player = { player | direction = p }
 tickPlayer : Player -> Player
 tickPlayer player =
   if player.direction == initPoint
-    then player
-    else { player | anim = updateSprite player.anim player.position }
+    then { player | position = (player.position `add` player.direction) }
+    else { player | position = (player.position `add` player.direction), anim = updateSprite player.anim player.position }
 
 initialPlayer = { position = origin, direction = origin, orientation = origin, anim = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 48 48 8) 4 origin }
 
