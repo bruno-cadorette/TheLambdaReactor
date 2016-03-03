@@ -135,3 +135,4 @@ jsonEncHit  val =
    , ("player", jsonEncEntity val.player)
    , ("bullet", jsonEncBullet val.bullet)
    ]
+

@@ -43,28 +43,6 @@ jsonEncGameState  val =
    ]
 
 
-
-type Entity  =
-    Player {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
-    | Enemy {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
-
-jsonDecEntity : Json.Decode.Decoder ( Entity )
-jsonDecEntity =
-    let jsonDecDictEntity = Dict.fromList
-            [ ("Player", Json.Decode.map Player (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
-            , ("Enemy", Json.Decode.map Enemy (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
-            ]
-    in  decodeSumObjectWithSingleField  "Entity" jsonDecDictEntity
-
-jsonEncEntity : Entity -> Value
-jsonEncEntity  val =
-    let keyval v = case v of
-                    Player vs -> ("Player", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
-                    Enemy vs -> ("Enemy", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
-    in encodeSumObjectWithSingleField keyval val
-
-
-
 type Entity  =
     Player {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
     | Enemy {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
