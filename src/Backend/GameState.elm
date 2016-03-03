@@ -19,80 +19,70 @@ jsonEncVec2 vector =
   in  Json.Encode.object [("x", Json.Encode.float x), ("y", Json.Encode.float y)]
 
 type alias GameState  =
-   { players: (Dict String Player)
+   { players: (Dict String Entity)
    , projectiles: (List Bullet)
-   , ennemies: (List Enemy)
+   , ennemies: (List Entity)
    , hits: (List Hit)
    }
 
 jsonDecGameState : Json.Decode.Decoder ( GameState )
 jsonDecGameState =
-   ("players" := Json.Decode.dict (jsonDecPlayer)) `Json.Decode.andThen` \pplayers ->
+   ("players" := Json.Decode.dict (jsonDecEntity)) `Json.Decode.andThen` \pplayers ->
    ("projectiles" := Json.Decode.list (jsonDecBullet)) `Json.Decode.andThen` \pprojectiles ->
-   ("ennemies" := Json.Decode.list (jsonDecEnemy)) `Json.Decode.andThen` \pennemies ->
+   ("ennemies" := Json.Decode.list (jsonDecEntity)) `Json.Decode.andThen` \pennemies ->
    ("hits" := Json.Decode.list (jsonDecHit)) `Json.Decode.andThen` \phits ->
    Json.Decode.succeed {players = pplayers, projectiles = pprojectiles, ennemies = pennemies, hits = phits}
 
 jsonEncGameState : GameState -> Value
 jsonEncGameState  val =
    Json.Encode.object
-   [ ("players", encodeMap (Json.Encode.string) (jsonEncPlayer) val.players)
+   [ ("players", encodeMap (Json.Encode.string) (jsonEncEntity) val.players)
    , ("projectiles", (Json.Encode.list << List.map jsonEncBullet) val.projectiles)
-   , ("ennemies", (Json.Encode.list << List.map jsonEncEnemy) val.ennemies)
+   , ("ennemies", (Json.Encode.list << List.map jsonEncEntity) val.ennemies)
    , ("hits", (Json.Encode.list << List.map jsonEncHit) val.hits)
    ]
 
 
 
-type alias Player  =
-   { puuid: String
-   , php: Int
-   , pposition: Vec2
-   , porientation: Vec2
-   }
+type Entity  =
+    Player {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
+    | Enemy {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
 
-jsonDecPlayer : Json.Decode.Decoder ( Player )
-jsonDecPlayer =
-   ("puuid" := Json.Decode.string) `Json.Decode.andThen` \ppuuid ->
-   ("php" := Json.Decode.int) `Json.Decode.andThen` \pphp ->
-   ("pposition" := jsonDecVec2) `Json.Decode.andThen` \ppposition ->
-   ("porientation" := jsonDecVec2) `Json.Decode.andThen` \pporientation ->
-   Json.Decode.succeed {puuid = ppuuid, php = pphp, pposition = ppposition, porientation = pporientation}
+jsonDecEntity : Json.Decode.Decoder ( Entity )
+jsonDecEntity =
+    let jsonDecDictEntity = Dict.fromList
+            [ ("Player", Json.Decode.map Player (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
+            , ("Enemy", Json.Decode.map Enemy (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
+            ]
+    in  decodeSumObjectWithSingleField  "Entity" jsonDecDictEntity
 
-jsonEncPlayer : Player -> Value
-jsonEncPlayer  val =
-   Json.Encode.object
-   [ ("puuid", Json.Encode.string val.puuid)
-   , ("php", Json.Encode.int val.php)
-   , ("pposition", jsonEncVec2 val.pposition)
-   , ("porientation", jsonEncVec2 val.porientation)
-   ]
+jsonEncEntity : Entity -> Value
+jsonEncEntity  val =
+    let keyval v = case v of
+                    Player vs -> ("Player", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
+                    Enemy vs -> ("Enemy", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
+    in encodeSumObjectWithSingleField keyval val
 
 
 
-type alias Enemy  =
-   { euuid: String
-   , ehp: Int
-   , eposition: Vec2
-   , eorientation: Vec2
-   }
+type Entity  =
+    Player {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
+    | Enemy {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
 
-jsonDecEnemy : Json.Decode.Decoder ( Enemy )
-jsonDecEnemy =
-   ("euuid" := Json.Decode.string) `Json.Decode.andThen` \peuuid ->
-   ("ehp" := Json.Decode.int) `Json.Decode.andThen` \pehp ->
-   ("eposition" := jsonDecVec2) `Json.Decode.andThen` \peposition ->
-   ("eorientation" := jsonDecVec2) `Json.Decode.andThen` \peorientation ->
-   Json.Decode.succeed {euuid = peuuid, ehp = pehp, eposition = peposition, eorientation = peorientation}
+jsonDecEntity : Json.Decode.Decoder ( Entity )
+jsonDecEntity =
+    let jsonDecDictEntity = Dict.fromList
+            [ ("Player", Json.Decode.map Player (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
+            , ("Enemy", Json.Decode.map Enemy (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
+            ]
+    in  decodeSumObjectWithSingleField  "Entity" jsonDecDictEntity
 
-jsonEncEnemy : Enemy -> Value
-jsonEncEnemy  val =
-   Json.Encode.object
-   [ ("euuid", Json.Encode.string val.euuid)
-   , ("ehp", Json.Encode.int val.ehp)
-   , ("eposition", jsonEncVec2 val.eposition)
-   , ("eorientation", jsonEncVec2 val.eorientation)
-   ]
+jsonEncEntity : Entity -> Value
+jsonEncEntity  val =
+    let keyval v = case v of
+                    Player vs -> ("Player", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
+                    Enemy vs -> ("Enemy", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
+    in encodeSumObjectWithSingleField keyval val
 
 
 
@@ -127,14 +117,14 @@ jsonEncBullet  val =
 
 type alias Hit  =
    { uuid: Int
-   , player: Player
+   , player: Entity
    , bullet: Bullet
    }
 
 jsonDecHit : Json.Decode.Decoder ( Hit )
 jsonDecHit =
    ("uuid" := Json.Decode.int) `Json.Decode.andThen` \puuid ->
-   ("player" := jsonDecPlayer) `Json.Decode.andThen` \pplayer ->
+   ("player" := jsonDecEntity) `Json.Decode.andThen` \pplayer ->
    ("bullet" := jsonDecBullet) `Json.Decode.andThen` \pbullet ->
    Json.Decode.succeed {uuid = puuid, player = pplayer, bullet = pbullet}
 
@@ -142,7 +132,6 @@ jsonEncHit : Hit -> Value
 jsonEncHit  val =
    Json.Encode.object
    [ ("uuid", Json.Encode.int val.uuid)
-   , ("player", jsonEncPlayer val.player)
+   , ("player", jsonEncEntity val.player)
    , ("bullet", jsonEncBullet val.bullet)
    ]
-
