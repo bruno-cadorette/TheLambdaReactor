@@ -18,6 +18,7 @@ import GameState
 import GameStateManagement
 import GameEngine
 import Data.Time.Clock
+import Data.Maybe
 
 data AddUser = AddUser Text
 
@@ -76,10 +77,11 @@ server = do
             sendMessageEvent <- sendMessageSocket
             (connectionEvent, connectedPlayers) <- usersSocket
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
+            let regFps = whenE ((\x -> isJust x) <$> sockBehavior) fpsEvent
             gameStateObject <- inputSocket
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
 
-            reactimate $ (toOutputTime . gameStateSender) <$> gameStateObject <*> sockBehavior <@> fpsEvent
+            reactimate $ (toOutputTime . gameStateSender) <$> gameStateObject <*> sockBehavior <@> regFps
 
         actuate network

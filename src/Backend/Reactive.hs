@@ -35,7 +35,8 @@ instance GetSocket (Socket, a) where
 
 instance GetSocket Socket where
     getSocket = id
-
+instance GetSocket (Maybe Socket) where
+  getSocket (Just x) = x
 
 
 handler :: Handler (Socket, a) -> a -> ReaderT Socket IO ()
