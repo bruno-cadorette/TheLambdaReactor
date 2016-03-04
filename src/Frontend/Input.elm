@@ -92,6 +92,5 @@ playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 sendMovement : Vec2-> Task x ()
 sendMovement v = Task.succeed ()--serverSocket `andThen` emit "userInput" (Encode.encode 0 <| vec2Encoder v)
 
-
 --sendShot : Signal Vec2 -> Signal (Task x ())
 --sendShot = sendFromSignal vec2Encoder "shootInput"

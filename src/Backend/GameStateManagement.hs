@@ -36,10 +36,12 @@ instance GetSocket UserInput where
     getSocket (Both _ _ s _) = s
 
 
-getSocketBehavior :: Behavior PlayerNames -> Behavior Socket
-getSocketBehavior players = (\ ma -> Prelude.head $ Map.keys ma) <$> players
+getSocketBehavior :: Behavior PlayerNames -> Behavior (Maybe Socket)
+getSocketBehavior players = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
+                                      in
+                                       if (not $ Prelude.null sockets) then (Just $ Prelude.head sockets) else Nothing) <$> players
 
-fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior Socket))
+fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior (Maybe Socket)))
 fpsClock playerNames = do
                         fpsEvent <- fps 30
                         return (fpsEvent, getSocketBehavior playerNames)
@@ -72,7 +74,7 @@ updateWorld m = updateBullets m
 notifyMove :: GameEngine -> UTCTime -> EventHandler()
 notifyMove n time = broadcastAll "updateGameState" (getGameStateForJSON n)
 
-gameStateSender ::GameEngine -> Socket -> UTCTime -> EventHandler()
+gameStateSender :: GetSocket a => GameEngine -> a -> UTCTime -> EventHandler()
 gameStateSender game sock time = notifyMove game time
 
 gameStateSenderTest x _ = broadcast "updateGameState" (getGameStateForJSON x)

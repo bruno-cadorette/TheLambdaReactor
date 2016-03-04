@@ -19,6 +19,7 @@ module Game.Map (Point2d(..), createMap,findNearestWall) where
   point2dToV2Float :: Point2d -> V2 Float
   point2dToV2Float p = (V2 (double2Float (p2x p)) (double2Float (p2y p)))
 
+  -- on donne les coordo de tous les murs \ (x,y) est le milieu de la case
   createMap :: [V2 Float] -> KdTree Point2d
   createMap points =
     let pts2D = fmap v2FloatToPoint2d points

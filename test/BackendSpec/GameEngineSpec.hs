@@ -5,7 +5,7 @@ import Test.Hspec
 import Test.QuickCheck
 import GameEngine
 import GameState (GameState(..))
-import Character (Player(..),Enemy(..), Character (..))
+import Character (Entity(..), Character (..))
 import Data.Maybe
 import Debug.Trace
 import qualified Data.Text as Text
@@ -38,7 +38,7 @@ spec = describe "GameEngine" $ do
         it "movePlayer" $ do
           let x = addPlayer getNewGameState (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))
             in
-              position (fromJust  (getPlayer (handleControl x "w" "0") "0")) `shouldBe` (V2 1.0 2.0)
+              position (fromJust  (getPlayer (handleControlV2 x (V2 0 1) "0") "0")) `shouldBe` (V2 1.0 2.0)
 
         it "intersecPlayer" $ do
           let y = addBullet  (addPlayer getNewGameState (Player "0" 15 (V2 1.0 1.0) (V2 1.0 1.0))) (V2 1.0 1.0) (V2 1.0 1.0) 50
