@@ -110,3 +110,23 @@ jsonEncHit  val =
    , ("player", jsonEncEntity val.player)
    , ("bullet", jsonEncBullet val.bullet)
    ]
+
+
+
+type alias Location  =
+   { position: Vec2
+   , orientation: Vec2
+   }
+
+jsonDecLocation : Json.Decode.Decoder ( Location )
+jsonDecLocation =
+   ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->
+   ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->
+   Json.Decode.succeed {position = pposition, orientation = porientation}
+
+jsonEncLocation : Location -> Value
+jsonEncLocation  val =
+   Json.Encode.object
+   [ ("position", jsonEncVec2 val.position)
+   , ("orientation", jsonEncVec2 val.orientation)
+   ]

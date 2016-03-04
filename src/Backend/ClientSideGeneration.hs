@@ -15,7 +15,8 @@ generateGameState =
     [ DefineElm (Proxy :: Proxy GameState),
       DefineElm (Proxy :: Proxy Entity),
       DefineElm (Proxy :: Proxy Bullet),
-      DefineElm (Proxy :: Proxy Hit)
+      DefineElm (Proxy :: Proxy Hit),
+      DefineElm (Proxy :: Proxy Location)
     ]
 
 myAlteration :: ETypeDef -> ETypeDef

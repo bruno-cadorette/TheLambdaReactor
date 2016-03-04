@@ -24,6 +24,7 @@ module Lib (module Exportable, decodeMessage) where
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Hit
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Message
 
+
   decodeMessage :: Text.Text -> Maybe Message
   decodeMessage text = Aeson.decode (BS.pack (Text.unpack text))
 
