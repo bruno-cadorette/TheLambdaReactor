@@ -1,4 +1,4 @@
-module Engine (getEvents, EngineEvent(..), GameState, playerInput, mouseInput, run, turn, initialGameState) where
+module Engine where
 
 import Signal
 import Math.Vector2 exposing (..)
@@ -10,13 +10,15 @@ import Graphics.Element exposing (show)
 import Player exposing (..)
 import Bullet exposing (..)
 import Window
---import GameState
-import Dict
+import GameState exposing (..)
+import Dict exposing (Dict)
 import Maybe exposing (withDefault)
 import Map exposing (..)
+import Tuple exposing (mapFst)
 
-type EngineEvent = Tick | Click | Move Point | Orientation Point
-type alias OutputGameState = {player : Player, enemies : List Player, bullets = []}
+type alias OutputGameState = {player : OutputEntity, enemies : Dict String OutputEntity, bullets : List Bullet}
+
+initialOutputGameState = {player = initialOutputEntity, enemies = Dict.empty, bullets = []}
 
 fov = 1000
 
@@ -26,42 +28,65 @@ popGet key dict =
     Just value -> (Just value, Dict.remove key dict)
     Nothing -> (Nothing, dict)
 
-initialGameState = {player = initialPlayer, bullets = [], field = initialMap}
-
-getEvents : Signal Point -> Signal Point -> Signal Time -> Signal (Int, Int) -> Signal () -> Signal EngineEvent
-getEvents moveVelocity orientation frames dimensions click =
-    let moves  = Signal.map Move moveVelocity
-        time  = Signal.map (always Tick) frames
-        mouse = Signal.map2 (\p (w, h) -> Orientation <| mapOrientation w h p) orientation dimensions
-        fire = Signal.map (always Click) click
-    in  Signal.mergeMany [time, moves, mouse, fire]
-
 
 playerInput = Signal.map(\{x, y} -> fromRecord {x = toFloat x, y = toFloat y }) Keyboard.wasd
-mouseInput = Signal.map(\(x, y) -> fromRecord {x = toFloat x, y = toFloat y }) Mouse.position
+mouseInput = Signal.map(\(x, y) -> vec2 (toFloat x) (toFloat y)) Mouse.position
 
-turn : EngineEvent -> GameState -> GameState
-turn event {player, bullets, field} =
-  case event of
-    Tick -> {player = tickPlayer player, bullets = tickBullets bullets, field = field}
-    Click  -> {player = player, bullets = shootBullet player field bullets, field = field}
-    Move p -> {player = movePlayer p player, bullets = bullets, field = field}
-    Orientation p -> {player = changePlayerOrientation p player, bullets = bullets, field = field}
+--Helper function for filterMap
+maybeInsert : comparable -> Maybe a -> Dict comparable a -> Dict comparable a
+maybeInsert k v dict =
+  case v of
+    Just v' -> Dict.insert k v' dict
+    Nothing -> dict
 
-run : Signal EngineEvent -> Signal GameState
-run = Signal.foldp turn initialGameState
+{-| Apply a function that may succeed to all values in the dictionary, but only keep the successes.
 
-update : Vec2 -> String -> GameState -> OutputGameState
-update mousePosition id gameState =
-  let (player, enemies) = mapEach (Maybe.map <| changePlayerOrientation mousePosition) Dict.values <| popGet id gameState
-  playerPosition = Maybe.withDefault (vec 0 0) <| Maybe.map (.position)
-  in {player = player, bullets = [], enemies = List.map (\e -> {e | position = position `sub` playerPosition } ) enemies |> List.filter(\e -> distance (vec 0 0) e.position < fov)}
+-}
+filterMap : (comparable -> a -> Maybe b) -> Dict comparable a -> Dict comparable b
+filterMap f =
+  Dict.foldr maybeInsert Dict.empty << Dict.map f
 
+{-| Keep a key-value pair when its key appears in the second dictionary, then use a function to determine the preference.
+
+-}
+intersectWith : (a -> b -> c) -> Dict comparable a -> Dict comparable b -> Dict comparable c
+intersectWith f d1 d2 =
+  filterMap (\k v -> Maybe.map (f v) <| Dict.get k d2 ) d1
+
+enemiesToShow : Vec2 -> Dict String Entity -> Dict String Entity
+enemiesToShow playerPosition enemies =
+  let newPosition position = position `sub` playerPosition
+  in filterMap (\k v ->
+    let p = newPosition v.location.position
+    in
+      if distance (vec2 0 0) p < fov
+        then Just (changeEntityPosition p v)
+        else Nothing) enemies
+
+--updatePositionsRelativePlayer : Vec2 -> String -> GameState -> --{playerTemp : Entity, bulletsTemp : List Bullet, enemiesTemp : Dict String Entity}
+updatePositionsRelativePlayer mousePosition id gameState =
+  let (player, enemies) = mapFst (changeEntityOrientation mousePosition << Maybe.withDefault initialEntity) (popGet id gameState.players)
+  in {playerTemp = player, bulletsTemp = [], enemiesTemp = enemiesToShow player.location.position enemies}
+
+--I need a different type than the core's version
+diff' t1 t2 =
+  Dict.foldl (\k v t -> Dict.remove k t) t1 t2
+
+--mergeEvents : Signal Vec2 -> Signal String -> Signal GameState -> Signal OutputGameState
+mergeEvents = Signal.map3 updatePositionsRelativePlayer mouseInput
+
+updateEnemies old new =
+  let i = intersectWith toOutputEntity old new
+      d = Dict.map (\k e -> {entity = e, anim = initialCharacterAnimation}) <| diff' new old
+  in Dict.union i d
+
+update : Signal String -> Signal GameState -> Signal OutputGameState
+update id gamestate =
+  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies old.enemies new.enemiesTemp, bullets = []})
+  initialOutputGameState <| mergeEvents id gamestate
 
 --getPlayerPosition : String -> GameState.GameState -> Vec2
 --getPlayerPosition id gameState = withDefault (vec2 0 0) <| Dict.get id gameState.players
 
 --overidePlayerOrientation : Vec2 -> Player -> Player -> GameState.GameState
 --overidePlayerOrientation orientation id gameState = {gameState | players = Dict.update (Maybe.map (\p -> {p | orientation = orientation})) id gameState }
-
-main = Signal.map show <| getEvents playerInput mouseInput (fps 30) Window.dimensions Mouse.clicks

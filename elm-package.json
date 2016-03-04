@@ -9,6 +9,7 @@
     "exposed-modules": [],
     "dependencies": {
         "Apanatshka/elm-signal-extra": "5.7.0 <= v < 5.8.0",
+        "Fresheyeball/elm-tuple-extra": "1.0.0 <= v < 2.0.0",
         "NoRedInk/elm-check": "2.0.0 <= v < 3.0.0",
         "bartavelle/json-helpers": "1.1.0 <= v < 2.0.0",
         "deadfoxygrandpa/elm-test": "3.0.1 <= v < 4.0.0",

@@ -1,4 +1,4 @@
-module Player (Player, displayPlayer, changePlayerOrientation, movePlayer, tickPlayer, initialPlayer) where
+module Player where
 
 import Mouse exposing (position, clicks)
 import Keyboard
@@ -13,29 +13,43 @@ import Window exposing (dimensions)
 import List
 import Point exposing (..)
 import Math.Vector2 exposing (..)
+import GameState exposing (..)
 import Sprites exposing (..)
 
-type alias Player = { position : Point, orientation : Point, direction : Point, anim : Sprites.Animator }
-type Event = Tick Time | Move Point | Orientation Point
+type alias OutputEntity = { entity : Entity, anim : Sprites.Animator }
 
-initPoint : Math.Vector2.Vec2
-initPoint = Math.Vector2.vec2 0 0
+changeEntityOrientation : Vec2 -> Entity -> Entity
+changeEntityOrientation p player =
+  let location = player.location
+  in {player | location = { location | orientation = p }}
 
-changePlayerOrientation : Point -> Player -> Player
-changePlayerOrientation p player = { player | orientation = p }
+changeEntityPosition : Vec2 -> Entity -> Entity
+changeEntityPosition p player =
+  let location = player.location
+  in {player | location = { location | position = p }}
 
-movePlayer : Point -> Player -> Player
-movePlayer p player = { player | direction = p }
 
-tickPlayer : Player -> Player
-tickPlayer player =
-  if player.direction == initPoint
-    then { player | position = (player.position `add` player.direction) }
-    else { player | position = (player.position `add` player.direction), anim = update player.anim player.position }
+hasMoved : Entity -> Entity -> Bool
+hasMoved old new = old.location.position /= new.location.position
 
-initialPlayer = { position = origin, direction = origin, orientation = origin, anim = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 48 48 (0,0) 8) 4 origin }
+toOutputEntity : OutputEntity -> Entity -> OutputEntity
+toOutputEntity old new =
+  let animation =
+    if hasMoved old.entity new
+      then update old.anim new.location.position
+      else old.anim
+  in {entity = new, anim = animation}
 
---displayPlayer : (Int, Int) -> Player -> Element
-displayPlayer (w, h) movable =
-  [Graphics.Collage.rotate (getOrientation movable.position movable.orientation - 90)
-    <| Graphics.Collage.toForm (Sprites.draw movable.anim)]
+initialLocation = { position = origin, orientation = origin }
+initialEntity = { location = initialLocation, hp = 0}
+initialCharacterAnimation = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 48 48 (0,0) 8) 4 origin
+initialOutputEntity = {entity = initialEntity, anim = initialCharacterAnimation}
+
+
+displayEntity : (Int, Int) -> OutputEntity -> Graphics.Collage.Form
+displayEntity (w, h) outputEntity =
+  Graphics.Collage.rotate (getOrientation outputEntity.entity.location.position outputEntity.entity.location.orientation - 90)
+    <| Graphics.Collage.toForm (Sprites.draw outputEntity.anim)
+
+displayEveryone : ( Int, Int ) -> List OutputEntity -> List Graphics.Collage.Form
+displayEveryone p = List.map (displayEntity p)

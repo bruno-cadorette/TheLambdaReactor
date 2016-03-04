@@ -8,6 +8,7 @@ import Player exposing (..)
 import Bullet exposing (..)
 import Time exposing (fps)
 import SocketIO exposing (..)
+import Dict
 import Graphics.Collage
 import Mouse
 import Task exposing (Task, andThen)
@@ -26,12 +27,15 @@ port communication =
 
 
 
---display : Signal (Int, Int) -> Signal Bullet -> Signal Player -> Graphics.Collage.Element
-display = Signal.map2 (\(w,h) {player, bullets, field} -> Graphics.Collage.collage w h <| displayMap player.position field ++ displayBullets (w,h) bullets ++ displayPlayer (w,h) player)
-
+--display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
+display = Signal.map3 (\(w,h) field {player, enemies, bullets} ->
+  Graphics.Collage.collage w h <| displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies))
 
 main =
-  display dimensions <| run <| getEvents playerInput mouseInput (fps 30) dimensions Mouse.clicks
+  display dimensions (Signal.constant initialMap) <| update currentPlayerId gameStateUpdate
+
+--main =
+--  display dimensions <| run <| getEvents playerInput mouseInput (fps 30) dimensions Mouse.clicks
 
 --main =
 --  display dimensions <| run gameStateUpdate

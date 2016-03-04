@@ -1,4 +1,7 @@
-module Bullet(displayBullets, Bullet, tickBullets, shootBullet) where
+module Bullet where
+t = 2 + 2
+
+{-module Bullet(displayBullets, Bullet, tickBullets, shootBullet) where
 import Mouse
 import Time exposing (fps, fpsWhen, every, second)
 import Debug exposing(..)
@@ -37,3 +40,4 @@ shootBullet : Player -> Map -> List Bullet -> List Bullet
 shootBullet player field xs = {position = origin, orientation = player.orientation, speed = 2, body = bulletBody} :: xs
 
 watchBullet x = watchSummary "playerOrientation" (\x -> toTuple x.orientation) x
+-}
