@@ -10,10 +10,21 @@ import Graphics.Element exposing (show)
 import Player exposing (..)
 import Bullet exposing (..)
 import Window
+--import GameState
+import Dict
+import Maybe exposing (withDefault)
 import Map exposing (..)
 
 type EngineEvent = Tick | Click | Move Point | Orientation Point
-type alias GameState = {player : Player, bullets : List Bullet, field : Map}
+type alias OutputGameState = {player : Player, enemies : List Player, bullets = []}
+
+fov = 1000
+
+popGet : comparable -> Dict comparable v -> (Maybe v, Dict comparable v)
+popGet key dict =
+  case Dict.get key dict of
+    Just value -> (Just value, Dict.remove key dict)
+    Nothing -> (Nothing, dict)
 
 initialGameState = {player = initialPlayer, bullets = [], field = initialMap}
 
@@ -39,5 +50,18 @@ turn event {player, bullets, field} =
 
 run : Signal EngineEvent -> Signal GameState
 run = Signal.foldp turn initialGameState
+
+update : Vec2 -> String -> GameState -> OutputGameState
+update mousePosition id gameState =
+  let (player, enemies) = mapEach (Maybe.map <| changePlayerOrientation mousePosition) Dict.values <| popGet id gameState
+  playerPosition = Maybe.withDefault (vec 0 0) <| Maybe.map (.position)
+  in {player = player, bullets = [], enemies = List.map (\e -> {e | position = position `sub` playerPosition } ) enemies |> List.filter(\e -> distance (vec 0 0) e.position < fov)}
+
+
+--getPlayerPosition : String -> GameState.GameState -> Vec2
+--getPlayerPosition id gameState = withDefault (vec2 0 0) <| Dict.get id gameState.players
+
+--overidePlayerOrientation : Vec2 -> Player -> Player -> GameState.GameState
+--overidePlayerOrientation orientation id gameState = {gameState | players = Dict.update (Maybe.map (\p -> {p | orientation = orientation})) id gameState }
 
 main = Signal.map show <| getEvents playerInput mouseInput (fps 30) Window.dimensions Mouse.clicks
