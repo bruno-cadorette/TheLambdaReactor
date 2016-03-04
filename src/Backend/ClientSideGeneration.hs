@@ -7,21 +7,13 @@ import GameState
 import Data.Proxy
 import Character
 import Bullet
-
-type Player = Entity
-type Enemy = Entity
-
-Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''GameState
-Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Entity
-Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Bullet
-Elm.Derive.deriveElmDef Elm.Derive.defaultOptions ''Hit
+import Lib
 
 generateGameState :: String
 generateGameState =
     moduleHeader "GameState" ++ vec2Json ++ makeModuleContentWithAlterations (defaultAlterations . myAlteration)
     [ DefineElm (Proxy :: Proxy GameState),
-      DefineElm (Proxy :: Proxy Player),
-      DefineElm (Proxy :: Proxy Enemy),
+      DefineElm (Proxy :: Proxy Entity),
       DefineElm (Proxy :: Proxy Bullet),
       DefineElm (Proxy :: Proxy Hit)
     ]

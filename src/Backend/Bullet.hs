@@ -8,11 +8,6 @@ import Linear.V2
 import Linear.Vector
 
 
-data Bullet = Bullet {uuid :: Int, position :: V2 Float, orientation :: V2 Float ,velocity :: Float, timeStamp::Int} deriving (Generic,Show,Eq)
+data Bullet = Bullet {uuid :: Int, location :: Location ,velocity :: Float, timeStamp::Int} deriving (Generic,Show,Eq)
 
-moveBullet (Bullet uuid position orientation velocity timestamp) = (Bullet uuid (position + (orientation ^* velocity)) orientation velocity timestamp)
-
---Bullet
-instance Aeson.ToJSON Bullet
-
-instance Aeson.FromJSON Bullet
+moveBullet (Bullet uuid location velocity timestamp) = (Bullet uuid (moveLocation location  ((orientation location) ^* velocity)) velocity timestamp)

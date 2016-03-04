@@ -43,31 +43,30 @@ jsonEncGameState  val =
    ]
 
 
-type Entity  =
-    Player {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
-    | Enemy {uuid: String, hp: Int, position: Vec2, orientation: Vec2}
+
+type alias Entity  =
+   { hp: Int
+   , location: Location
+   }
 
 jsonDecEntity : Json.Decode.Decoder ( Entity )
 jsonDecEntity =
-    let jsonDecDictEntity = Dict.fromList
-            [ ("Player", Json.Decode.map Player (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
-            , ("Enemy", Json.Decode.map Enemy (   ("uuid" := Json.Decode.string) `Json.Decode.andThen` \puuid ->    ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->    ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->    ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->    Json.Decode.succeed {uuid = puuid, hp = php, position = pposition, orientation = porientation}))
-            ]
-    in  decodeSumObjectWithSingleField  "Entity" jsonDecDictEntity
+   ("hp" := Json.Decode.int) `Json.Decode.andThen` \php ->
+   ("location" := jsonDecLocation) `Json.Decode.andThen` \plocation ->
+   Json.Decode.succeed {hp = php, location = plocation}
 
 jsonEncEntity : Entity -> Value
 jsonEncEntity  val =
-    let keyval v = case v of
-                    Player vs -> ("Player", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
-                    Enemy vs -> ("Enemy", encodeObject [("uuid", Json.Encode.string vs.uuid), ("hp", Json.Encode.int vs.hp), ("position", jsonEncVec2 vs.position), ("orientation", jsonEncVec2 vs.orientation)])
-    in encodeSumObjectWithSingleField keyval val
+   Json.Encode.object
+   [ ("hp", Json.Encode.int val.hp)
+   , ("location", jsonEncLocation val.location)
+   ]
 
 
 
 type alias Bullet  =
    { uuid: Int
-   , position: Vec2
-   , orientation: Vec2
+   , location: Location
    , velocity: Float
    , timeStamp: Int
    }
@@ -75,18 +74,16 @@ type alias Bullet  =
 jsonDecBullet : Json.Decode.Decoder ( Bullet )
 jsonDecBullet =
    ("uuid" := Json.Decode.int) `Json.Decode.andThen` \puuid ->
-   ("position" := jsonDecVec2) `Json.Decode.andThen` \pposition ->
-   ("orientation" := jsonDecVec2) `Json.Decode.andThen` \porientation ->
+   ("location" := jsonDecLocation) `Json.Decode.andThen` \plocation ->
    ("velocity" := Json.Decode.float) `Json.Decode.andThen` \pvelocity ->
    ("timeStamp" := Json.Decode.int) `Json.Decode.andThen` \ptimeStamp ->
-   Json.Decode.succeed {uuid = puuid, position = pposition, orientation = porientation, velocity = pvelocity, timeStamp = ptimeStamp}
+   Json.Decode.succeed {uuid = puuid, location = plocation, velocity = pvelocity, timeStamp = ptimeStamp}
 
 jsonEncBullet : Bullet -> Value
 jsonEncBullet  val =
    Json.Encode.object
    [ ("uuid", Json.Encode.int val.uuid)
-   , ("position", jsonEncVec2 val.position)
-   , ("orientation", jsonEncVec2 val.orientation)
+   , ("location", jsonEncLocation val.location)
    , ("velocity", Json.Encode.float val.velocity)
    , ("timeStamp", Json.Encode.int val.timeStamp)
    ]

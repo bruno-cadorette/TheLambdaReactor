@@ -10,6 +10,7 @@ import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
 import Linear.V2
 import qualified Linear.Vector as LV
+import Lib
 
 main :: IO()
 main = hspec spec
@@ -17,4 +18,4 @@ main = hspec spec
 spec :: Spec
 spec = describe "Bullet" $ do
         it "moveBullet" $ do
-          moveBullet (Bullet 50 (V2 1 1) (V2 1 0) 5 50) `shouldBe` (Bullet 50 (V2 6 1) (V2 1 0) 5 50)
+          moveBullet (Bullet 50 (Location (V2 1 1) (V2 1 0)) 5 50) `shouldBe` (Bullet 50 (Location (V2 6 1) (V2 1 0)) 5 50)

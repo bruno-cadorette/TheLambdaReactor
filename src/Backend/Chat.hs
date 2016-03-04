@@ -20,46 +20,6 @@ import GameEngine
 import Data.Time.Clock
 import Data.Maybe
 
-data AddUser = AddUser Text
-
-instance Aeson.FromJSON AddUser where
-  parseJSON = Aeson.withText "AddUser" $ pure . AddUser
-
-
-data NumConnected = NumConnected !Int
-
-instance Aeson.ToJSON NumConnected where
-  toJSON (NumConnected n) = Aeson.object [ "numUsers" .= n]
-
-
-data NewMessage = NewMessage Text
-
-instance Aeson.FromJSON NewMessage where
-  parseJSON = Aeson.withText "NewMessage" $ pure . NewMessage
-
-
-data Said = Said Text Text
-
-instance Aeson.ToJSON Said where
-  toJSON (Said username message) = Aeson.object
-    [ "username" .= username
-    , "message" .= message
-    ]
-
-data UserName = UserName Text
-
-instance Aeson.ToJSON UserName where
-  toJSON (UserName un) = Aeson.object [ "username" .= un ]
-
-
-data UserJoined = UserJoined Text Int
-
-instance Aeson.ToJSON UserJoined where
-  toJSON (UserJoined un n) = Aeson.object
-    [ "username" .= un
-    , "numUsers" .= n
-    ]
-
 sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
 sendMessage p (s, n) =
     case Map.lookup s p of
@@ -79,9 +39,9 @@ server = do
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
             let regFps = whenE ((\x -> isJust x) <$> sockBehavior) fpsEvent
             gameStateObject <- inputSocket
+
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
-
             reactimate $ (toOutputTime . gameStateSender) <$> gameStateObject <*> sockBehavior <@> regFps
 
         actuate network
