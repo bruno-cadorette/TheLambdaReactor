@@ -21,19 +21,24 @@ import Reactive.Banana.Combinators
 import Control.Concurrent
 import Data.Time
 import UserManagement (PlayerNames)
-
+import Game.Helper
+import Lib
 type Move = V2 Float
 type Direction = V2 Float
+type UserName = String
 
 --TODO move to helper
 toId :: ByteString -> Id
 toId = decodeUtf8
 
-data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Direction Socket Socket
+data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Socket Direction Socket
+data UserState = Create UserName Socket | Delete Socket UserName | BothConnection UserName Socket Socket
+
+
 instance GetSocket UserInput where
     getSocket (Movement _ s) = s
     getSocket (Shoot _ s) = s
-    getSocket (Both _ _ s _) = s
+    getSocket (Both _ s _ _) = s
 
 
 getSocketBehavior :: Behavior PlayerNames -> Behavior (Maybe Socket)
@@ -50,22 +55,32 @@ gameStateManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Behav
 gameStateManager  = do
     userInputSocket <- createSocketEvent "userInput"
     userShootSocket <- createSocketEvent "userShoot"
+    userCreateSocket <- createSocketEvent "userCreate"
+    userDeleteSocket <- createSocketEvent "userDelete"
     return $ do
         userInput  <-  userInputSocket
         userShoot <- userShootSocket
+        userCreate <- userCreateSocket
+        userDelete <- userDeleteSocket
         fpsEventMoment <- fps 30
 
         let eUpdate = (updateWorld) <$ fpsEventMoment
-        --let eSend = (notifyMove) <$ fpsEventMoment
         bWorld <- accumB getNewGameState eUpdate
         let inputEvent = (\(s, n) -> Movement n s) <$> userInput
         let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
-        stepper getNewGameState (bWorld <@  (fmap input  $ unionWith (\ (Movement n s) (Shoot d s') -> Both n d s s') inputEvent shootEvent))
+        let createEvent = (\(s, n) -> Create n s) <$> userCreate
+        let deleteEvent = (\(s, n) -> Delete s n) <$> userDelete
+        input <- stepper getNewGameState (bWorld <@  (fmap input  $ unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent))
+        stepper getNewGameState (input <@ (fmap inputConnection $ unionWith (\(Create n s) (Delete s' _) -> BothConnection n s s') createEvent deleteEvent ))
+
+                              --Event(b) -> Event(a) -> Event(b)
     where
         input (Movement n s) m = handleControlV2 m n (toId (socketId s))
         input (Shoot d s) m = handleShoot d (toId (socketId s)) m
-        input (Both n d s s') m = handleShoot d (toId (socketId s')) $ handleControlV2 m n (toId (socketId s))
-        input x m = m
+        input (Both n s d s') m = handleShoot d (toId (socketId s')) $ handleControlV2 m n (toId (socketId s))
+        inputConnection (Create n s) m = addPlayer m (Entity 100 (Location (V2 0.0 0.0) (V2 1.0 0.0))) (toId (socketId s))
+        inputConnection (Delete s _) m = removePlayerWithUUID m (toId (socketId s))
+        inputConnection (BothConnection n s s') m = addPlayer (removePlayerWithUUID m (toId (socketId s))) (Entity 100 (Location (V2 0.0 0.0) (V2 1.0 0.0))) (toId (socketId s))
 
 updateWorld :: GameEngine -> GameEngine
 updateWorld m = updateBullets m

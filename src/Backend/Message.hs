@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 
-module Message (Message (..),decodeMessage) where
+module Message (Message (..)) where
 
 import Data.Aeson
 import qualified Data.Text as Text
@@ -15,10 +15,3 @@ data Message = Message
     } deriving (Generic,Show)
 
 type ServerMessage =  Text.Text
-    
-instance ToJSON Message
-
-instance FromJSON Message
-
-decodeMessage :: Text.Text -> Maybe Message
-decodeMessage text = decode (BS.pack (Text.unpack text))

@@ -22,7 +22,6 @@ import Control.Concurrent
 import Data.Time
 import Reactive.Banana
 import Reactive.Banana.Frameworks
-
 import Data.Aeson
 import Data.Text
 import Network.SocketIO

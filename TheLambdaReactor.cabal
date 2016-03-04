@@ -58,6 +58,7 @@ test-suite spec
                   lens,
                   snap-core,
                   snap-server,
+                  elm-bridge,
                   socket-io,
                   engine-io-snap,
                   snap-cors,

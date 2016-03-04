@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module GameEngine(getGameStateForJSON, getNewGameState, addBullet, addPlayer,removePlayer,damageToPlayer,movePlayer, GameEngine (..),getPlayer,handleControlV2,handleShoot,getPlayersHit,updateBullets) where
+module GameEngine(getGameStateForJSON, getNewGameState, addBullet, addPlayer,removePlayerWithUUID,damageToPlayer,movePlayer, GameEngine (..),getPlayer,handleControlV2,handleShoot,getPlayersHit,updateBullets) where
 import GameState (GameState(..))
 import Character
 import Bullet (Bullet(..),moveBullet)
@@ -9,6 +9,7 @@ import Linear.V2
 import System.Random
 import Data.Maybe
 import Game.BoundingSphere
+import Game.Helper as H
 
 randomGen:: StdGen
 randomGen = mkStdGen 50
@@ -21,12 +22,12 @@ getGameStateForJSON (GameEngine players bullet enemy) = (GameState players (Map.
 getNewGameState :: GameEngine
 getNewGameState = (GameEngine Map.empty Map.empty Map.empty);
 
-addPlayer:: GameEngine -> Entity -> GameEngine
-addPlayer (GameEngine players bullet enemy) (Player uuid hp position orientation) =
-  (GameEngine (Map.insert uuid (Player uuid hp position orientation) players) bullet enemy)
+addPlayer:: GameEngine -> Entity -> Text -> GameEngine
+addPlayer (GameEngine players bullet enemy) (Entity hp location) uuid =
+  (GameEngine (Map.insert uuid (Entity hp location) players) bullet enemy)
 
-removePlayer:: GameEngine -> Entity -> GameEngine
-removePlayer (GameEngine players bullet enemy) (Player uuid hp position orientation) =
+removePlayerWithUUID:: GameEngine -> Id -> GameEngine
+removePlayerWithUUID (GameEngine players bullet enemy) uuid =
   (GameEngine (Map.delete uuid players) bullet enemy)
 
 damageToPlayer :: GameEngine -> Id -> Int -> GameEngine
@@ -37,9 +38,9 @@ movePlayer :: GameEngine -> Id -> V2 Float -> GameEngine
 movePlayer (GameEngine players bullet enemy) uuid position =
     (GameEngine (Map.adjust (\ p -> move p position) uuid players) bullet enemy)
 
-addBullet :: GameEngine -> V2 Float -> V2 Float -> Int -> GameEngine
-addBullet (GameEngine players bullet enemy) position orientation uuid =
-    (GameEngine players (Map.insert uuid (Bullet uuid position orientation 1.0 0) bullet) enemy)
+addBullet :: GameEngine -> Location -> Int -> GameEngine
+addBullet (GameEngine players bullet enemy) location uuid =
+    (GameEngine players (Map.insert uuid (Bullet uuid location 1.0 0) bullet) enemy)
 
 updateBullets :: GameEngine -> GameEngine
 updateBullets (GameEngine players bullets ennemies) = GameEngine players  (Map.map moveBullet bullets) ennemies
@@ -47,9 +48,9 @@ updateBullets (GameEngine players bullets ennemies) = GameEngine players  (Map.m
 
 getPlayersHit :: GameEngine -> [Entity]
 getPlayersHit (GameEngine players bullet _) =
-  let bulletBounding = fmap (\ x -> (BoundingSphere (Bullet.position x) 0.5) ) $ Map.elems bullet
+  let bulletBounding = fmap (\ x -> (BoundingSphere (H.position $ Bullet.location x) 0.5) ) $ Map.elems bullet
   in
-   Prelude.filter (\x -> intersectingMany (BoundingSphere (Character.position x) 1.0) bulletBounding) $ Map.elems players
+   Prelude.filter (\x -> intersectingMany (BoundingSphere (H.position $ Character.location x) 1.0) bulletBounding) $ Map.elems players
 
 --Should not use this too often, just a helper function
 getPlayer :: GameEngine -> Text -> Maybe(Entity)
@@ -63,4 +64,4 @@ handleControlV2 gameState x uuid = movePlayer gameState uuid x
 
 handleShoot :: V2 Float -> Id -> GameEngine -> GameEngine
 handleShoot direction socketId gameState =
-  addBullet gameState (Character.position $ fromJust $getPlayer gameState socketId) direction (fst $ randomR (1, 1000) randomGen)
+  addBullet gameState (Character.location $ fromJust $getPlayer gameState socketId) (fst $ randomR (1, 1000) randomGen)

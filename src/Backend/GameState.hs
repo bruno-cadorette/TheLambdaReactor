@@ -15,16 +15,3 @@ data Hit = Hit {uuid :: Int, player :: Entity, bullet :: Bullet} deriving (Gener
 data GameState = GameState {players :: Map Text.Text Entity, projectiles :: [Bullet],ennemies :: [Entity], hits :: [Hit]} deriving (Generic,Show,Eq)
 
 --JSON stuff
-
-instance Aeson.ToJSON GameState where
-  toJSON (GameState players projectiles enemies hits) = Aeson.object ["players" Aeson..= Aeson.toJSON (toList players),
-                                                                   "projectiles" Aeson..= Aeson.toJSON projectiles,
-                                                                   "enemies" Aeson..= Aeson.toJSON enemies,
-                                                                   "hits" Aeson..= Aeson.toJSON hits]
-
-instance Aeson.FromJSON GameState
-
---Hit
-instance Aeson.ToJSON Hit
-
-instance Aeson.FromJSON Hit
