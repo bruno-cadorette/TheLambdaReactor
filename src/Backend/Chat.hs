@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 
 module Chat (server) where
@@ -9,18 +8,11 @@ import Reactive
 import qualified Data.Map.Strict as Map
 import Control.Monad.State.Strict
 import UserManagement
-import Data.Aeson
 import Data.Text
-import qualified Data.Aeson as Aeson
 import Message
 import Network.SocketIO
 import GameState
 import GameStateManagement
-import GameEngine
-import Data.Time.Clock
-import Data.Time
-import Data.Maybe
-import Debug.Trace
 
 
 sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
@@ -47,6 +39,6 @@ server = do
             gameObject <- stepper emptyGameState mix
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
-            reactimate $ (toOutputMaybe . gameStateSender) <$> gameObject <*> sockBehavior <@> fpsEvent
+            reactimate $ (\ g s t -> toOutputMaybe (gameStateSender g t) s) <$> gameObject <*>  sockBehavior <@> fpsEvent
 
         actuate network

@@ -77,7 +77,7 @@ updateStuff players game input = getGameStateForJSON $handleInput players game i
 notifyMove :: GameState -> UTCTime -> EventHandler()
 notifyMove n time = broadcastAll "updateGameState" (trace "sending updates!" n)
 
-gameStateSender :: GetSocket a => GameState -> a -> UTCTime -> EventHandler()
-gameStateSender game sock time = notifyMove game time
+gameStateSender :: GetSocket a => GameState -> UTCTime -> a -> EventHandler()
+gameStateSender game time sock = notifyMove game time
 
 gameStateSenderTest x _ = broadcast "updateGameState" (getGameStateForJSON x)
