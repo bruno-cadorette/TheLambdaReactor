@@ -24,10 +24,11 @@ port communication =
   always (gameInputCommunication socket) `andThen`
   always (initialMessage socket)
 
-port input : Task a (Signal (Task x ()))
-port input = Task.map (initializeInput) gameSocket
+port inputs : Signal (Task x ())
+port inputs = initializeInput
 
-
+port test : Signal (Task x ())
+port test = sendMovement gameSocket
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display = Signal.map3 (\(w,h) field {player, enemies, bullets} ->
@@ -35,9 +36,3 @@ display = Signal.map3 (\(w,h) field {player, enemies, bullets} ->
 
 main =
   display dimensions (Signal.constant initialMap) <| update currentPlayerId gameStateUpdate
-
---main =
---  display dimensions <| run <| getEvents playerInput mouseInput (fps 30) dimensions Mouse.clicks
-
---main =
---  display dimensions <| run gameStateUpdate
