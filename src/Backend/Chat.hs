@@ -18,6 +18,7 @@ import GameState
 import GameStateManagement
 import GameEngine
 import Data.Time.Clock
+import Data.Time
 import Data.Maybe
 import Debug.Trace
 
@@ -41,12 +42,11 @@ server = do
             inputEvent <- testSocket
             (connectionEvent, connectedPlayers) <- usersSocket
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
-            let regFps = filterApply ((\x y -> isJust $ trace "TEST " x) <$> sockBehavior) fpsEvent
             gameStateObject <- inputSocket
             let mix = (updateStuff <$> connectedPlayers <*> gameStateObject) <@> inputEvent
             gameObject <- stepper emptyGameState mix
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
-            reactimate $ (toOutputTime . gameStateSender) <$> gameObject <*> sockBehavior <@> regFps
+            reactimate $ (toOutputMaybe . gameStateSender) <$> gameObject <*> sockBehavior <@> fpsEvent
 
         actuate network

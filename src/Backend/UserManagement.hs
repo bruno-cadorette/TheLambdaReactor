@@ -24,6 +24,7 @@ instance GetSocket UserConnection where
     getSocket (Both _ s _) = s
 
 
+
 connectionManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserConnection, Behavior PlayerNames))
 connectionManager = do
     userConnectedSocket <- createSocketEvent "newUser"

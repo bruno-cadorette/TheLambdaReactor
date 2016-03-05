@@ -38,14 +38,14 @@ getSocketBehavior players = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
 
 fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior (Maybe Socket)))
 fpsClock playerNames = do
-                        fpsEvent <- fps 1000
+                        fpsEvent <- fps (1000 * 1000)
                         return (fpsEvent, getSocketBehavior playerNames)
 
 gameStateManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Behavior GameEngine))
 gameStateManager  = do
 
     return $ do
-        fpsEventMoment <- fps 1000
+        fpsEventMoment <- fps (1000 * 1000)
         let eUpdate = (updateWorld) <$ fpsEventMoment
         accumB getNewGameState eUpdate
 
@@ -75,7 +75,7 @@ updateStuff players game input = getGameStateForJSON $handleInput players game i
 
 --Dont really need it right now
 notifyMove :: GameState -> UTCTime -> EventHandler()
-notifyMove n time = broadcastAll "updateGameState" (trace "SENDING" n)
+notifyMove n time = broadcastAll "updateGameState" (trace "sending updates!" n)
 
 gameStateSender :: GetSocket a => GameState -> a -> UTCTime -> EventHandler()
 gameStateSender game sock time = notifyMove game time
