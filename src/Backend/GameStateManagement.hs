@@ -16,6 +16,7 @@ import Data.Time
 import UserManagement (PlayerNames)
 import Game.Helper
 import Lib
+import Debug.Trace
 type Move = V2 Float
 type Direction = V2 Float
 type UserName = String
@@ -37,14 +38,14 @@ getSocketBehavior players = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
 
 fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior (Maybe Socket)))
 fpsClock playerNames = do
-                        fpsEvent <- fps 30
+                        fpsEvent <- fps 1000
                         return (fpsEvent, getSocketBehavior playerNames)
 
 gameStateManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Behavior GameEngine))
 gameStateManager  = do
 
     return $ do
-        fpsEventMoment <- fps 100
+        fpsEventMoment <- fps 1000
         let eUpdate = (updateWorld) <$ fpsEventMoment
         accumB getNewGameState eUpdate
 
@@ -74,7 +75,7 @@ updateStuff players game input = getGameStateForJSON $handleInput players game i
 
 --Dont really need it right now
 notifyMove :: GameState -> UTCTime -> EventHandler()
-notifyMove n time = broadcastAll "updateGameState" n
+notifyMove n time = broadcastAll "updateGameState" (trace "SENDING" n)
 
 gameStateSender :: GetSocket a => GameState -> a -> UTCTime -> EventHandler()
 gameStateSender game sock time = notifyMove game time

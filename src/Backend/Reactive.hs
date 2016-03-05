@@ -25,6 +25,8 @@ import Reactive.Banana.Frameworks
 import Data.Aeson
 import Data.Text
 import Network.SocketIO
+import Debug.Trace
+import Data.Maybe
 
 class GetSocket a where
     getSocket :: a -> Socket
@@ -87,7 +89,7 @@ fps:: Int -> MomentIO (Event UTCTime)
 fps frame = do
     (eTime, fireTime) <- newEvent
     liftIO . forkIO . forever $
-            threadDelay frame >> getCurrentTime >>= fireTime
+            threadDelay frame >> getCurrentTime >>= (trace "YOLO" fireTime)
     return eTime
 
 {- This function should be used just before reactimate to map your output. -}

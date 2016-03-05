@@ -19,6 +19,7 @@ import GameStateManagement
 import GameEngine
 import Data.Time.Clock
 import Data.Maybe
+import Debug.Trace
 
 
 sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
@@ -40,7 +41,7 @@ server = do
             inputEvent <- testSocket
             (connectionEvent, connectedPlayers) <- usersSocket
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
-            let regFps = whenE ((\x -> isJust x) <$> sockBehavior) fpsEvent
+            let regFps = filterApply ((\x y -> isJust $ trace "TEST " x) <$> sockBehavior) fpsEvent
             gameStateObject <- inputSocket
             let mix = (updateStuff <$> connectedPlayers <*> gameStateObject) <@> inputEvent
             gameObject <- stepper emptyGameState mix
