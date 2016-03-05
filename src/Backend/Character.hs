@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Character (Entity (..), Character (..), Id ) where
+module Character (Entity (..), Character (..) ) where
 
 import Game.Helper
 import Linear.V2
