@@ -21,27 +21,15 @@ main = hspec spec
 spec :: Spec
 spec = describe "GameEngine" $ do
         it "getGameStateForJSON empty" $ do
-          (getGameStateForJSON getNewGameState) `shouldBe` (GameState M.empty [] [] [])
+          (getGameStateForJSON (getNewGameState, M.empty)) `shouldBe` (GameState M.empty [] [] [])
 
         it "getGameStateForJSON player and addPlayer" $ do
-          (getGameStateForJSON $ addPlayer getNewGameState (Entity  15 (Location (V2 1.0 1.0) (V2 1.0 1.0))) "0") `shouldBe` (GameState  (M.fromList [(Text.pack "0",(Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))))]) [] [] [])
-
-        it "getPlayerTest true" $ do
-          let x = addPlayer getNewGameState (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))) "0"
-            in
-              (isJust  (getPlayer x "0")) `shouldBe` True
-
-        it "getPlayerTest false" $ do
-          let x = addPlayer getNewGameState (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))) "0"
-            in
-              (isJust  (getPlayer x "23")) `shouldBe` False
-
-        it "movePlayer" $ do
-          let x = addPlayer getNewGameState (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))) "0"
-            in
-              (position $ location (fromJust  (getPlayer (handleControlV2 x (V2 0 1) "0") "0"))) `shouldBe` (V2 1.0 2.0)
+          let world = (getGameStateForJSON $ ((addBullet getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50 ), M.empty))
+           in
+            (length $projectiles world)  == 1 `shouldBe` True 
 
         it "intersecPlayer" $ do
-          let y = addBullet  (addPlayer getNewGameState (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))) "0" ) (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50
+          let y = addBullet  getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50
+              x = M.fromList [(0, (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))))]
             in
-              (length $ getPlayersHit y) `shouldBe` 1
+              (length $ getPlayersHit y x) `shouldBe` 1

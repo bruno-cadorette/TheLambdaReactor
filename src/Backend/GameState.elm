@@ -21,7 +21,7 @@ jsonEncVec2 vector =
 type alias GameState  =
    { players: (Dict String Entity)
    , projectiles: (List Bullet)
-   , ennemies: (List Entity)
+   , enemies: (List Entity)
    , hits: (List Hit)
    }
 
@@ -29,16 +29,16 @@ jsonDecGameState : Json.Decode.Decoder ( GameState )
 jsonDecGameState =
    ("players" := Json.Decode.dict (jsonDecEntity)) `Json.Decode.andThen` \pplayers ->
    ("projectiles" := Json.Decode.list (jsonDecBullet)) `Json.Decode.andThen` \pprojectiles ->
-   ("ennemies" := Json.Decode.list (jsonDecEntity)) `Json.Decode.andThen` \pennemies ->
+   ("enemies" := Json.Decode.list (jsonDecEntity)) `Json.Decode.andThen` \penemies ->
    ("hits" := Json.Decode.list (jsonDecHit)) `Json.Decode.andThen` \phits ->
-   Json.Decode.succeed {players = pplayers, projectiles = pprojectiles, ennemies = pennemies, hits = phits}
+   Json.Decode.succeed {players = pplayers, projectiles = pprojectiles, enemies = penemies, hits = phits}
 
 jsonEncGameState : GameState -> Value
 jsonEncGameState  val =
    Json.Encode.object
    [ ("players", encodeMap (Json.Encode.string) (jsonEncEntity) val.players)
    , ("projectiles", (Json.Encode.list << List.map jsonEncBullet) val.projectiles)
-   , ("ennemies", (Json.Encode.list << List.map jsonEncEntity) val.ennemies)
+   , ("enemies", (Json.Encode.list << List.map jsonEncEntity) val.enemies)
    , ("hits", (Json.Encode.list << List.map jsonEncHit) val.hits)
    ]
 
@@ -130,3 +130,4 @@ jsonEncLocation  val =
    [ ("position", jsonEncVec2 val.position)
    , ("orientation", jsonEncVec2 val.orientation)
    ]
+

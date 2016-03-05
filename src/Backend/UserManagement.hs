@@ -3,15 +3,19 @@
 module UserManagement (connectionManager, connectionMessageSender, UserConnection(..), PlayerNames) where
 
 import Reactive
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import Control.Monad.State.Strict
 import Control.Monad.Reader
 import Data.Text
 import Data.Aeson
 import Network.SocketIO
+import Character
+import Lib
+import Data.ByteString.Char8
+import Data.Text.Encoding
 
 type Username = String
-type PlayerNames = Map.Map Socket Username
+type PlayerNames = Map.Map Socket Entity
 
 data UserConnection = EnterGame Username Socket | LeaveGame Socket | Both Username Socket Socket
 instance GetSocket UserConnection where
@@ -33,20 +37,22 @@ connectionManager = do
 
         mapAccum Map.empty $ fmap connection $ unionWith (\(EnterGame n s) (LeaveGame s') -> Both n s s') connectionEvent quittingEvent
     where
-        connection (EnterGame n s) m = ((EnterGame n s), Map.insert s n m)
+        connection (EnterGame n s) m = ((EnterGame n s), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) m)
         connection (LeaveGame s) m = ((LeaveGame s), Map.delete s m)
-        connection (Both n s s') m = ((Both n s s'), Map.insert s n $ Map.delete s' m)
+        connection (Both n s s') m = ((Both n s s'), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) $ Map.delete s' m)
 
 --TODO put the message in a ToJson instance so that the client will decide the message to show on each case
-joinGame n   = broadcastAll "receiveServerMessage" (n `mappend` " has join the game")
+joinGame n s  = do
+                emit "login" (getSocketId s)
+                broadcastAll "receiveServerMessage" (n `mappend` " has join the game")
 leftGame s m =
     case Map.lookup s m of
-        Just x -> broadcastAll "receiveServerMessage" (x `mappend` " has left the game")
+        Just x -> broadcastAll "receiveServerMessage" ( (getSocketId s) `mappend` " has left the game")
         Nothing -> broadcastAll "receiveServerMessage" ("Someone has left the game" :: String) -- return () -- TODO log
 
 connectionMessageSender :: (MonadIO m) => PlayerNames -> UserConnection -> ReaderT Socket m ()
-connectionMessageSender m (EnterGame n s) = joinGame n
+connectionMessageSender m (EnterGame n s) = joinGame n s
 connectionMessageSender m (LeaveGame s) = leftGame s m
 connectionMessageSender m (Both n _ s) = do
-    joinGame n
+    joinGame n s
     leftGame s m

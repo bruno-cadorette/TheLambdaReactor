@@ -10,8 +10,6 @@ import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import GHC.Generics
 
-type Id = Text.Text
-
 class Character a where
   hurt :: a -> Int -> a
   move :: a -> V2 Float -> a -- Move is the deplacement vector

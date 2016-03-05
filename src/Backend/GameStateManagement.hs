@@ -1,24 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-module GameStateManagement (gameStateManager,gameStateSender, UserInput,fpsClock) where
+module GameStateManagement (gameStateManager,gameStateSender, UserInput,fpsClock,testManager,updateStuff) where
 
 import Reactive
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import Control.Monad.State.Strict
-import Control.Monad.Reader
-import Data.Text
-import Data.Maybe
-import Data.Aeson
-import Network.EngineIO (SocketId)
 import Network.SocketIO
 import Data.ByteString.Char8
 import Linear.V2
-import Linear.V
 import Data.Text.Encoding
 import Character
 import GameEngine
-import Reactive.Banana.Combinators
-import Control.Concurrent
+import GameState
 import Data.Time
 import UserManagement (PlayerNames)
 import Game.Helper
@@ -27,13 +20,9 @@ type Move = V2 Float
 type Direction = V2 Float
 type UserName = String
 
---TODO move to helper
-toId :: ByteString -> Id
-toId = decodeUtf8
+
 
 data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Socket Direction Socket
-data UserState = Create UserName Socket | Delete Socket UserName | BothConnection UserName Socket Socket
-
 
 instance GetSocket UserInput where
     getSocket (Movement _ s) = s
@@ -44,7 +33,7 @@ instance GetSocket UserInput where
 getSocketBehavior :: Behavior PlayerNames -> Behavior (Maybe Socket)
 getSocketBehavior players = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
                                       in
-                                       if (not $ Prelude.null sockets) then (Just $ Prelude.head sockets) else Nothing) <$> players
+                                       if ((not $ Prelude.null sockets)) then (Just $ Prelude.head sockets) else Nothing) <$> players
 
 fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior (Maybe Socket)))
 fpsClock playerNames = do
@@ -53,43 +42,41 @@ fpsClock playerNames = do
 
 gameStateManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Behavior GameEngine))
 gameStateManager  = do
-    userInputSocket <- createSocketEvent "userInput"
-    userShootSocket <- createSocketEvent "userShoot"
-    userCreateSocket <- createSocketEvent "userCreate"
-    userDeleteSocket <- createSocketEvent "userDelete"
+
     return $ do
-        userInput  <-  userInputSocket
-        userShoot <- userShootSocket
-        userCreate <- userCreateSocket
-        userDelete <- userDeleteSocket
-        fpsEventMoment <- fps 30
-
+        fpsEventMoment <- fps 100
         let eUpdate = (updateWorld) <$ fpsEventMoment
-        bWorld <- accumB getNewGameState eUpdate
-        let inputEvent = (\(s, n) -> Movement n s) <$> userInput
-        let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
-        let createEvent = (\(s, n) -> Create n s) <$> userCreate
-        let deleteEvent = (\(s, n) -> Delete s n) <$> userDelete
-        input <- stepper getNewGameState (bWorld <@  (fmap input  $ unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent))
-        stepper getNewGameState (input <@ (fmap inputConnection $ unionWith (\(Create n s) (Delete s' _) -> BothConnection n s s') createEvent deleteEvent ))
-
-                              --Event(b) -> Event(a) -> Event(b)
-    where
-        input (Movement n s) m = handleControlV2 m n (toId (socketId s))
-        input (Shoot d s) m = handleShoot d (toId (socketId s)) m
-        input (Both n s d s') m = handleShoot d (toId (socketId s')) $ handleControlV2 m n (toId (socketId s))
-        inputConnection (Create n s) m = addPlayer m (Entity 100 (Location (V2 0.0 0.0) (V2 1.0 0.0))) (toId (socketId s))
-        inputConnection (Delete s _) m = removePlayerWithUUID m (toId (socketId s))
-        inputConnection (BothConnection n s s') m = addPlayer (removePlayerWithUUID m (toId (socketId s))) (Entity 100 (Location (V2 0.0 0.0) (V2 1.0 0.0))) (toId (socketId s))
+        accumB getNewGameState eUpdate
 
 updateWorld :: GameEngine -> GameEngine
 updateWorld m = updateBullets m
 
---Dont really need it right now
-notifyMove :: GameEngine -> UTCTime -> EventHandler()
-notifyMove n time = broadcastAll "updateGameState" (getGameStateForJSON n)
+testManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserInput))
+testManager = do
+    userInputSocket <- createSocketEvent "userInput"
+    userShootSocket <- createSocketEvent "userShoot"
+    return $ do
+      userInput  <-  userInputSocket
+      userShoot <- userShootSocket
+      let inputEvent = (\(s, n) -> Movement n s) <$> userInput
+      let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
+      return (unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent)
 
-gameStateSender :: GetSocket a => GameEngine -> a -> UTCTime -> EventHandler()
+updateStuff :: Map.Map Socket Entity -> GameEngine -> UserInput ->  GameState
+updateStuff players game input = getGameStateForJSON $handleInput players game input
+            where
+              handleInput players game (Movement m s) = (game, Map.update (\ x -> Just $ move x m) s players)
+              handleInput players game (Shoot d s) = (handleShoot d (Map.lookup s players) game, players)
+              handleInput players game (Both m s d s') = (handleShoot d (Map.lookup s players) game,  Map.update (\ x -> Just $ move x m) s players)
+
+
+
+
+--Dont really need it right now
+notifyMove :: GameState -> UTCTime -> EventHandler()
+notifyMove n time = broadcastAll "updateGameState" n
+
+gameStateSender :: GetSocket a => GameState -> a -> UTCTime -> EventHandler()
 gameStateSender game sock time = notifyMove game time
 
 gameStateSenderTest x _ = broadcast "updateGameState" (getGameStateForJSON x)
