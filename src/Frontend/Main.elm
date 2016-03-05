@@ -24,12 +24,14 @@ port communication =
   always (gameInputCommunication socket) `andThen`
   always (initialMessage socket)
 
+port input : Task a (Signal (Task x ()))
+port input = Task.map (initializeInput) gameSocket
 
 
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display = Signal.map3 (\(w,h) field {player, enemies, bullets} ->
-  Graphics.Collage.collage w h <| displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies))
+  Graphics.Collage.collage w h <|  displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies))
 
 main =
   display dimensions (Signal.constant initialMap) <| update currentPlayerId gameStateUpdate

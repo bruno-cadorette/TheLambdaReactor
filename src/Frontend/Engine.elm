@@ -4,6 +4,7 @@ import Signal
 import Math.Vector2 exposing (..)
 import Time exposing(Time, fps)
 import Keyboard
+import Debug exposing(log)
 import Mouse
 import Point exposing(..)
 import Graphics.Element exposing (show)

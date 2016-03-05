@@ -16,34 +16,30 @@ import Json.Encode as Encode
 import Result exposing (Result)
 import Dict exposing (Dict)
 import GameState exposing (..)
+import Time
 
 type alias PlayerId = String
 
 gameInputCommunication : Socket -> Task x ()
 gameInputCommunication socket =
-    on "gameStateUpdate" decodeSignal socket `andThen` \_ ->
-    on "initialConnection" playerIdMailbox.address socket
+    on "updateGameState" decodeSignal socket --`andThen` \_ ->
+    --on "initialConnection" playerIdMailbox.address socket
 
-initializeInput : Signal (Task x ())
-initializeInput = Signal.map (\x ->
+initializeInput : Socket -> Signal (Task x ())
+initializeInput socket = Signal.map (\x ->
   case x of
-    Movement m -> sendMovement m
+    Movement m -> sendMovement socket m
     Typing t   -> Signal.send keyboardInputMailbox.address (log "initializeInput" t)) <| gameInput Keyboard.wasd
 
 gameStateUpdate : Signal GameState
-gameStateUpdate = Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
+gameStateUpdate = gameStateTest--Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
 
 currentPlayerId : Signal PlayerId
-currentPlayerId = playerIdMailbox.signal
+currentPlayerId = Signal.map(\g -> Maybe.withDefault "" <| List.minimum <| Dict.keys g.players) gameStateUpdate --playerIdMailbox.signal
 
 safeKeyboardPresses : Signal KeyCode
 safeKeyboardPresses = Signal.map (log "safeKeyboardPresses") keyboardInputMailbox.signal
-{-
-movePlayer : Signal PlayerId -> Signal GameState -> Signal Point
-movePlayer playerId =
-  Signal.foldp (flip sub) (vec2 0 0)
-  << Signal.map2 (\id w -> Dict.get id (w.players) |> Maybe.map(.position) |> Maybe.withDefault (vec2 0 0)) playerId
--}
+
 decodeSignal : Signal.Address String
 decodeSignal = Signal.forwardTo gameStateMailbox.address (Decode.decodeString jsonDecGameState >> logError)
 
@@ -89,9 +85,12 @@ playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 --sendFromSignal : (a -> Encode.Value) -> String -> Signal a -> Signal (Task x ())
 --sendFromSignal encodeFunc emitTo = Signal.map(\s -> serverSocket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
 
-sendMovement : Vec2-> Task x ()
-sendMovement v = Task.succeed ()--serverSocket `andThen` emit "userInput" (Encode.encode 0 <| vec2Encoder v)
+sendMovement : Socket -> Vec2 -> Task x ()
+sendMovement serverSocket v = emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v) serverSocket
 
+gameStateTest =
+  Signal.map (\p -> {projectiles = [], ennemies = [], hits = [], players = Dict.singleton "1" {hp = 100, location = p} }) <|
+    Signal.map (\x -> {position = (vec2 (toFloat x) (toFloat x)), orientation = (vec2 0 0)}) <| Signal.map (\x -> (floor x) % 100)<| Time.fps 30
 
 --sendShot : Signal Vec2 -> Signal (Task x ())
 --sendShot = sendFromSignal vec2Encoder "shootInput"
