@@ -25,14 +25,11 @@ port communication =
   always (initialMessage socket)
 
 port inputs : Signal (Task x ())
-port inputs = initializeInput
-
-port test : Signal (Task x ())
-port test = sendMovement gameSocket
+port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendMovement gameSocket), initializeInput]
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
-display = Signal.map3 (\(w,h) field {player, enemies, bullets} ->
-  Graphics.Collage.collage w h <|  displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies))
+display = Signal.map4 (\(w,h) field chat {player, enemies, bullets} ->
+  Graphics.Collage.collage w h <|  displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies) ++ [chat])
 
 main =
-  display dimensions (Signal.constant initialMap) <| update currentPlayerId gameStateUpdate
+  display dimensions (Signal.constant initialMap) displayChat <| update currentPlayerId gameStateUpdate

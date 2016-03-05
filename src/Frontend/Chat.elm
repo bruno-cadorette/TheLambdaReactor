@@ -55,13 +55,13 @@ receiveMessage removeMessage newStr=
       Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
-chat : Signal Collage.Form
-chat = Signal.map2(\writting received -> Collage.toForm <| flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
+displayChat : Signal Collage.Form
+displayChat = Signal.map2(\writting received -> Collage.toForm <| flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
 
-sendMessage : Socket -> Signal (Task String ())
-sendMessage socket = Signal.map (\s ->
+sendMessage : Task x Socket -> Signal (Task x ())
+sendMessage serverSocket = Signal.map (\s ->
   case s of
-    SendMessage m -> emit "sendMessage" m socket
+    SendMessage m -> serverSocket `andThen` emit "sendMessage" m
     BuildString s -> Task.succeed ()) buildWord
 
 -- send a value once at program start
