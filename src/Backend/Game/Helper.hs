@@ -28,5 +28,6 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   changeOri p ori = p {orientation = ori}
 
   normalize :: V2 Float -> V2 Float
+  normalize (V2 0 0) = (V2 1 1)
   normalize v = (1/ magnitude) *^ v
                 where magnitude = sqrt ((v ^._x) ** 2 + (v ^._y) ** 2)

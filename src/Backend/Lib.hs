@@ -11,11 +11,13 @@ module Lib (module Exportable, decodeMessage) where
   import Bullet
   import Data.Maybe as Exportable
   import Message
-  import qualified Data.Aeson as Aeson
+  import Data.Aeson as Aeson
   import Linear.V2 as Exportable
   import Control.Lens as Exportable
   import qualified Data.ByteString.Lazy.Char8 as BS
   import Data.Text as Text
+  import Debug.Trace
+  import Control.Monad
 
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Location
@@ -34,7 +36,6 @@ module Lib (module Exportable, decodeMessage) where
                    , "y"   Aeson..= (x ^._y)
                      ]
 
-  instance (Aeson.FromJSON a) => Aeson.FromJSON (V2 a) where
-  parseJSON (Aeson.Object v) =
-     V2     <$> v Aeson..: "x"
-            <*> v Aeson..: "y"
+  instance FromJSON a => FromJSON (V2 a) where
+    parseJSON (Object obj) = V2 <$> obj .: "x" <*> obj .: "y"
+    parseJSON _ = mzero

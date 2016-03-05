@@ -17,6 +17,8 @@ import UserManagement (PlayerNames)
 import Game.Helper
 import Lib
 import Debug.Trace
+import Data.Aeson as A
+import qualified Data.ByteString.Lazy.Char8 as BS
 type Move = V2 Float
 type Direction = V2 Float
 type UserName = String
@@ -59,16 +61,16 @@ testManager = do
     return $ do
       userInput  <-  userInputSocket
       userShoot <- userShootSocket
-      let inputEvent = (\(s, n) -> Movement n s) <$> userInput
+      let inputEvent = (\(s, n) -> Movement (trace "MOVE" (fromJust $A.decode $ BS.pack n)) s) <$> userInput
       let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
       return (unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent)
 
 updateStuff :: Map.Map Socket Entity -> GameEngine -> UserInput ->  GameState
-updateStuff players game input = getGameStateForJSON $handleInput players game input
+updateStuff pls game input = getGameStateForJSON $handleInput pls game (trace "UPDATE" input)
             where
-              handleInput players game (Movement m s) = (game, Map.update (\ x -> Just $ move x m) s players)
-              handleInput players game (Shoot d s) = (handleShoot d (Map.lookup s players) game, players)
-              handleInput players game (Both m s d s') = (handleShoot d (Map.lookup s players) game,  Map.update (\ x -> Just $ move x m) s players)
+              handleInput pls2 game (Movement m s) = (game, Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game (Shoot d s) = (handleShoot d (Map.lookup s pls2) game, pls2)
+              handleInput pls2 game (Both m s d s') = (handleShoot d (Map.lookup s pls2) game,  Map.update (\ x -> Just $ move x m) s pls2)
 
 
 
@@ -78,6 +80,6 @@ notifyMove :: GameState -> UTCTime -> EventHandler()
 notifyMove n time = broadcastAll "updateGameState" (trace "sending updates!" n)
 
 gameStateSender :: GetSocket a => GameState -> UTCTime -> a -> EventHandler()
-gameStateSender game time sock = notifyMove game time
+gameStateSender game time sock = notifyMove (trace (show game) game) time
 
 gameStateSenderTest x _ = broadcast "updateGameState" (getGameStateForJSON x)
