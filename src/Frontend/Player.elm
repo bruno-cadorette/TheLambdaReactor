@@ -40,6 +40,11 @@ toOutputEntity old new =
       else old.anim
   in {entity = new, anim = animation}
 
+playerToOutputEntity : OutputEntity -> Entity -> OutputEntity
+playerToOutputEntity old new =
+  let outputEntity = toOutputEntity old new
+  in {outputEntity | entity = changeEntityPosition origin outputEntity.entity}
+
 initialLocation = { position = origin, orientation = origin }
 initialEntity = { location = initialLocation, hp = 0}
 initialCharacterAnimation = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 48 48 (0,0) 8) 4 origin
@@ -48,7 +53,7 @@ initialOutputEntity = {entity = initialEntity, anim = initialCharacterAnimation}
 
 displayEntity : (Int, Int) -> OutputEntity -> Graphics.Collage.Form
 displayEntity (w, h) outputEntity =
-  Graphics.Collage.rotate (getOrientation outputEntity.entity.location.position outputEntity.entity.location.orientation - 90)
+  Graphics.Collage.rotate (getOrientation outputEntity.entity.location.position (mapOrientation w h outputEntity.entity.location.orientation) - 90)
     <| Graphics.Collage.toForm (Sprites.draw outputEntity.anim)
 
 displayEveryone : ( Int, Int ) -> List OutputEntity -> List Graphics.Collage.Form

@@ -1,4 +1,4 @@
-module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput) where
+module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement) where
 
 import Signal
 import Signal.Extra exposing (foldps)
@@ -22,28 +22,31 @@ type alias PlayerId = String
 
 gameInputCommunication : Socket -> Task x ()
 gameInputCommunication socket =
-    on "updateGameState" decodeSignal socket --`andThen` \_ ->
-    --on "initialConnection" playerIdMailbox.address socket
+    on "updateGameState" decodeSignal socket `andThen` \_ ->
+    on "login" playerIdMailbox.address socket
 
-initializeInput : Socket -> Signal (Task x ())
-initializeInput socket = Signal.map (\x ->
+initializeInput : Signal (Task x ())
+initializeInput = Signal.map (\x ->
   case x of
-    Movement m -> sendMovement socket m
+    Movement m -> Signal.send movementMailbox.address m
     Typing t   -> Signal.send keyboardInputMailbox.address (log "initializeInput" t)) <| gameInput Keyboard.wasd
 
 gameStateUpdate : Signal GameState
-gameStateUpdate = gameStateTest--Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
+gameStateUpdate = Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
 
 currentPlayerId : Signal PlayerId
-currentPlayerId = Signal.map(\g -> Maybe.withDefault "" <| List.minimum <| Dict.keys g.players) gameStateUpdate --playerIdMailbox.signal
+currentPlayerId = playerIdMailbox.signal
 
 safeKeyboardPresses : Signal KeyCode
 safeKeyboardPresses = Signal.map (log "safeKeyboardPresses") keyboardInputMailbox.signal
 
+keyboardMovement : Signal Vec2
+keyboardMovement = movementMailbox.signal
+
 decodeSignal : Signal.Address String
 decodeSignal = Signal.forwardTo gameStateMailbox.address (Decode.decodeString jsonDecGameState >> logError)
 
-defaultGameState = { players = Dict.empty, projectiles =  [], ennemies = [], hits = [] }
+defaultGameState = { players = Dict.empty, projectiles =  [], enemies = [], hits = [] }
 
 gameStateMailbox : Signal.Mailbox (Result String GameState)
 gameStateMailbox = Signal.mailbox (Ok defaultGameState)
@@ -53,6 +56,9 @@ playerIdMailbox = Signal.mailbox "null"
 
 keyboardInputMailbox : Signal.Mailbox KeyCode
 keyboardInputMailbox = Signal.mailbox 0
+
+movementMailbox : Signal.Mailbox Vec2
+movementMailbox = Signal.mailbox (vec2 0 0)
 
 logError : Result String a -> Result String a
 logError r =
@@ -85,12 +91,11 @@ playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 --sendFromSignal : (a -> Encode.Value) -> String -> Signal a -> Signal (Task x ())
 --sendFromSignal encodeFunc emitTo = Signal.map(\s -> serverSocket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
 
-sendMovement : Socket -> Vec2 -> Task x ()
-sendMovement serverSocket v = emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v) serverSocket
+emitMovement : Task x Socket -> Vec2 -> Task x ()
+emitMovement serverSocket v = serverSocket `andThen` emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v)
 
-gameStateTest =
-  Signal.map (\p -> {projectiles = [], ennemies = [], hits = [], players = Dict.singleton "1" {hp = 100, location = p} }) <|
-    Signal.map (\x -> {position = (vec2 (toFloat x) (toFloat x)), orientation = (vec2 0 0)}) <| Signal.map (\x -> (floor x) % 100)<| Time.fps 30
+sendMovement : Task x Socket -> Signal (Task x ())
+sendMovement s = Signal.map (emitMovement s) movementMailbox.signal
 
 --sendShot : Signal Vec2 -> Signal (Task x ())
 --sendShot = sendFromSignal vec2Encoder "shootInput"
