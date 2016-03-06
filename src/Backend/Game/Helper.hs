@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId) where
+module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId,add) where
   import Linear.V2
   import Linear.Vector
   import Control.Lens
@@ -20,6 +20,8 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
 
   data Location = Location {position :: V2 Float, orientation :: V2 Float}  deriving (Generic,Show, Eq)
 
+  add :: Location -> Location -> Location
+  add l1 l2 = changeOri (moveLocation l1 $ position l2) $orientation l2
 
   moveLocation :: Location -> V2 Float -> Location
   moveLocation p pos = p {position = (position p) ^+^ pos}

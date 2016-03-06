@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module GameEngine(getGameStateForJSON, getNewGameState, addBullet, GameEngine (..),getPlayer,handleShoot,getPlayersHit,updateBullets) where
 import GameState (GameState(..))
-import Character
+import Character as C
 import Bullet (Bullet(..),moveBullet)
 import qualified Data.Map.Strict as Map
 import Data.Text
@@ -53,7 +53,7 @@ getPlayersHit :: GameEngine -> Map.Map a Entity -> [Entity]
 getPlayersHit (GameEngine _ bullet _) players =
   let bulletBounding = fmap (\ x -> (BoundingSphere (H.position $ Bullet.location x) 0.5) ) $ Map.elems bullet
   in
-   Prelude.filter (\x -> intersectingMany (BoundingSphere (H.position $ Character.location x) 1.0) bulletBounding) $ Map.elems players
+   Prelude.filter (\x -> intersectingMany (BoundingSphere (H.position $ C.location x) 1.0) bulletBounding) $ Map.elems players
 
 --Should not use this too often, just a helper function
 getPlayer :: GameEngine -> Text -> Maybe(Entity)
@@ -63,4 +63,4 @@ getPlayer (GameEngine players bullet enemy) uuid = Map.lookup uuid players
 
 handleShoot :: V2 Float -> Maybe Entity -> GameEngine -> GameEngine
 handleShoot direction entity gameState =
-  addBullet gameState (Character.location $ fromJust entity) (fst $ randomR (1, 1000) randomGen)
+  addBullet gameState (C.location $ fromJust entity) (fst $ randomR (1, 1000) randomGen)

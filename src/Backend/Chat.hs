@@ -36,7 +36,7 @@ server = do
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
             gameStateObject <- inputSocket
             let mix = (updateStuff <$> connectedPlayers <*> gameStateObject) <@> inputEvent
-            gameObject <- stepper emptyGameState mix
+            gameObject <- accumB emptyGameState $ fmap mergeGameState mix
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
             reactimate $ (\ g s t -> toOutputMaybe (gameStateSender g t) s) <$> gameObject <*>  sockBehavior <@> fpsEvent
