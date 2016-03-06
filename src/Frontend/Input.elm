@@ -1,4 +1,4 @@
-module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement) where
+module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement, sendShot) where
 
 import Signal
 import Signal.Extra exposing (foldps)
@@ -16,7 +16,8 @@ import Json.Encode as Encode
 import Result exposing (Result)
 import Dict exposing (Dict)
 import GameState exposing (..)
-import Time
+import Window exposing (dimensions)
+import Mouse
 
 type alias PlayerId = String
 
@@ -32,10 +33,10 @@ initializeInput = Signal.map (\x ->
     Typing t   -> Signal.send keyboardInputMailbox.address (log "initializeInput" t)) <| gameInput Keyboard.wasd
 
 gameStateUpdate : Signal GameState
-gameStateUpdate = Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
+gameStateUpdate = Signal.map (log "gameStateUpdate")<| Signal.filterMap Result.toMaybe defaultGameState gameStateMailbox.signal
 
 currentPlayerId : Signal PlayerId
-currentPlayerId = playerIdMailbox.signal
+currentPlayerId = Signal.map (log "id") playerIdMailbox.signal
 
 safeKeyboardPresses : Signal KeyCode
 safeKeyboardPresses = Signal.map (log "safeKeyboardPresses") keyboardInputMailbox.signal
@@ -88,14 +89,17 @@ inputHandler input isMovement =
 
 playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 
---sendFromSignal : (a -> Encode.Value) -> String -> Signal a -> Signal (Task x ())
---sendFromSignal encodeFunc emitTo = Signal.map(\s -> serverSocket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
+emitFromSignal : (a -> Encode.Value) -> String -> Task x Socket-> Signal a -> Signal (Task x ())
+emitFromSignal encodeFunc emitTo socket = Signal.map(\s -> socket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
 
-emitMovement : Task x Socket -> Vec2 -> Task x ()
-emitMovement serverSocket v = serverSocket `andThen` emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v)
+--emitMovement : Task x Socket -> Vec2 -> Task x ()
+--emitMovement serverSocket v = --serverSocket `andThen` emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v)
+
+normalizedMouseInput = Signal.sampleOn Mouse.clicks <| Signal.map2 (\(w,h) (x,y) -> normalize (mapOrientation w h <| vec2 (toFloat x) (toFloat y))) dimensions Mouse.position
 
 sendMovement : Task x Socket -> Signal (Task x ())
-sendMovement s = Signal.map (emitMovement s) movementMailbox.signal
+sendMovement s = emitFromSignal jsonEncVec2 "userInput" s movementMailbox.signal
 
+sendShot s = emitFromSignal jsonEncVec2 "userShoot" s normalizedMouseInput
 --sendShot : Signal Vec2 -> Signal (Task x ())
 --sendShot = sendFromSignal vec2Encoder "shootInput"

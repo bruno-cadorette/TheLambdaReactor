@@ -25,7 +25,7 @@ port communication =
   always (initialMessage socket)
 
 port inputs : Signal (Task x ())
-port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendMovement gameSocket), initializeInput]
+port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display = Signal.map4 (\(w,h) field chat {player, enemies, bullets} ->

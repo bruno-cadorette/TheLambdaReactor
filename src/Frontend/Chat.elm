@@ -5,10 +5,6 @@ import Char exposing (fromCode, KeyCode)
 import Debug exposing (..)
 import Graphics.Collage as Collage
 import Graphics.Element exposing (Element, show, leftAligned, flow, down)
-import Html
-import Html.Events exposing (onWithOptions, keyCode)
-import Json.Decode as Decode exposing ((:=))
-import Keyboard
 import Keyboard.Keys exposing (enter, backspace, Key)
 import List
 import Protocol exposing (..)
@@ -18,7 +14,6 @@ import String
 import Task exposing (Task, andThen)
 import Text exposing (Text)
 import Time exposing (Time)
-import Window
 
 type MessageToSend = SendMessage String | BuildString String
 sendToString : MessageToSend -> String

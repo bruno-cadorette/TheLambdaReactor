@@ -11,6 +11,7 @@ import Graphics.Element exposing (show)
 import Player exposing (..)
 import Bullet exposing (..)
 import Window
+import DictExtra exposing (..)
 import GameState exposing (..)
 import Dict exposing (Dict)
 import Maybe exposing (withDefault)
@@ -33,27 +34,6 @@ popGet key dict =
 playerInput = Signal.map(\{x, y} -> fromRecord {x = toFloat x, y = toFloat y }) Keyboard.wasd
 mouseInput = Signal.map(\(x, y) -> vec2 (toFloat x) (toFloat y)) Mouse.position
 
---Helper function for filterMap
-maybeInsert : comparable -> Maybe a -> Dict comparable a -> Dict comparable a
-maybeInsert k v dict =
-  case v of
-    Just v' -> Dict.insert k v' dict
-    Nothing -> dict
-
-{-| Apply a function that may succeed to all values in the dictionary, but only keep the successes.
-
--}
-filterMap : (comparable -> a -> Maybe b) -> Dict comparable a -> Dict comparable b
-filterMap f =
-  Dict.foldr maybeInsert Dict.empty << Dict.map f
-
-{-| Keep a key-value pair when its key appears in the second dictionary, then use a function to determine the preference.
-
--}
-intersectWith : (a -> b -> c) -> Dict comparable a -> Dict comparable b -> Dict comparable c
-intersectWith f d1 d2 =
-  filterMap (\k v -> Maybe.map (f v) <| Dict.get k d2 ) d1
-
 enemiesToShow : Vec2 -> Dict String Entity -> Dict String Entity
 enemiesToShow playerPosition enemies =
   let newPosition position = position `sub` playerPosition
@@ -68,10 +48,6 @@ enemiesToShow playerPosition enemies =
 updatePositionsRelativePlayer mousePosition id gameState =
   let (player, enemies) = mapFst (changeEntityOrientation mousePosition << Maybe.withDefault initialEntity) (popGet id gameState.players)
   in {playerTemp = player, bulletsTemp = [], enemiesTemp = enemiesToShow player.location.position enemies}
-
---I need a different type than the core's version
-diff' t1 t2 =
-  Dict.foldl (\k v t -> Dict.remove k t) t1 t2
 
 --mergeEvents : Signal Vec2 -> Signal String -> Signal GameState -> Signal OutputGameState
 mergeEvents = Signal.map3 updatePositionsRelativePlayer mouseInput
