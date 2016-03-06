@@ -38,9 +38,9 @@ connectionManager = do
 
         mapAccum Map.empty $ fmap connection $ unionWith (\(EnterGame n s) (LeaveGame s') -> Both n s s') connectionEvent quittingEvent
     where
-        connection (EnterGame n s) m = ((EnterGame n s), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 1.0 0.0))) m)
+        connection (EnterGame n s) m = ((EnterGame n s), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) m)
         connection (LeaveGame s) m = ((LeaveGame s), Map.delete s m)
-        connection (Both n s s') m = ((Both n s s'), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 1.0 0.0))) $ Map.delete s' m)
+        connection (Both n s s') m = ((Both n s s'), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) $ Map.delete s' m)
 
 --TODO put the message in a ToJson instance so that the client will decide the message to show on each case
 joinGame n s  = do

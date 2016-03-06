@@ -40,14 +40,14 @@ getSocketBehavior players = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
 
 fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior (Maybe Socket)))
 fpsClock playerNames = do
-                        fpsEvent <- fps (1000 * 1000)
+                        fpsEvent <- fps (33 * 1000)
                         return (fpsEvent, getSocketBehavior playerNames)
 
 gameStateManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Behavior GameEngine))
 gameStateManager  = do
 
     return $ do
-        fpsEventMoment <- fps (1000 * 1000)
+        fpsEventMoment <- fps (33 * 1000)
         let eUpdate = (updateWorld) <$ fpsEventMoment
         accumB getNewGameState eUpdate
 
@@ -65,10 +65,12 @@ testManager = do
       let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
       return (unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent)
 
+defaultEntity = (Entity 100 (Location (V2 0 0) (V2 0 0)))
+
 updateStuff :: Map.Map Socket Entity -> GameEngine -> UserInput ->  GameState
-updateStuff pls game input = getGameStateForJSON $handleInput pls game (trace "UPDATE" input)
+updateStuff pls game input = getGameStateForJSON $handleInput Map.empty game (trace "UPDATE" input)
             where
-              handleInput pls2 game (Movement m s) = (game, Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game (Movement m s) = (game, Map.insert s (move defaultEntity m) pls2)
               handleInput pls2 game (Shoot d s) = (handleShoot d (Map.lookup s pls2) game, pls2)
               handleInput pls2 game (Both m s d s') = (handleShoot d (Map.lookup s pls2) game,  Map.update (\ x -> Just $ move x m) s pls2)
 
@@ -80,6 +82,6 @@ notifyMove :: GameState -> UTCTime -> EventHandler()
 notifyMove n time = broadcastAll "updateGameState" (trace "sending updates!" n)
 
 gameStateSender :: GetSocket a => GameState -> UTCTime -> a -> EventHandler()
-gameStateSender game time sock = notifyMove (trace (show game) game) time
+gameStateSender game time sock = notifyMove game time
 
 gameStateSenderTest x _ = broadcast "updateGameState" (getGameStateForJSON x)

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId,add) where
+module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId,add,moveWithFPS) where
   import Linear.V2
   import Linear.Vector
   import Control.Lens
@@ -23,6 +23,9 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   add :: Location -> Location -> Location
   add l1 l2 = changeOri (moveLocation l1 $ position l2) $orientation l2
 
+  moveWithFPS :: Location -> Location -> Location
+  moveWithFPS l1 l2 = changeOri (moveLocation l1 $ orientation l2) $orientation l2
+
   moveLocation :: Location -> V2 Float -> Location
   moveLocation p pos = p {position = (position p) ^+^ pos}
 
@@ -30,6 +33,6 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   changeOri p ori = p {orientation = ori}
 
   normalize :: V2 Float -> V2 Float
-  normalize (V2 0 0) = (V2 1 1)
+  normalize (V2 0 0) = (V2 0 0)
   normalize v = (1/ magnitude) *^ v
                 where magnitude = sqrt ((v ^._x) ** 2 + (v ^._y) ** 2)

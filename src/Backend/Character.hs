@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Character (Entity (..), Character (..) ) where
+module Character (Entity (..), Character (..),moveEntity ) where
 
 import Game.Helper
 import Linear.V2
@@ -17,6 +17,8 @@ class Character a where
 
 
 data Entity = Entity {hp :: Int, location :: Location} deriving (Generic,Show, Eq)
+
+moveEntity p = move p $orientation $ location p
 
 instance Character Entity where
   hurt p dmg = p {hp = ((hp p)  - dmg)}

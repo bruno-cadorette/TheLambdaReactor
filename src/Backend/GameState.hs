@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module GameState (GameState(..), Hit(..),emptyGameState,mergeGameState) where
+module GameState (GameState(..), Hit(..),emptyGameState,mergeGameState,moveAllPlayer) where
 
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
@@ -18,8 +18,10 @@ data GameState = GameState {players :: Map Text.Text Entity, projectiles :: [Bul
 emptyGameState :: GameState
 emptyGameState = GameState Map.empty [] [] []
 
+-- update old
 mergeGameState :: GameState -> GameState -> GameState
-mergeGameState (GameState p b e _ ) (GameState p' _ _ _ ) = (GameState (Map.unionWith  (\ p1 p2 -> p1 {C.location = add  (C.location p1) (C.location p2)} ) p' p) b e [])
+mergeGameState (GameState p b e _ ) (GameState p' _ _ _ ) = (GameState (Map.unionWith  (\ p1 p2 -> p2 {C.location = changeOri  (C.location p2) (orientation $ C.location p1)} ) p p') b e [])
 
-
+moveAllPlayer :: GameState -> GameState
+moveAllPlayer (GameState p b e h) = (GameState (Map.map (\ p' -> moveEntity p') p) b e h)
 --JSON stuff
