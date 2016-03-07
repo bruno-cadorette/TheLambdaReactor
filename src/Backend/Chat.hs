@@ -13,7 +13,9 @@ import Message
 import Network.SocketIO
 import GameState
 import GameStateManagement
+import Game.MapReader
 import Debug.Trace
+import Lib
 
 sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
 sendMessage p (s, n) =
@@ -29,8 +31,8 @@ setGameEvent inputSocket connectedPlayers inputEvent fpsEvent = do
   gameUpdated <- accumB  emptyGameState $((\ updates time old -> moveAllPlayer $ mergeGameState updates old ) <$> gameObject <@> fpsEvent)
   return gameUpdated
 
-server :: (MonadIO m, MonadState RoutingTable m) => m ()
-server = do
+server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (V2 Float) Int -> m ()
+server gameMap = do
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
     inputSocket <- gameStateManager
@@ -43,7 +45,7 @@ server = do
             (connectionEvent, connectedPlayers) <- usersSocket
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
             x <- setGameEvent inputSocket connectedPlayers inputEvent fpsEvent
-            reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
+            reactimate $ (toOutput . (connectionMessageSender $mapToExport gameMap)) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
             reactimate $ (\ g s t -> toOutputMaybe (gameStateSender g t) s) <$> x <*>  sockBehavior <@> fpsEvent
 

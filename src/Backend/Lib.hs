@@ -18,6 +18,7 @@ module Lib (module Exportable, decodeMessage) where
   import Data.Text as Text
   import Debug.Trace
   import Control.Monad
+  import Game.MapReader
 
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Location
@@ -25,6 +26,7 @@ module Lib (module Exportable, decodeMessage) where
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Hit
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Message
+  Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameMap
 
 
   decodeMessage :: Text.Text -> Maybe Message

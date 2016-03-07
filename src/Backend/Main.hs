@@ -11,11 +11,14 @@ import qualified Snap.Http.Server as Snap
 import Snap.Http.Server.Config
 import qualified Network.SocketIO as SocketIO
 import qualified Snap.CORS as CORS
+import Game.MapReader
+
 
 main :: IO ()
 main = do
   writeFile "GameState.elm" generateGameState
-  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI server
+  gameMap <- parseMap "test.dat"
+  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI $ server gameMap
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")
