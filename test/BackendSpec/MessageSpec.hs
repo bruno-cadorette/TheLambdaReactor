@@ -3,11 +3,12 @@ module BackendSpec.MessageSpec (main, spec) where
 
 import Test.Hspec
 import Test.QuickCheck
-import Message (Message (..),decodeMessage)
+import Message (Message (..))
 import Data.Maybe
 import Debug.Trace
 import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
+import Lib
 
 main :: IO()
 main = hspec spec

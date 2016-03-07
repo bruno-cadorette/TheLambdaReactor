@@ -1,17 +1,35 @@
 import Signal
---import Chat
+import Keyboard
+import Input exposing(..)
+import Chat exposing (..)
 import Window exposing (dimensions)
 import Engine exposing (..)
 import Player exposing (..)
 import Bullet exposing (..)
 import Time exposing (fps)
+import SocketIO exposing (..)
+import Dict
 import Graphics.Collage
-import Graphics.Element
 import Mouse
+import Task exposing (Task, andThen)
 import Map exposing (..)
 
---display : Signal (Int, Int) -> Signal Bullet -> Signal Player -> Graphics.Collage.Element
-display = Signal.map2 (\(w,h) {player, bullets, field} -> Graphics.Collage.collage w h <| displayMap player.position field ++ displayBullets (w,h) bullets ++ displayPlayer (w,h) player)
+gameSocket : Task x Socket
+gameSocket = io "http://localhost:8001" defaultOptions
+
+port communication : Task a ()
+port communication =
+  gameSocket `andThen` \socket ->
+  chatCommunication socket `andThen`
+  always (gameInputCommunication socket) `andThen`
+  always (initialMessage socket)
+
+port inputs : Signal (Task x ())
+port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
+
+--display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
+display = Signal.map4 (\(w,h) field chat {player, enemies, bullets} ->
+  Graphics.Collage.collage w h <|  displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies) ++ [chat])
 
 main =
-  display dimensions <| run <| getEvents playerInput mouseInput (fps 30) dimensions Mouse.clicks
+  display dimensions (Signal.constant initialMap) displayChat <| update currentPlayerId gameStateUpdate

@@ -1,4 +1,7 @@
-module Bullet(displayBullets, Bullet, tickBullets, shootBullet) where
+module Bullet where
+t = 2 + 2
+
+{-module Bullet(displayBullets, Bullet, tickBullets, shootBullet) where
 import Mouse
 import Time exposing (fps, fpsWhen, every, second)
 import Debug exposing(..)
@@ -28,7 +31,7 @@ displayBullets (w, h) =
 bulletBody = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 10 10 (0, 50) 1) 4 origin
 
 tickBullets : List Bullet -> List Bullet
-tickBullets = List.map (\b -> {b | position = b.position `add` scale b.speed (direction b.orientation b.position), orientation = b.orientation `add` direction b.orientation b.position, body = Sprites.update b.body b.position} |> watchBullet)
+tickBullets = List.map (\b -> {b | position = b.position `add` scale b.speed (direction b.orientation b.position), orientation = b.orientation , body = Sprites.update b.body b.position} |> watchBullet)
   >> List.filter (\b ->
       let p = toRecord b.position
       in p.y < 2000 && p.y > -2000 && p.x < 2000 && p.x > -2000)
@@ -37,3 +40,4 @@ shootBullet : Player -> Map -> List Bullet -> List Bullet
 shootBullet player field xs = {position = origin, orientation = player.orientation, speed = 2, body = bulletBody} :: xs
 
 watchBullet x = watchSummary "playerOrientation" (\x -> toTuple x.orientation) x
+-}

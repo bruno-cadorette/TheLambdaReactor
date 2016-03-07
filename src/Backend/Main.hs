@@ -3,6 +3,7 @@
 module Main where
 
 import Chat
+import ClientSideGeneration
 import qualified Network.EngineIO.Snap as EIOSnap
 import qualified Snap.Core as Snap
 import qualified Snap.Util.FileServe as Snap
@@ -13,6 +14,7 @@ import qualified Snap.CORS as CORS
 
 main :: IO ()
 main = do
+  writeFile "GameState.elm" generateGameState
   socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI server
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)

@@ -12,7 +12,7 @@ module Reactive (
     module Reactive.Banana,
     module Reactive.Banana.Frameworks,
     fps,
-    toOutputTime) where
+    toOutputMaybe) where
 
 import Control.Monad
 import Control.Monad.IO.Class
@@ -22,10 +22,11 @@ import Control.Concurrent
 import Data.Time
 import Reactive.Banana
 import Reactive.Banana.Frameworks
-
 import Data.Aeson
 import Data.Text
 import Network.SocketIO
+import Debug.Trace
+import Data.Maybe
 
 class GetSocket a where
     getSocket :: a -> Socket
@@ -35,6 +36,8 @@ instance GetSocket (Socket, a) where
 
 instance GetSocket Socket where
     getSocket = id
+
+
 
 
 
@@ -83,19 +86,20 @@ broadcastAll text x = do
 
 
 {-FPS method-}
+fps:: Int -> MomentIO (Event UTCTime)
 fps frame = do
     (eTime, fireTime) <- newEvent
     liftIO . forkIO . forever $
-            threadDelay (frame) >> getCurrentTime >>= fireTime
-    bTime <- flip stepper eTime <$> liftIO getCurrentTime
-    return (bTime,eTime)
+            threadDelay frame >> getCurrentTime >>= (trace "new FPS Event" fireTime)
+    return eTime
 
 {- This function should be used just before reactimate to map your output. -}
-toOutput :: GetSocket s => (s -> ReaderT Socket m a) -> s -> m a
+toOutput :: GetSocket s => (s -> ReaderT Socket m ()) -> s -> m ()
 toOutput event a = runReaderT (event a) $ getSocket a
 
-toOutputTime :: GetSocket s => (s -> ReaderT Socket m a) -> s -> Event UTCTime -> m a
-toOutputTime event a x = runReaderT (event a) $ getSocket a
+toOutputMaybe :: (GetSocket s, Monad m) => (s -> ReaderT Socket m ()) -> Maybe s -> m ()
+toOutputMaybe event (Just a)  = runReaderT (event a) $ getSocket a
+toOutputMaybe event Nothing  = return ()
 
 foldp :: MonadMoment m => (a -> b -> b) -> b -> Event a -> m (Event b)
 foldp f z e = accumE z (fmap f e)

@@ -2,9 +2,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 
-module Message (Message (..),decodeMessage) where
+module Message (Message (..)) where
 
-import qualified Data.Aeson as Aeson
+import Data.Aeson
 import qualified Data.Text as Text
 import qualified Data.ByteString.Lazy.Char8 as BS
 import GHC.Generics
@@ -15,11 +15,3 @@ data Message = Message
     } deriving (Generic,Show)
 
 type ServerMessage =  Text.Text
-    
-instance Aeson.ToJSON Message
-
-instance Aeson.FromJSON Message where
-  parseJSON  = Aeson.genericParseJSON Aeson.defaultOptions
-
-decodeMessage :: Text.Text -> Maybe Message
-decodeMessage text = Aeson.decode (BS.pack (Text.unpack text))

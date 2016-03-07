@@ -1,82 +1,50 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 
 module Chat (server) where
 
 import Reactive
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import Control.Monad.State.Strict
 import UserManagement
-import Data.Aeson
 import Data.Text
-import qualified Data.Aeson as Aeson
 import Message
 import Network.SocketIO
-import World
-import WorldManagement
-import WorldEngine
-import Data.Time.Clock
-
-data AddUser = AddUser Text
-
-instance Aeson.FromJSON AddUser where
-  parseJSON = Aeson.withText "AddUser" $ pure . AddUser
-
-
-data NumConnected = NumConnected !Int
-
-instance Aeson.ToJSON NumConnected where
-  toJSON (NumConnected n) = Aeson.object [ "numUsers" .= n]
-
-
-data NewMessage = NewMessage Text
-
-instance Aeson.FromJSON NewMessage where
-  parseJSON = Aeson.withText "NewMessage" $ pure . NewMessage
-
-
-data Said = Said Text Text
-
-instance Aeson.ToJSON Said where
-  toJSON (Said username message) = Aeson.object
-    [ "username" .= username
-    , "message" .= message
-    ]
-
-data UserName = UserName Text
-
-instance Aeson.ToJSON UserName where
-  toJSON (UserName un) = Aeson.object [ "username" .= un ]
-
-
-data UserJoined = UserJoined Text Int
-
-instance Aeson.ToJSON UserJoined where
-  toJSON (UserJoined un n) = Aeson.object
-    [ "username" .= un
-    , "numUsers" .= n
-    ]
+import GameState
+import GameStateManagement
+import Debug.Trace
 
 sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
 sendMessage p (s, n) =
     case Map.lookup s p of
-        Just x -> broadcastAll "receiveMessage" $ Message (pack x) n
+        Just x -> broadcastAll "receiveMessage" $ Message (pack (show x)) n
         Nothing -> broadcastAll "receiveMessage" $ Message "ERROR USER" n
+
+--setGameEvent :: m (Behavior GameEngine) -> Behavior (Map Socket Entity) -> Event UserInput -> Event a -> m (Behavior GameState)
+setGameEvent inputSocket connectedPlayers inputEvent fpsEvent = do
+  gameStateObject <- inputSocket
+  let mix = (updateStuff <$> connectedPlayers <*> gameStateObject) <@> inputEvent
+  gameObject <- accumB emptyGameState $ fmap mergeGameState mix
+  gameUpdated <- accumB  emptyGameState $((\ updates time old -> moveAllPlayer $ mergeGameState updates old ) <$> gameObject <@> fpsEvent)
+  return gameUpdated
 
 server :: (MonadIO m, MonadState RoutingTable m) => m ()
 server = do
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
-    inputSocket <- worldManager
+    inputSocket <- gameStateManager
+    testSocket <- testManager
+
     liftIO $ do
         network <- compile $ do
-
             sendMessageEvent <- sendMessageSocket
+            inputEvent <- testSocket
             (connectionEvent, connectedPlayers) <- usersSocket
-            (inputEvent,worldObject) <- inputSocket
+            (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
+            x <- setGameEvent inputSocket connectedPlayers inputEvent fpsEvent
             reactimate $ (toOutput . connectionMessageSender) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
-            reactimate $ (toOutput . worldSender) <$> worldObject <@> inputEvent
+            reactimate $ (\ g s t -> toOutputMaybe (gameStateSender g t) s) <$> x <*>  sockBehavior <@> fpsEvent
+
         actuate network

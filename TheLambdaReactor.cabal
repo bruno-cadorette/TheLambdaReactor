@@ -38,6 +38,7 @@ executable the-lamba-reactor-exe
                     snap-cors,
                     bytestring,
                     mtl,
+                    elm-bridge,
                     reactive-banana >= 1.1.0.0
   default-language:    Haskell2010
 
@@ -57,6 +58,7 @@ test-suite spec
                   lens,
                   snap-core,
                   snap-server,
+                  elm-bridge,
                   socket-io,
                   engine-io-snap,
                   snap-cors,
