@@ -1,3 +1,5 @@
+module Main where
+
 import Signal
 --import Chat
 import Window exposing (dimensions)

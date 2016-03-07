@@ -32,7 +32,7 @@ crops : Dict Int (Int, Int)
 crops = Dict.fromList (zip [0..1] [(102, 170), (136, 170)])
 
 displayMap pos field =
-  [toForm (container 1024 728  (middleAt (absolute (floor (getX (Math.Vector2.negate pos)))) (absolute (floor (getY pos)))) (collage 1280 1600 (field.tiles)))]
+  [toForm (container 1025 728  (middleAt (absolute (floor (getX (Math.Vector2.negate pos)))) (absolute (floor (getY pos)))) (collage 1280 1600 (field.tiles)))]
 
 --Utility
 zip : List a -> List b -> List (a,b)

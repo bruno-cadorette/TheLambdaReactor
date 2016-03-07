@@ -78,10 +78,3 @@ zip xs ys =
   case (xs, ys) of
     ( x :: xs', y :: ys' ) -> (x,y) :: zip xs' ys'
     (_, _) -> []
-
-{- Main -}
---getCurrentImage : Element
---getCurrentImage = draw (updateSprite (animator (sprite (image 384 48 "../resources/sheets/character.png") (crops startCrop 8)) (100 * Time.millisecond)) x))
-
-
---main = Signal.map (\x -> draw (updateSprite (animator (sprite (image 384 48 "../resources/sheets/character.png") (crops startCrop 8)) (100 * Time.millisecond)) x)) (every Time.millisecond)
