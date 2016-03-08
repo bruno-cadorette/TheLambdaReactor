@@ -1,5 +1,5 @@
-module Game.Map (Point2d(..), createMap,findNearestWall) where
-  import Data.Trees.KdTree
+module Game.Map (Point2d(..), createMap,findNearestWall,module Export) where
+  import Data.Trees.KdTree as Export
   import Linear.V2
   import GHC.Float
   import Control.Lens

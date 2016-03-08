@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId,add,moveWithFPS) where
+module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId,add,moveWithFPS,divide) where
   import Linear.V2
   import Linear.Vector
   import Control.Lens
@@ -36,3 +36,7 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   normalize (V2 0 0) = (V2 0 0)
   normalize v = (1/ magnitude) *^ v
                 where magnitude = sqrt ((v ^._x) ** 2 + (v ^._y) ** 2)
+
+  divide :: Float -> V2 Float -> V2 Float
+  divide 0 _ = (V2 0 0)
+  divide z (V2 x y) = (V2 (x/z) (y/z))

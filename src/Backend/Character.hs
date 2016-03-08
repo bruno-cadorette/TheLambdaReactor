@@ -5,7 +5,7 @@ module Character (Entity (..), Character (..),moveEntity ) where
 
 import Game.Helper
 import Linear.V2
-import Linear.Vector  ((^+^))
+import Linear.Vector  ((^+^), (^*))
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import GHC.Generics
@@ -18,7 +18,10 @@ class Character a where
 
 data Entity = Entity {hp :: Int, location :: Location} deriving (Generic,Show, Eq)
 
-moveEntity p = move p $orientation $ location p
+speed :: Float
+speed = 2
+
+moveEntity p = move p $ (orientation $ location p) ^* speed
 
 instance Character Entity where
   hurt p dmg = p {hp = ((hp p)  - dmg)}
