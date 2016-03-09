@@ -28,7 +28,7 @@ mergeGameState :: GameState -> GameState -> GameState
 mergeGameState (GameState p b e _ ) (GameState p' _ _ _ ) = (GameState (Map.unionWith  (\ p1 p2 -> p2 {C.location = changeOri  (C.location p2) (orientation $ C.location p1)} ) p p') b e [])
 
 moveAllPlayer :: KdTree Point2d -> GameState -> GameState
-moveAllPlayer bound (GameState p b e h) = (GameState (Map.map (\ p' -> if (playerCanMove p' bound) then moveEntity p' else p') p) b e h)
+moveAllPlayer bound (GameState p b e h) = (GameState (Map.map (\ p' -> if (playerCanMove p' bound) then moveEntity p' else moveEntityBackward p') p) b e h)
 --JSON stuff
 
 playerCanMove :: Entity -> KdTree Point2d -> Bool

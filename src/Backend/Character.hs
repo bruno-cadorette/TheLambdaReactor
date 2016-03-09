@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Character (Entity (..), Character (..),moveEntity ) where
+module Character (Entity (..), Character (..),moveEntity,moveEntityBackward ) where
 
 import Game.Helper
 import Linear.V2
@@ -22,6 +22,8 @@ speed :: Float
 speed = 2
 
 moveEntity p = move p $ (orientation $ location p) ^* speed
+
+moveEntityBackward p = move p $ (orientation $ location p) ^* ((0-1) * speed)
 
 instance Character Entity where
   hurt p dmg = p {hp = ((hp p)  - dmg)}
