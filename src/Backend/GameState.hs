@@ -34,7 +34,7 @@ moveAllPlayer bound (GameState p b e h) = (GameState (Map.map (\ p' -> if (playe
 playerCanMove :: Entity -> KdTree Point2d -> Bool
 playerCanMove newEnt gameBound = let probEntity = divide tileSize $ H.position $ C.location $ moveEntity newEnt in
                               case findNearestWall probEntity gameBound  of
-                                                    Just p -> if(intersectPos p probEntity 1.0 1.0) then
+                                                    Just p -> if(intersectBoxPos p probEntity 1.0 1.0) then
                                                                   False else
                                                                   True
                                                     Nothing -> True
