@@ -1,0 +1,88 @@
+<html>
+  <head>
+    <title>John Cena!</title>
+    <script type="text/javascript" src="elm.js"></script>
+		<style>
+			ul {
+			    list-style-type: none;
+			    margin: 0;
+			    padding: 0;
+			    width: 200px;
+			    background-color: #f1f1f1;
+			}
+
+			button {
+			    display: block;
+			    text-decoration: none;
+					width:200px;
+					height: 50px;
+			}
+
+			/* Change the link color on hover */
+			button:hover {
+			    background-color: #555;
+			    color: white;
+			}
+
+			h1 {
+				color: white;
+			}
+
+			#main {
+				width: 100%;
+				height: calc(100% - 60px);
+				display: none;
+				padding: 0px;
+			}
+
+			#menu {
+				border: 3px solid black;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				margin-top: -100px;
+				margin-left: -100px;
+				width: 200px;
+				z-index: 2;
+			}
+		</style>
+	</head>
+
+	<body background="/resources/background.jpg">
+	  <h1 align="center">Procedural-functional-elm-haskell-lambda-cena-shooter game</h1>
+		<div id="menu">
+			<ul style="padding: 0px; margin-top: 0px; margin-bottom: 0px">
+				<button type=button onclick="startGame()">Start Game</button>
+				<button type=button onclick="startGame()">Choose Server</button>
+				<button type=button onclick="startGame()">Settings</button>
+			</ul>
+		</div>
+	  <div id="main"/>
+	</body>
+
+  <script type="text/javascript">
+		function startGame() {
+    	var div = document.getElementById('main');
+			Elm.embed(Elm.Main, div);
+			document.getElementById('menu').style.display = "none";
+			document.getElementById('main').style.display = "block";
+		}
+
+		function handleKeyPress(e)
+		{
+			var key=e.keyCode;
+  		if (key==27) {
+				var menu = document.getElementById('menu').style;
+				if(menu.display == "block") {
+					menu.display = "none";
+					menu.opacity = 0.7;
+				}
+				else {
+					menu.display = "block";
+					menu.opacity = 0.7;
+				}
+  		}
+		}
+		document.onkeydown = handleKeyPress;
+  </script>
+</html>
