@@ -18,4 +18,4 @@ main = hspec spec
 spec :: Spec
 spec = describe "Bullet" $ do
         it "moveBullet" $ do
-          moveBullet (Bullet 50 (Location (V2 1 1) (V2 1 0)) 5 50) `shouldBe` (Bullet 50 (Location (V2 6 1) (V2 1 0)) 5 50)
+          moveBullet (Bullet 50 (Location (V2 1 1) (V2 1 0)) 5 "12" ) `shouldBe` (Bullet 50 (Location (V2 6 1) (V2 1 0)) 5 "12" )

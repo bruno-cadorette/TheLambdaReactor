@@ -25,6 +25,7 @@ myAlteration = recAlterType $ \t -> case t of
             -- Do not use V2 with something other than a float if you plan on sending it to Elm
             ETyApp (ETyCon (ETCon "V2")) _ -> ETyCon (ETCon "Vec2")
             _ -> t
+            
 
 --I don't thing there is a better way of doing that, since we're not creating the datatype
 --Might break if the package update

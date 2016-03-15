@@ -29,7 +29,7 @@ setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   gameStateObject <- inputSocket
   let mix = (updateStuff <$> connectedPlayers <*> gameStateObject) <@> inputEvent
   gameObject <- accumB emptyGameState $ fmap mergeGameState mix
-  gameUpdated <- accumB  emptyGameState $((\ updates time old -> (moveAllPlayer mapBound) $ mergeGameState updates old ) <$> gameObject <@> fpsEvent)
+  gameUpdated <- accumB  emptyGameState $((\ updates time old -> (moveGameState mapBound) $ mergeGameState updates old ) <$> gameObject <@> fpsEvent)
   return gameUpdated
 
 server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (V2 Float) Int -> m ()

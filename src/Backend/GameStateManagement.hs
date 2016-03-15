@@ -61,16 +61,16 @@ testManager = do
     return $ do
       userInput  <-  userInputSocket
       userShoot <- userShootSocket
-      let inputEvent = (\(s, n) -> Movement (trace "MOVE" (fromJust $A.decode $ BS.pack n)) s) <$> userInput
-      let shootEvent = (\(s, n) -> Shoot n s) <$> userShoot
+      let inputEvent = (\(s, n) -> Movement (fromJust $A.decode $ BS.pack n) s) <$> userInput
+      let shootEvent = (\(s, n) -> Shoot (fromJust $A.decode $ BS.pack n) s) <$> userShoot
       return (unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent)
 
 updateStuff :: Map.Map Socket Entity -> GameEngine -> UserInput ->  GameState
 updateStuff pls game input = getGameStateForJSON $handleInput (trace (show $ Map.elems pls) pls) game (trace "UPDATE" input)
             where
               handleInput pls2 game (Movement m s) = (game, Map.update (\ x -> Just $ move x m) s pls2)
-              handleInput pls2 game (Shoot d s) = (handleShoot d (Map.lookup s pls2) game, pls2)
-              handleInput pls2 game (Both m s d s') = (handleShoot d (Map.lookup s pls2) game,  Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game (Shoot d s) = (handleShoot d (Map.lookup s pls2) game (getSocketId s), pls2)
+              handleInput pls2 game (Both m s d s') = (handleShoot d (Map.lookup s pls2) game (getSocketId s),  Map.update (\ x -> Just $ move x m) s pls2)
 
 
 

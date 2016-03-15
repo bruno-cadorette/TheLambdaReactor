@@ -11,6 +11,7 @@ module Lib (module Exportable, decodeMessage) where
   import Bullet
   import Data.Maybe as Exportable
   import Message
+  import Data.Map.Strict
   import Data.Aeson as Aeson
   import Linear.V2 as Exportable
   import Control.Lens as Exportable
@@ -20,10 +21,10 @@ module Lib (module Exportable, decodeMessage) where
   import Control.Monad
   import Game.MapReader
 
+  Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Location
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Entity
-  Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Hit
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Message
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameMap
