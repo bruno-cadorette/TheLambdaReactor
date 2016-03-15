@@ -6,9 +6,7 @@ import Reactive
 import qualified Data.Map.Strict as Map
 import Control.Monad.State.Strict
 import Network.SocketIO
-import Data.ByteString.Char8
 import Linear.V2
-import Data.Text.Encoding
 import Character
 import GameEngine
 import GameState
@@ -21,7 +19,6 @@ import Data.Aeson as A
 import qualified Data.ByteString.Lazy.Char8 as BS
 type Move = V2 Float
 type Direction = V2 Float
-type UserName = String
 
 
 
@@ -65,21 +62,19 @@ testManager = do
       let shootEvent = (\(s, n) -> Shoot (fromJust $A.decode $ BS.pack n) s) <$> userShoot
       return (unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent)
 
-updateStuff :: Map.Map Socket Entity -> GameEngine -> UserInput ->  GameState
-updateStuff pls game input = getGameStateForJSON $handleInput (trace (show $ Map.elems pls) pls) game (trace "UPDATE" input)
+updateStuff :: Map.Map Socket Entity -> UTCTime  -> GameEngine -> UserInput-> GameState
+updateStuff pls time game input = getGameStateForJSON $handleInput pls game input time
             where
-              handleInput pls2 game (Movement m s) = (game, Map.update (\ x -> Just $ move x m) s pls2)
-              handleInput pls2 game (Shoot d s) = (handleShoot d (Map.lookup s pls2) game (getSocketId s), pls2)
-              handleInput pls2 game (Both m s d s') = (handleShoot d (Map.lookup s pls2) game (getSocketId s),  Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game (Movement m s) _  = (game, Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game (Shoot d s) t = (handleShoot d (Map.lookup s pls2) game (getSocketId s) t, pls2)
+              handleInput pls2 game (Both m s d _) t = (handleShoot d (Map.lookup s pls2) game (getSocketId s) t,  Map.update (\ x -> Just $ move x m) s pls2)
 
 
 
 
 --Dont really need it right now
 notifyMove :: GameState -> UTCTime -> EventHandler()
-notifyMove n time = broadcastAll "updateGameState" (trace "sending updates!" n)
+notifyMove n _ = broadcastAll "updateGameState" (trace "sending updates!" n)
 
 gameStateSender :: GetSocket a => GameState -> UTCTime -> a -> EventHandler()
-gameStateSender game time sock = notifyMove  game time
-
-gameStateSenderTest x _ = broadcast "updateGameState" (getGameStateForJSON x)
+gameStateSender game time _ = notifyMove  game time

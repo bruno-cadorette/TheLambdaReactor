@@ -11,7 +11,6 @@ import Data.Maybe
 import Game.BoundingSphere
 import Game.Helper as H
 import Network.SocketIO
-import Debug.Trace
 import Data.Time.Clock
 
 randomGen:: StdGen
@@ -58,10 +57,10 @@ getPlayersHit (GameEngine _ bullet _ _) players =
 
 --Should not use this too often, just a helper function
 getPlayer :: GameEngine -> Text -> Maybe(Entity)
-getPlayer (GameEngine players bullet enemy _) uuid = Map.lookup uuid players
+getPlayer (GameEngine players _ _ _) uuid = Map.lookup uuid players
 
     --TODO CRUD Bullet and Enem
 
-handleShoot :: V2 Float -> Maybe Entity -> GameEngine -> Id -> GameEngine
-handleShoot direction entity (GameEngine p b e gen) sockId  =
-  addBullet (GameEngine p b e gen) ((C.location $ fromJust entity) {orientation = direction})  (getCurrentMilli False) sockId
+handleShoot :: V2 Float -> Maybe Entity -> GameEngine -> Id -> UTCTime -> GameEngine
+handleShoot direction entity (GameEngine p b e gen) sockId time  =
+  addBullet (GameEngine p b e gen) ((C.location $ fromJust entity) {orientation = direction})  (getCurrentMilli time) sockId

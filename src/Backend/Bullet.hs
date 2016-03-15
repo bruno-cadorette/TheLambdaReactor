@@ -2,19 +2,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bullet (Bullet(..),moveBullet,expiredBullet) where
 import Game.Helper
-import qualified Data.Aeson as Aeson
 import GHC.Generics
-import Linear.V2
 import Linear.Vector
-import Debug.Trace
+import Data.Time.Clock
 
 
 data Bullet = Bullet {uuid :: Int, location :: Location ,velocity :: Float, playerId::Id} deriving (Generic,Show,Eq)
+
+range :: Int
 range = 1000
 
 
+moveBullet :: Bullet -> Bullet
 moveBullet (Bullet uuid location velocity playerId) = (Bullet uuid (moveLocation location  ((orientation location) ^* velocity)) velocity playerId)
 
-expiredBullet :: Bullet -> Bool
-expiredBullet (Bullet uuid location velocity playerId) = let currentTime = getCurrentMilli True
+expiredBullet :: Bullet -> UTCTime -> Bool
+expiredBullet (Bullet uuid _ _ _) time = let currentTime = getCurrentMilli time
                                                           in (currentTime - uuid) >  range

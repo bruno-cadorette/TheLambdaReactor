@@ -7,7 +7,6 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   import Control.Lens
   import GHC.Generics
   import Data.ByteString.Char8
-  import System.IO.Unsafe
   import Data.Text.Encoding
   import Data.Text
   import Network.SocketIO
@@ -34,8 +33,8 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   changeOri :: Location -> V2 Float -> Location
   changeOri p ori = p {orientation = ori}
 
-  getCurrentMilli :: Bool -> Int
-  getCurrentMilli b = (floor $ 1000 * toRational (utctDayTime $ unsafePerformIO getCurrentTime))
+  getCurrentMilli :: UTCTime -> Int
+  getCurrentMilli time  = (floor $ 1000 * toRational (utctDayTime $ time))
 
   normalize :: V2 Float -> V2 Float
   normalize (V2 0 0) = (V2 0 0)
