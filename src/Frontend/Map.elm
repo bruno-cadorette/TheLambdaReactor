@@ -3,19 +3,21 @@ module Map(displayMap, Map, initialMap) where
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Dict exposing (..)
-import Player exposing (..)
 import Point exposing (..)
 import Math.Vector2 exposing (..)
 
 mapTileList = List.concat (List.repeat 500 [0,1,1,0])
-initialMap = { tiles = group (makeMap 40 -800 mapTileList), position = origin }
+initialMap = { tiles = group (makeMap 40 -480 mapTileList), position = origin }
+
+mapCollage =
+  collage 1280 1600 [initialMap.tiles]
 
 type alias Map = { tiles : Form, position : Point }
 
 makeMap w shiftY tiles =
   case tiles of
     [] -> []
-    _ -> List.append (makeMapRow -640 shiftY (List.take w tiles)) (makeMap w (shiftY + 32) (List.drop w tiles))
+    _ -> List.append (makeMapRow 0 shiftY (List.take w tiles)) (makeMap w (shiftY + 32) (List.drop w tiles))
 
 makeMapRow shiftX shiftY tiles =
   case tiles of
@@ -28,14 +30,18 @@ crops = Dict.fromList (zip [0..1] [(102, 170), (136, 170)])
 
 createSprite position = Graphics.Collage.sprite 32 32 position "../../resources/sheets/tiles.png"
 
-getSprite : Int -> Form
-getSprite i = Maybe.withDefault (createSprite (0,0)) <| Dict.get i sprites
-
 sprites : Dict Int Form
 sprites = Dict.map (\k v -> createSprite v) crops
 
+getSprite : Int -> Form
+getSprite i = Maybe.withDefault (createSprite (0,0)) <| Dict.get i sprites
+
 displayMap pos field =
-  [toForm (container 1024 728  (middleAt (absolute (floor (getX (Math.Vector2.negate pos)))) (absolute (floor (getY pos)))) (collage 1280 1600 [field.tiles]))]
+  [toForm (container
+            640
+            480
+            (middleAt (absolute (floor (getX (Math.Vector2.negate pos)))) (absolute (floor (getY pos))))
+            (collage 1280 1600 [field.tiles]))]
 
 --Utility
 zip : List a -> List b -> List (a,b)
