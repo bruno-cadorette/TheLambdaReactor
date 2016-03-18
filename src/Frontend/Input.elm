@@ -1,4 +1,4 @@
-module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement, sendShot) where
+module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement, sendShot, sendTest) where
 
 import Signal
 import Signal.Extra exposing (foldps)
@@ -18,6 +18,7 @@ import Dict exposing (Dict)
 import GameState exposing (..)
 import Window exposing (dimensions)
 import Mouse
+import Time exposing (every, second)
 
 type alias PlayerId = String
 
@@ -101,5 +102,7 @@ sendMovement : Task x Socket -> Signal (Task x ())
 sendMovement s = emitFromSignal jsonEncVec2 "userInput" s movementMailbox.signal
 
 sendShot s = emitFromSignal jsonEncVec2 "userShoot" s normalizedMouseInput
+
+sendTest s = emitFromSignal Encode.float "test1" s <| every second
 --sendShot : Signal Vec2 -> Signal (Task x ())
 --sendShot = sendFromSignal vec2Encoder "shootInput"

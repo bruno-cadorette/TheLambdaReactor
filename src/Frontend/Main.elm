@@ -24,10 +24,12 @@ port communication =
   gameSocket `andThen` \socket ->
   chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
-  always (initialMessage socket)
+  always (initialMessage socket) `andThen`
+  always (emit "test1" "test1" socket) `andThen`
+  always (emit "test2" "test2" socket)
 
 port inputs : Signal (Task x ())
-port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
+port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), (sendTest gameSocket), initializeInput]
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display = Signal.map4 (\(w,h) field chat {player, enemies, bullets} ->
