@@ -1,4 +1,4 @@
-module Map(displayMap, Map, initialMap) where
+module Map(displayMap) where
 
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
@@ -6,19 +6,27 @@ import Dict exposing (..)
 import Point exposing (..)
 import Math.Vector2 exposing (..)
 
-mapTileList = List.concat (List.repeat 500 [0,1,1,0])
-initialMap = { tiles = group (makeMap 40 -480 mapTileList), position = origin }
-
-mapCollage =
-  collage 1280 1600 [initialMap.tiles]
-
 type alias Map = { tiles : Form, position : Point }
 
+mapTileList : List Int
+mapTileList =
+  List.concat (List.repeat 500 [0,1,1,0])
+
+initialMap : Map
+initialMap =
+  { tiles = group (makeMap 40 0 mapTileList), position = origin }
+
+mapCollage : Int -> Int -> Element
+mapCollage w h =
+  collage w h <| [Graphics.Collage.move (toFloat <| Basics.negate <| w // 2, toFloat <| Basics.negate <| h // 2) initialMap.tiles]
+
+makeMap : Int -> Float -> List Int -> List Form
 makeMap w shiftY tiles =
   case tiles of
     [] -> []
     _ -> List.append (makeMapRow 0 shiftY (List.take w tiles)) (makeMap w (shiftY + 32) (List.drop w tiles))
 
+makeMapRow : Float -> Float -> List Int -> List Form
 makeMapRow shiftX shiftY tiles =
   case tiles of
     [] -> []
@@ -26,22 +34,24 @@ makeMapRow shiftX shiftY tiles =
 
 --Association of ints to a certain sprite sheet image
 crops : Dict Int (Int, Int)
-crops = Dict.fromList (zip [0..1] [(102, 170), (136, 170)])
+crops =
+  Dict.fromList (zip [0..1] [(102, 170), (136, 170)])
 
-createSprite position = Graphics.Collage.sprite 32 32 position "../../resources/sheets/tiles.png"
+createSprite : (Int, Int) -> Form
+createSprite position =
+  Graphics.Collage.sprite 32 32 position "../../resources/sheets/tiles.png"
 
 sprites : Dict Int Form
-sprites = Dict.map (\k v -> createSprite v) crops
+sprites =
+  Dict.map (\k v -> createSprite v) crops
 
 getSprite : Int -> Form
-getSprite i = Maybe.withDefault (createSprite (0,0)) <| Dict.get i sprites
+getSprite i =
+  Maybe.withDefault (createSprite (0,0)) <| Dict.get i sprites
 
-displayMap pos field =
-  [toForm (container
-            640
-            480
-            (middleAt (absolute (floor (getX (Math.Vector2.negate pos)))) (absolute (floor (getY pos))))
-            (collage 1280 1600 [field.tiles]))]
+displayMap : Int -> Int -> Vec2 -> List Form
+displayMap w h pos =
+  [Graphics.Collage.move (Basics.negate (getX pos) / 2, Basics.negate (getY pos) / 2) <| toForm <| mapCollage w h]
 
 --Utility
 zip : List a -> List b -> List (a,b)
