@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <title>John Cena!</title>
+    <script type="text/javascript" src="elm.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+	</head>
+
+	<body>
+
+	  <h1 align="center">Procedural-functional-elm-haskell-lambda-cena-shooter game</h1>
+
+		<div id="mainMenu">
+			<ul style="padding: 0px; margin-top: 0px; margin-bottom: 0px">
+				<button type=button onclick="startGame()">Start Game</button>
+				<button type=button onclick="startGame()">Choose Server</button>
+				<button type=button onclick="startGame()">Settings</button>
+			</ul>
+		</div>
+
+    <div id="game"/>
+
+    <script type="text/javascript">
+  		function startGame() {
+      	var div = document.getElementById("game");
+  			Elm.embed(Elm.Main, div);
+
+  			document.getElementById('mainMenu').style.display = "none";
+  			div.style.display = "block";
+  		}
+
+  		document.onkeydown = handleKeyPress;
+  		function handleKeyPress(e)
+  		{
+  			var key=e.keyCode;
+
+    		if (key==27) {
+  				var menu = document.getElementById("mainMenu").style;
+  				if(menu.display == "block") {
+  					menu.display = "none";
+  					menu.opacity = 0.7;
+            window.onclick = none;
+  				}
+  				else {
+  					menu.display = "block";
+  					menu.opacity = 0.7;
+  				}
+    		}
+  		}
+    </script>
+  </body>
+</html>
