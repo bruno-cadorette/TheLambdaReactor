@@ -16,13 +16,16 @@ module Game.Map (Point2d(..), createMap,findNearestWall,module Export) where
   v2FloatToPoint2d :: V2 Float -> Point2d
   v2FloatToPoint2d (V2 x y) = (Point2d (float2Double x) (float2Double y))
 
+  toPoint2d :: (Int, Int) -> Point2d
+  toPoint2d (x, y) = (Point2d (fromIntegral  x) (fromIntegral  y))
+  
   point2dToV2Float :: Point2d -> V2 Float
   point2dToV2Float p = (V2 (double2Float (p2x p)) (double2Float (p2y p)))
 
   -- on donne les coordo de tous les murs \ (x,y) est le milieu de la case
-  createMap :: [V2 Float] -> KdTree Point2d
+  createMap :: [(Int, Int)] -> KdTree Point2d
   createMap points =
-    let pts2D = fmap v2FloatToPoint2d points
+    let pts2D = fmap toPoint2d points
      in fromList pts2D
 
   findNearestWall :: V2 Float -> KdTree Point2d -> Maybe (V2 Float)

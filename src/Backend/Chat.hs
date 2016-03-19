@@ -32,11 +32,11 @@ setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   gameUpdated <- accumB  emptyGameState $((\ updates time old -> (moveAllPlayer mapBound) $ mergeGameState updates old ) <$> gameObject <@> fpsEvent)
   return gameUpdated
 
-server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (V2 Float) Int -> m ()
+server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
 server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
                  in do
-    test1 "test1"
-                 {-
+    --test1 "test1"
+                 
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
     inputSocket <- gameStateManager
@@ -49,9 +49,8 @@ server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x =
             (connectionEvent, connectedPlayers) <- usersSocket
             (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
             x <- setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound
-            reactimate $ (toOutput . (connectionMessageSender $mapToExport gameMap)) <$> connectedPlayers <@> connectionEvent
+            reactimate $ (toOutput . (connectionMessageSender $ mapToExport gameMap)) <$> connectedPlayers <@> connectionEvent
             reactimate $ (toOutput . sendMessage) <$> connectedPlayers <@> sendMessageEvent
             reactimate $ (\ g s t -> toOutputMaybe (gameStateSender g t) s) <$> x <*>  sockBehavior <@> fpsEvent
 
         actuate network
--}

@@ -8,6 +8,7 @@ import Data.Proxy
 import Character
 import Bullet
 import Lib
+import Game.MapReader
 
 generateGameState :: String
 generateGameState =
@@ -16,7 +17,8 @@ generateGameState =
       DefineElm (Proxy :: Proxy Entity),
       DefineElm (Proxy :: Proxy Bullet),
       DefineElm (Proxy :: Proxy Hit),
-      DefineElm (Proxy :: Proxy Location)
+      DefineElm (Proxy :: Proxy Location),
+      DefineElm (Proxy :: Proxy GameMap)
     ]
 
 myAlteration :: ETypeDef -> ETypeDef
@@ -53,7 +55,3 @@ moduleHeader moduleName = unlines
      , ""
      , ""
      ]
-
-main :: IO ()
-main =
-   putStrLn $ generateGameState

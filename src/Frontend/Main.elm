@@ -10,7 +10,7 @@ import SocketIO exposing (..)
 import Dict
 import Graphics.Collage
 import Task exposing (Task, andThen)
-import Map exposing (displayMap)
+import Map exposing (..)
 
 gameSocket : Task x Socket
 gameSocket = io "http://localhost:8001" defaultOptions
@@ -29,8 +29,8 @@ port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket),
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display =
-  Signal.map3 (\(w,h) chat {player, enemies, bullets} ->
-  Graphics.Collage.collage w h <|  displayMap w h player.entity.location.position ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies) ++ [chat])
+  Signal.map4 (\(w,h) chat map {player, enemies, bullets} ->
+  Graphics.Collage.collage w h <|  displayMap w h player.entity.location.position map ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies) ++ [chat])
 
 main =
-  display dimensions displayChat <| update currentPlayerId gameStateUpdate
+  display dimensions displayChat (Signal.map getMap currentGameMap) <| update currentPlayerId gameStateUpdate
