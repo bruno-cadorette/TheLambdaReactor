@@ -16,7 +16,7 @@ cabal-version:       >=1.22.4.0
 executable the-lamba-reactor
   hs-source-dirs:      src/Backend
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -fno-warn-orphans
   build-depends:
                     base,
                     snap >= 0.14.0.6,

@@ -19,6 +19,7 @@ import GameState exposing (..)
 import Window exposing (dimensions)
 import Mouse
 import Time exposing (every, second)
+import Debug exposing (..)
 
 type alias PlayerId = String
 
@@ -41,7 +42,7 @@ currentPlayerId : Signal PlayerId
 currentPlayerId = Signal.map (log "id") playerIdMailbox.signal
 
 currentGameMap : Signal GameMap
-currentGameMap = Signal.filterMap identity defaultGameMap gameMapMailbox.signal
+currentGameMap = Signal.filterMap (log "gameMap" ) defaultGameMap gameMapMailbox.signal
 
 safeKeyboardPresses : Signal KeyCode
 safeKeyboardPresses = Signal.map (log "safeKeyboardPresses") keyboardInputMailbox.signal

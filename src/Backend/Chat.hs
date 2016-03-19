@@ -35,7 +35,7 @@ setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
 server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
 server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
                  in do
-    --test1 "test1"
+    
                  
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
@@ -43,7 +43,7 @@ server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x =
     testSocket <- testManager
 
     liftIO $ do
-        network <- compile $ do
+        network <- compile $ trace "YOU ONLY COMPILE ONCE" $ do
             sendMessageEvent <- sendMessageSocket
             inputEvent <- testSocket
             (connectionEvent, connectedPlayers) <- usersSocket

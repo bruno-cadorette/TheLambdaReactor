@@ -12,7 +12,7 @@ module Reactive (
     module Reactive.Banana,
     module Reactive.Banana.Frameworks,
     fps,
-    test1, test2,
+    test1, test2, testChan,
     toOutputMaybe) where
 
 import Control.Monad
@@ -26,6 +26,7 @@ import Reactive.Banana.Frameworks
 import Data.Aeson
 import Pipes.Concurrent
 import Pipes
+import Control.Concurrent.STM
 import Data.Text
 import Network.SocketIO
 import Debug.Trace
@@ -84,6 +85,14 @@ type SocketInput a = (Socket, a)
 handler :: ((SocketInput a) -> IO ()) -> a -> ReaderT Socket IO ()
 handler f x = ReaderT (\r -> f (r, x))    
 
+
+testChan :: (MonadIO m, MonadState RoutingTable m) => Text -> m ()
+testChan text = do
+    chan <- liftIO newTChanIO
+    on text $ handler (atomically . writeTChan chan)
+    liftIO $ do 
+        (_, x) <- atomically $ readTChan chan
+        putStrLn x
 
 test1 :: (MonadIO m, MonadState RoutingTable m) => Text -> m ()
 test1 text = do
@@ -157,9 +166,10 @@ fps:: Int -> MomentIO (Event UTCTime)
 fps frame = do
     (eTime, fireTime) <- newEvent
     liftIO . forkIO . forever $
-            threadDelay frame >> getCurrentTime >>= (trace "new FPS Event" fireTime)
+            threadDelay frame >> getCurrentTime >>= fireTime
     return eTime
 
+    
 {- This function should be used just before reactimate to map your output. -}
 toOutput :: GetSocket s => (s -> ReaderT Socket m ()) -> s -> m ()
 toOutput event a = runReaderT (event a) $ getSocket a
