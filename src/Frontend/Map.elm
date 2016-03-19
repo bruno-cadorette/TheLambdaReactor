@@ -8,7 +8,7 @@ import Math.Vector2 exposing (..)
 import GameState
 import Debug exposing (..)
 
-type alias Map = { tiles : Form, position : Point }
+type alias Map = { tiles : Form, position : Point, size : (Int, Int) }
 
 mapTileList : List Int
 mapTileList =
@@ -17,10 +17,10 @@ mapTileList =
 getMap : GameState.GameMap -> Map
 getMap {size, items, sprites} =
   let spriteDict = Dict.fromList <| List.map(\(a,b,c) -> (a, createSprite (b,c))) sprites
-  in { tiles = group <| makeMap (snd size) 0 items spriteDict, position = origin }
+  in { tiles = group <| makeMap (snd size) 0 items spriteDict, position = origin, size = (32 * fst size, 32 * snd size) }
 
-mapCollage : Int -> Int -> Map -> Element
-mapCollage w h map =
+mapCollage : (Int, Int) -> Map -> Element
+mapCollage (w, h) map =
   collage w h <| [Graphics.Collage.move (toFloat <| Basics.negate <| w // 2, toFloat <| Basics.negate <| h // 2) map.tiles]
 
 makeMap : Int -> Float -> List Int -> Dict Int Form -> List Form
@@ -43,6 +43,6 @@ getSprite :  Int -> Dict Int Form -> Form
 getSprite i sprites =
   Maybe.withDefault (createSprite (0,0)) <| Dict.get (log (toString i) i) sprites
 
-displayMap : Int -> Int -> Vec2 -> Map -> List Form
-displayMap w h pos map =
-  [Graphics.Collage.move (Basics.negate (getX pos) / 2, Basics.negate (getY pos) / 2) <| toForm <| mapCollage w h map]
+displayMap : Vec2 -> Map -> List Form
+displayMap pos map =
+  [Graphics.Collage.move (Basics.negate (getX pos) / 2, Basics.negate (getY pos) / 2) <| toForm <| mapCollage map.size map]

@@ -38,4 +38,4 @@ neighbors (x, y) v gameMap = fmap (\k-> differentValues $ fromMaybe 1 $ Map.look
         differentValues i = if i == v then 0 else 1
 
 neighborScore :: [Int] -> Int
-neighborScore = foldl1 (.|.) . zipWith (*) [8,4,2,1]
+neighborScore = foldl1 (.|.) . zipWith (*) [8,4,1,2]
