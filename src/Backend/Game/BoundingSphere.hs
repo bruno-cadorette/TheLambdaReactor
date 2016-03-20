@@ -15,8 +15,8 @@ module Game.BoundingSphere (BoundingSphere(..), intersecting, intersectingMany,i
   intersecting (BoundingSphere (V2 x0 y0) rad0) (BoundingSphere (V2 x1 y1) rad1) =
      (rad0 + rad1) ** 2 >= (x0-x1)**2+(y0-y1)**2
 
-  intersectingMany obj others =
-    any (\x -> intersecting obj x) others
+  intersectingMany :: BoundingSphere -> [(a,BoundingSphere)] -> [a]
+  intersectingMany obj others = foldr (\ x acc -> if (snd x) then (fst x):acc else acc) [] $ fmap (\(y,x) ->(y, intersecting obj x)) others
 
   intersectPos :: V2 Float -> V2 Float -> Float -> Float -> Bool
   intersectPos (V2 x0 y0) (V2 x1 y1) rad0 rad1  = intersecting (BoundingSphere (V2 x0 y0) rad0) (BoundingSphere (V2 x1 y1) rad1)

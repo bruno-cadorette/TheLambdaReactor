@@ -49,7 +49,7 @@ gameStateManager  = do
         accumB getNewGameState eUpdate
 
 updateWorld :: GameEngine -> GameEngine
-updateWorld m = updateBullets m
+updateWorld m = m
 
 testManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserInput))
 testManager = do

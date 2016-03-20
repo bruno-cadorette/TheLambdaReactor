@@ -28,9 +28,3 @@ spec = describe "GameEngine" $ do
           let world = (getGameStateForJSON $ ((addBullet getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50 "12" ), M.empty))
            in
             (Prelude.length$ M.elems $projectiles world)  == 1 `shouldBe` True
-
-        it "intersecPlayer" $ do
-          let y = addBullet  getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50 "12"
-              x = M.fromList [(0, (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))))]
-            in
-              (Prelude.length $ getPlayersHit y x) `shouldBe` 1
