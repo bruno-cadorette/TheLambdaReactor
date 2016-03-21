@@ -19,7 +19,7 @@ randomGen = mkStdGen 50
 data GameEngine = GameEngine (Map.Map Text Entity) (Map.Map Int Bullet) (Map.Map Text Entity) deriving (Eq)
 
 getGameStateForJSON :: (GameEngine, Map.Map Socket Entity) -> GameState
-getGameStateForJSON ((GameEngine players bullet enemy), mapPlayers) = (GameState (Map.mapKeys (\ s -> trace "player" $getSocketId s) mapPlayers) (Map.elems bullet) (Map.elems enemy) [])
+getGameStateForJSON ((GameEngine players bullet enemy), mapPlayers) = (GameState (Map.mapKeys (\ s -> getSocketId s) mapPlayers) (Map.elems bullet) (Map.elems enemy) [])
 
 getNewGameState :: GameEngine
 getNewGameState = (GameEngine Map.empty Map.empty Map.empty);
