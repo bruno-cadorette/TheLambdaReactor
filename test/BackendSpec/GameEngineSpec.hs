@@ -14,6 +14,7 @@ import Linear.V2
 import Lib
 import qualified Linear.Vector as LV
 import qualified Data.Map.Strict as M
+import Data.ByteString.Char8 as BS
 
 main :: IO()
 main = hspec spec
@@ -21,15 +22,9 @@ main = hspec spec
 spec :: Spec
 spec = describe "GameEngine" $ do
         it "getGameStateForJSON empty" $ do
-          (getGameStateForJSON (getNewGameState, M.empty)) `shouldBe` (GameState M.empty [] [] [])
+          (getGameStateForJSON (getNewGameState, M.empty)) `shouldBe` (GameState M.empty M.empty [] [])
 
         it "getGameStateForJSON player and addPlayer" $ do
-          let world = (getGameStateForJSON $ ((addBullet getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50 ), M.empty))
+          let world = (getGameStateForJSON $ ((addBullet getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50 "12" ), M.empty))
            in
-            (length $projectiles world)  == 1 `shouldBe` True 
-
-        it "intersecPlayer" $ do
-          let y = addBullet  getNewGameState (Location (V2 1.0 1.0) (V2 1.0 1.0)) 50
-              x = M.fromList [(0, (Entity 15 (Location (V2 1.0 1.0) (V2 1.0 1.0))))]
-            in
-              (length $ getPlayersHit y x) `shouldBe` 1
+            (Prelude.length$ M.elems $projectiles world)  == 1 `shouldBe` True

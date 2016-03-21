@@ -47,7 +47,7 @@ keyboardMovement = movementMailbox.signal
 decodeSignal : Signal.Address String
 decodeSignal = Signal.forwardTo gameStateMailbox.address (Decode.decodeString jsonDecGameState >> logError)
 
-defaultGameState = { players = Dict.empty, projectiles =  [], enemies = [], hits = [] }
+defaultGameState = { players = Dict.empty, projectiles =  Dict.empty, enemies = [], hits = [] }
 
 gameStateMailbox : Signal.Mailbox (Result String GameState)
 gameStateMailbox = Signal.mailbox (Ok defaultGameState)
