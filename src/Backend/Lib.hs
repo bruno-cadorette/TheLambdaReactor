@@ -1,23 +1,18 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Lib (module Exportable, decodeMessage) where
-  import Elm.Module
   import Elm.Derive
-  import Elm.TyRep
   import GameState
   import Game.Helper as Exportable
-  import Data.Proxy
   import Character
   import Bullet
   import Data.Maybe as Exportable
   import Message
-  import Data.Map.Strict
   import Data.Aeson as Aeson
   import Linear.V2 as Exportable
   import Control.Lens as Exportable
   import qualified Data.ByteString.Lazy.Char8 as BS
   import Data.Text as Text
-  import Debug.Trace
   import Control.Monad
   import Game.MapReader
 

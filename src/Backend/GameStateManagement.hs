@@ -31,9 +31,9 @@ instance GetSocket UserInput where
 
 
 getSocketBehavior :: Behavior PlayerNames -> Behavior (Maybe Socket)
-getSocketBehavior players = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
+getSocketBehavior players' = (\ ma -> let sockets = (Map.keys ma) ::[Socket]
                                       in
-                                       if ((not $ Prelude.null sockets)) then (Just $ Prelude.head sockets) else Nothing) <$> players
+                                       if ((not $ Prelude.null sockets)) then (Just $ Prelude.head sockets) else Nothing) <$> players'
 
 fpsClock :: Behavior PlayerNames -> MomentIO((Event UTCTime,Behavior (Maybe Socket)))
 fpsClock playerNames = do
@@ -65,9 +65,9 @@ testManager = do
 updateStuff :: Map.Map Socket Entity -> UTCTime  -> GameEngine -> UserInput-> GameState
 updateStuff pls time game input = getGameStateForJSON $handleInput pls game input time
             where
-              handleInput pls2 game (Movement m s) _  = (game, Map.update (\ x -> Just $ move x m) s pls2)
-              handleInput pls2 game (Shoot d s) t = (handleShoot d (Map.lookup s pls2) game (getSocketId s) t, pls2)
-              handleInput pls2 game (Both m s d _) t = (handleShoot d (Map.lookup s pls2) game (getSocketId s) t,  Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game' (Movement m s) _  = (game', Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game' (Shoot d s) t = (handleShoot d (Map.lookup s pls2) game' (getSocketId s) t, pls2)
+              handleInput pls2 game' (Both m s d _) t = (handleShoot d (Map.lookup s pls2) game' (getSocketId s) t,  Map.update (\ x -> Just $ move x m) s pls2)
 
 
 

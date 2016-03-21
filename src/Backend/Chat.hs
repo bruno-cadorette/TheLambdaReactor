@@ -17,7 +17,6 @@ import Game.MapReader
 import Game.Map
 import GameEngine
 import Character
-import Debug.Trace
 import Data.Time.Clock
 import Lib
 
@@ -27,13 +26,13 @@ sendMessage p (s, n) =
         Just x -> broadcastAll "receiveMessage" $ Message (pack (show x)) n
         Nothing -> broadcastAll "receiveMessage" $ Message "ERROR USER" n
 
---setGameEvent ::(MonadIO m, MomentIO m) => m (Behavior GameEngine) -> Behavior (Map.Map Socket Entity) -> Event UserInput -> Event a -> KdTree Point2d -> m (Behavior GameState)
+setGameEvent :: MomentIO (Behavior GameEngine) -> Behavior (Map.Map Socket Entity) -> Event UserInput -> Event a -> KdTree Point2d -> MomentIO (Behavior GameState)
 setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   bcurrentTime <- fromPoll getCurrentTime
   gameStateObject <- inputSocket
   let mix = updateStuff <$> connectedPlayers <*> bcurrentTime <*> gameStateObject <@> inputEvent
   gameObject <- accumB emptyGameState $ fmap mergeGameState mix
-  gameUpdated <- accumB  emptyGameState $((\ updates currenTime time old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
+  gameUpdated <- accumB  emptyGameState $((\ updates currenTime _ old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
   return gameUpdated
 
 server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (V2 Float) Int -> m ()

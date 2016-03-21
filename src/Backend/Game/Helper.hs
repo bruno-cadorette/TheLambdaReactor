@@ -12,7 +12,7 @@ module Game.Helper (normalize, Location(..), moveLocation, changeOri,getSocketId
   import Network.SocketIO
   import Data.Time.Clock
   type Id = Text
-  --TODO move to helper
+
   toId :: ByteString -> Id
   toId = decodeUtf8
 

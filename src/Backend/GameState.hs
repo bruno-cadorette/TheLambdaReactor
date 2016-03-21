@@ -14,7 +14,6 @@ import Bullet
 import Data.Maybe
 import Data.Time.Clock
 import Game.BoundingSphere
-import Debug.Trace
 import Linear.V2
 
 data Hit = Hit {uuid :: Int, player :: Entity, bullet :: Bullet} deriving (Generic,Show, Eq)
@@ -42,8 +41,9 @@ moveGameState bound time gs = hurtPlayers $ (moveAllBullet bound time (moveAllPl
 hurtPlayers :: GameState -> GameState
 hurtPlayers gs =   let bulletBounding = fmap (\ x ->(x, (BoundingSphere (H.position $ Bullet.location x) 0.5) )) $ Map.elems $projectiles gs
                        hurtedPlayers = Map.foldrWithKey (\k x acc -> let hitted = Prelude.filter (\ (Bullet _ _ _ id') -> not $ id' == k) $ intersectingMany (BoundingSphere (H.position $ C.location x) 1.0) bulletBounding
-                                                                      in case hitted of [] -> acc
-                                                                                        otherwise -> k:acc) [] $ players gs
+                                                                      in case hitted of
+                                                                         [] -> acc
+                                                                         _ -> k:acc) [] $ players gs
   in
     Prelude.foldr (\ x gameState -> hurtPlayer gameState x ) gs hurtedPlayers
 
@@ -51,15 +51,15 @@ moveAllPlayer :: KdTree Point2d -> GameState -> GameState
 moveAllPlayer bound (GameState p b e h) = (GameState (Map.map (\ p' -> if (playerCanMove p' bound) then moveEntity p' else moveEntityBackward p') p) b e h)
 
 moveAllBullet :: KdTree Point2d -> UTCTime -> GameState -> GameState
-moveAllBullet bound time (GameState p b e h) = (GameState p (Map.foldrWithKey (\ uuid b' acc -> if bulletCanMove b' bound time then (Map.insert uuid (moveBullet b' time) acc) else acc ) Map.empty b) e h)
+moveAllBullet bound time (GameState p b e h) = (GameState p (Map.foldrWithKey (\ uuid' b' acc -> if bulletCanMove b' bound time then (Map.insert uuid' (moveBullet b' time) acc) else acc ) Map.empty b) e h)
 
 bulletCanMove :: Bullet -> KdTree Point2d -> UTCTime -> Bool
 bulletCanMove b gameBound time = let probBullet = divide tileSize $ H.position $ Bullet.location $ moveBullet b time in
                               case findNearestWall probBullet gameBound  of
                                                     Just p -> if(intersectBoxPos p probBullet 1.0 1.0) then
                                                                   False else
-                                                                  True && (not $ expiredBullet b time)
-                                                    Nothing -> True && (not $ expiredBullet b time)
+                                                                  (not $ expiredBullet b time)
+                                                    Nothing -> (not $ expiredBullet b time)
 
 playerCanMove :: Entity -> KdTree Point2d -> Bool
 playerCanMove newEnt gameBound = let probEntity = divide tileSize $ H.position $ C.location $ moveEntity newEnt in
