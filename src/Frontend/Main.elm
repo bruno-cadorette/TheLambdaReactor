@@ -31,7 +31,11 @@ port inputs = Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket),
 
 --display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display = Signal.map4 (\(w,h) field chat {player, enemies, bullets} ->
-  Graphics.Collage.collage w h <|  displayMap player.entity.location.position field ++ [displayEntity (w,h) player] ++ displayEveryone (w,h) (Dict.values enemies) ++ [chat])
+  Graphics.Collage.collage w h <| displayMap player.entity.location.position field
+                                  ++ [displayEntity (w,h) player]
+                                  ++ displayEveryone (w,h) (Dict.values enemies)
+                                  ++ displayBullets (w, h) bullets
+                                  ++ [chat])
 
 main =
   display dimensions (Signal.constant initialMap) displayChat <| update currentPlayerId gameStateUpdate

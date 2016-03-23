@@ -18,7 +18,7 @@ import Maybe exposing (withDefault)
 import Map exposing (..)
 import Tuple exposing (mapFst)
 
-type alias OutputGameState = {player : OutputEntity, enemies : Dict String OutputEntity, bullets : List Bullet}
+type alias OutputGameState = {player : OutputEntity, enemies : Dict String OutputEntity, bullets : List OutputBullet}
 
 initialOutputGameState = {player = initialOutputEntity, enemies = Dict.empty, bullets = []}
 
@@ -47,10 +47,11 @@ enemiesToShow playerPosition enemies =
 --updatePositionsRelativePlayer : Vec2 -> String -> GameState -> --{playerTemp : Entity, bulletsTemp : List Bullet, enemiesTemp : Dict String Entity}
 updatePositionsRelativePlayer mousePosition id gameState =
   let (player, enemies) = mapFst (changeEntityOrientation mousePosition << Maybe.withDefault initialEntity) (popGet id gameState.players)
-  in {playerTemp = player, bulletsTemp = [], enemiesTemp = enemiesToShow player.location.position enemies}
+  in {playerTemp = player, bulletsTemp = Dict.values gameState.projectiles, enemiesTemp = enemiesToShow player.location.position enemies}
 
 --mergeEvents : Signal Vec2 -> Signal String -> Signal GameState -> Signal OutputGameState
-mergeEvents = Signal.map3 updatePositionsRelativePlayer mouseInput
+mergeEvents =
+  Signal.map3 updatePositionsRelativePlayer mouseInput
 
 updateEnemies old new =
   let i = intersectWith toOutputEntity old new
@@ -59,7 +60,7 @@ updateEnemies old new =
 
 update : Signal String -> Signal GameState -> Signal OutputGameState
 update id gamestate =
-  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies old.enemies new.enemiesTemp, bullets = []})
+  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies old.enemies new.enemiesTemp, bullets = updateBullets old.bullets new.bulletsTemp})
   initialOutputGameState <| mergeEvents id gamestate
 
 --getPlayerPosition : String -> GameState.GameState -> Vec2
