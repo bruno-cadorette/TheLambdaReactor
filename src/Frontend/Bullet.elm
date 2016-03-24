@@ -1,4 +1,4 @@
-module Bullet(displayBullets, OutputBullet, updateBullets) where
+module Bullet(displayBullets, OutputBullet, toOutputBullet, initialBulletBody, changeBulletPosition) where
 import Mouse
 import Time exposing (fps, fpsWhen, every, second)
 import Debug exposing(..)
@@ -13,9 +13,19 @@ import Math.Vector2 exposing (..)
 import Debug exposing (..)
 import Sprites exposing (..)
 import Map exposing (..)
+import Dict exposing (values, Dict)
 import GameState exposing (..)
 
 type alias OutputBullet = { position : Point, orientation : Point, body : Sprites.Animator}
+
+initialBulletBody : Sprites.Animator
+initialBulletBody =
+  Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 6 8 (0,50) 1) 1 origin
+
+changeBulletPosition : Vec2 -> Bullet -> Bullet
+changeBulletPosition p bullet =
+  let location = bullet.location
+  in {bullet | location = { location | position = p }}
 
 displayBullet : (Int, Int) -> OutputBullet -> Form
 displayBullet (w, h) bullet =
@@ -23,22 +33,14 @@ displayBullet (w, h) bullet =
       <| Graphics.Collage.move (toTuple bullet.position)
       <| Graphics.Collage.toForm (Sprites.draw bullet.body)
 
-updateBullets : List OutputBullet -> List Bullet -> List OutputBullet
-updateBullets oldBullets newBullets =
-  let updateBullet oldBullet newBullet =
-    if hasMoved oldBullet newBullet
-      then { position = newBullet.location.position,
-             orientation = newBullet.location.orientation,
-             body = Sprites.update oldBullet.body newBullet.location.position }
-      else { position = newBullet.location.position,
-             orientation = newBullet.location.orientation,
-             body = oldBullet.body}
-  in List.map2 updateBullet oldBullets newBullets
+toOutputBullet : OutputBullet -> Bullet -> OutputBullet
+toOutputBullet oldBullet newBullet =
+  let updateBullet old new =
+    { position = (log "newPos" new.location.position),
+      orientation = (log "newOri" new.location.orientation),
+      body = (log "newBody" Sprites.update old.body new.location.position) }
+  in updateBullet oldBullet newBullet
 
-hasMoved : OutputBullet -> Bullet -> Bool
-hasMoved old new =
-  old.position /= new.location.position
-
-displayBullets : (Int, Int) -> List OutputBullet -> List Form
+displayBullets : (Int, Int) -> Dict String OutputBullet -> List Form
 displayBullets (w, h) bullets =
-  List.map (displayBullet (w, h)) bullets
+  List.map (displayBullet (w, h)) (Dict.values bullets)
