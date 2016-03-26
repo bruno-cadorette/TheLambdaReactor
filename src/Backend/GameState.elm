@@ -20,26 +20,26 @@ jsonEncVec2 vector =
 
 type alias GameState  =
    { players: (Dict String Entity)
-   , projectiles: (List Bullet)
+   , projectiles: (Dict String Bullet)
    , enemies: (List Entity)
-   , hits: (List Hit)
+   , hits: (List Vec2)
    }
 
 jsonDecGameState : Json.Decode.Decoder ( GameState )
 jsonDecGameState =
    ("players" := Json.Decode.dict (jsonDecEntity)) `Json.Decode.andThen` \pplayers ->
-   ("projectiles" := Json.Decode.list (jsonDecBullet)) `Json.Decode.andThen` \pprojectiles ->
+   ("projectiles" := Json.Decode.dict (jsonDecBullet)) `Json.Decode.andThen` \pprojectiles ->
    ("enemies" := Json.Decode.list (jsonDecEntity)) `Json.Decode.andThen` \penemies ->
-   ("hits" := Json.Decode.list (jsonDecHit)) `Json.Decode.andThen` \phits ->
+   ("hits" := Json.Decode.list (jsonDecVec2)) `Json.Decode.andThen` \phits ->
    Json.Decode.succeed {players = pplayers, projectiles = pprojectiles, enemies = penemies, hits = phits}
 
 jsonEncGameState : GameState -> Value
 jsonEncGameState  val =
    Json.Encode.object
    [ ("players", encodeMap (Json.Encode.string) (jsonEncEntity) val.players)
-   , ("projectiles", (Json.Encode.list << List.map jsonEncBullet) val.projectiles)
+   , ("projectiles", encodeMap (Json.Encode.string) (jsonEncBullet) val.projectiles)
    , ("enemies", (Json.Encode.list << List.map jsonEncEntity) val.enemies)
-   , ("hits", (Json.Encode.list << List.map jsonEncHit) val.hits)
+   , ("hits", (Json.Encode.list << List.map jsonEncVec2) val.hits)
    ]
 
 
@@ -68,7 +68,7 @@ type alias Bullet  =
    { uuid: Int
    , location: Location
    , velocity: Float
-   , timeStamp: Int
+   , playerId: String
    }
 
 jsonDecBullet : Json.Decode.Decoder ( Bullet )
@@ -76,8 +76,8 @@ jsonDecBullet =
    ("uuid" := Json.Decode.int) `Json.Decode.andThen` \puuid ->
    ("location" := jsonDecLocation) `Json.Decode.andThen` \plocation ->
    ("velocity" := Json.Decode.float) `Json.Decode.andThen` \pvelocity ->
-   ("timeStamp" := Json.Decode.int) `Json.Decode.andThen` \ptimeStamp ->
-   Json.Decode.succeed {uuid = puuid, location = plocation, velocity = pvelocity, timeStamp = ptimeStamp}
+   ("playerId" := Json.Decode.string) `Json.Decode.andThen` \pplayerId ->
+   Json.Decode.succeed {uuid = puuid, location = plocation, velocity = pvelocity, playerId = pplayerId}
 
 jsonEncBullet : Bullet -> Value
 jsonEncBullet  val =
@@ -85,7 +85,7 @@ jsonEncBullet  val =
    [ ("uuid", Json.Encode.int val.uuid)
    , ("location", jsonEncLocation val.location)
    , ("velocity", Json.Encode.float val.velocity)
-   , ("timeStamp", Json.Encode.int val.timeStamp)
+   , ("playerId", Json.Encode.string val.playerId)
    ]
 
 

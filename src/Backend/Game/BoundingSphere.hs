@@ -1,17 +1,21 @@
-module Game.BoundingSphere (BoundingSphere(..), intersecting, intersectingMany,intersectPos) where
+module Game.BoundingSphere (BoundingSphere(..), intersecting, intersectingMany,intersectPos,intersectBoxPos) where
   import Linear.V2
-  import Data.List
 
   data BoundingSphere = BoundingSphere {
   position :: V2 Float,
   radius :: Float
 }
 
+  intersecting :: BoundingSphere -> BoundingSphere -> Bool
   intersecting (BoundingSphere (V2 x0 y0) rad0) (BoundingSphere (V2 x1 y1) rad1) =
      (rad0 + rad1) ** 2 >= (x0-x1)**2+(y0-y1)**2
 
-  intersectingMany obj others =
-    any (\x -> intersecting obj x) others
+  intersectingMany :: BoundingSphere -> [(a,BoundingSphere)] -> [a]
+  intersectingMany obj others = foldr (\ x acc -> if (snd x) then (fst x):acc else acc) [] $ fmap (\(y,x) ->(y, intersecting obj x)) others
 
   intersectPos :: V2 Float -> V2 Float -> Float -> Float -> Bool
   intersectPos (V2 x0 y0) (V2 x1 y1) rad0 rad1  = intersecting (BoundingSphere (V2 x0 y0) rad0) (BoundingSphere (V2 x1 y1) rad1)
+
+  intersectBoxPos:: V2 Float -> V2 Float -> Float -> Float -> Bool
+  intersectBoxPos (V2 x1 y1) (V2 x2 y2) dif1 dif2 = let pyth = sqrt ((abs(x1 - x2)) ** 2 + (abs(y1 - y2)) ** 2)
+                                                      in  pyth < (dif1 + dif2)

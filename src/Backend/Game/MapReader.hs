@@ -4,12 +4,9 @@ module Game.MapReader(parseMap,mapToExport,GameMap (..)) where
   import Data.Char
   import Linear.V2
   import Control.Lens
-  import Data.Aeson
   import GHC.Generics
 
   data GameMap = GameMap {taille :: (Float,Float), items::[Int]} deriving (Generic,Show, Eq)
-
-
 
   parseMap :: String -> IO (Map (V2 Float) Int)
   parseMap fileName = do

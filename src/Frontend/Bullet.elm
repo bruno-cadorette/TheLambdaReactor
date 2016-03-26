@@ -1,43 +1,46 @@
-module Bullet where
-t = 2 + 2
-
-{-module Bullet(displayBullets, Bullet, tickBullets, shootBullet) where
+module Bullet(displayBullets, OutputBullet, toOutputBullet, initialBulletBody, changeBulletPosition) where
 import Mouse
 import Time exposing (fps, fpsWhen, every, second)
 import Debug exposing(..)
 import Signal
 import Graphics.Element exposing (..)
-import Graphics.Collage
+import Graphics.Collage exposing (Form)
 import Color exposing (red, black, blue)
 import List
 import Signal.Time exposing (limitRate)
-import Player exposing (Player)
 import Point exposing (..)
 import Math.Vector2 exposing (..)
 import Debug exposing (..)
 import Sprites exposing (..)
 import Map exposing (..)
+import Dict exposing (values, Dict)
+import GameState exposing (..)
 
-type alias Bullet = { position : Point, orientation : Point, speed : Float, body : Sprites.Animator}
+type alias OutputBullet = { position : Point, orientation : Point, body : Sprites.Animator}
 
+initialBulletBody : Sprites.Animator
+initialBulletBody =
+  Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 6 8 (0,50) 1) 1 origin
+
+changeBulletPosition : Vec2 -> Bullet -> Bullet
+changeBulletPosition p bullet =
+  let location = bullet.location
+  in {bullet | location = { location | position = p }}
+
+displayBullet : (Int, Int) -> OutputBullet -> Form
 displayBullet (w, h) bullet =
   Graphics.Collage.rotate (getOrientation bullet.position <| mapOrientation w h bullet.orientation)
-      <| Graphics.Collage.move (watch "position" <| toTuple bullet.position)
+      <| Graphics.Collage.move (toTuple bullet.position)
       <| Graphics.Collage.toForm (Sprites.draw bullet.body)
 
-displayBullets (w, h) =
-  List.map (displayBullet (w, h))
+toOutputBullet : OutputBullet -> Bullet -> OutputBullet
+toOutputBullet oldBullet newBullet =
+  let updateBullet old new =
+    { position = new.location.position,
+      orientation = new.location.orientation,
+      body = Sprites.update old.body new.location.position }
+  in updateBullet oldBullet newBullet
 
-bulletBody = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 10 10 (0, 50) 1) 4 origin
-
-tickBullets : List Bullet -> List Bullet
-tickBullets = List.map (\b -> {b | position = b.position `add` scale b.speed (direction b.orientation b.position), orientation = b.orientation , body = Sprites.update b.body b.position} |> watchBullet)
-  >> List.filter (\b ->
-      let p = toRecord b.position
-      in p.y < 2000 && p.y > -2000 && p.x < 2000 && p.x > -2000)
-
-shootBullet : Player -> Map -> List Bullet -> List Bullet
-shootBullet player field xs = {position = origin, orientation = player.orientation, speed = 2, body = bulletBody} :: xs
-
-watchBullet x = watchSummary "playerOrientation" (\x -> toTuple x.orientation) x
--}
+displayBullets : (Int, Int) -> Dict String OutputBullet -> List Form
+displayBullets (w, h) bullets =
+  List.map (displayBullet (w, h)) (Dict.values bullets)
