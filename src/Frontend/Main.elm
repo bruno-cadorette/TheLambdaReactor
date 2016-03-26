@@ -12,6 +12,7 @@ import Graphics.Collage
 import Task exposing (Task, andThen)
 import Map exposing (displayMap)
 import Debug exposing (log)
+import Bullet exposing (..)
 
 gameSocket : Task x Socket
 gameSocket =
@@ -28,10 +29,9 @@ port inputs : Signal (Task x ())
 port inputs =
   Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
 
---display : Signal (Int, Int) -> Signal Map -> Signal OutputGameState -> Graphics.Collage.Element
 display =
-  Signal.map4 (\(w,h) field chat {player, enemies, bullets} ->
-  Graphics.Collage.collage w h <| displayMap player.entity.location.position field
+  Signal.map3 (\(w,h) chat {player, enemies, bullets} ->
+  Graphics.Collage.collage w h <| displayMap w h player.entity.location.position
                                   ++ [displayEntity (w,h) player]
                                   ++ displayEveryone (w,h) (Dict.values enemies)
                                   ++ displayBullets (w, h) bullets

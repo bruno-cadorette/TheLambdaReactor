@@ -1,4 +1,4 @@
-module Map(displayMap) where
+module Map(displayMap, initialMap) where
 
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
