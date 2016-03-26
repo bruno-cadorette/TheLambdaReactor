@@ -3,7 +3,7 @@ module Main where
 import Signal
 import Input exposing(..)
 import Chat exposing (..)
-import Window exposing (dimensions)
+import Window exposing (dimensions, width)
 import Engine exposing (..)
 import Player exposing (..)
 import SocketIO exposing (..)
@@ -35,7 +35,7 @@ display =
                                   ++ [displayEntity (w,h) player]
                                   ++ displayEveryone (w,h) (Dict.values enemies)
                                   ++ displayBullets (w, h) bullets
-                                  ++ [Graphics.Collage.move (150, 0) chat])
+                                  ++ [chat])
 
 main =
   display dimensions displayChat <| update currentPlayerId gameStateUpdate

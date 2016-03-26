@@ -12,8 +12,10 @@ import Signal
 import SocketIO exposing (..)
 import String
 import Task exposing (Task, andThen)
-import Text exposing (Text)
+import Text exposing (Text, color)
 import Time exposing (Time)
+import Window exposing (dimensions)
+import Color exposing (..)
 
 type MessageToSend = SendMessage String | BuildString String
 sendToString : MessageToSend -> String
@@ -38,20 +40,26 @@ stringBuilder key m =
         BuildString <| String.append str <| String.fromChar <| fromCode key
 
 writtenText: Signal Element
-writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>leftAligned)
+writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>color darkBlue>>leftAligned)
 
 timeToClear = Time.every <| 10 * Time.second
 
 receiveMessage : Signal Time -> Signal String -> Signal (List Element)
-receiveMessage removeMessage newStr=
-  Signal.merge (Signal.map (Text.fromString>>Just) newStr) (Signal.map (always Nothing) removeMessage)
+receiveMessage removeMessage newStr =
+  Signal.merge (Signal.map (Text.fromString>>color black>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
       Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
 displayChat : Signal Collage.Form
-displayChat = Signal.map2(\writting received -> Collage.toForm <| flow down (received ++ [writting])) writtenText (receiveMessage timeToClear received.signal)
+displayChat =
+  Signal.map3(\writting received (w, h) ->
+    Collage.group
+      [Collage.move ((toFloat w) / 2 - 100, 100 - (toFloat h) / 2) <| Collage.filled white <| Collage.rect 210 200,
+      Collage.move ((toFloat w) / 2 - 100, 50 - (toFloat h) / 2) <|
+        Collage.toForm <|
+          flow down (List.map (Graphics.Element.width 200) (received ++ [writting]))]) writtenText (receiveMessage timeToClear received.signal) Window.dimensions
 
 sendMessage : Task x Socket -> Signal (Task x ())
 sendMessage serverSocket = Signal.map (\s ->
