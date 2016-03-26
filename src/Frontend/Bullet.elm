@@ -36,9 +36,9 @@ displayBullet (w, h) bullet =
 toOutputBullet : OutputBullet -> Bullet -> OutputBullet
 toOutputBullet oldBullet newBullet =
   let updateBullet old new =
-    { position = (log "newPos" new.location.position),
-      orientation = (log "newOri" new.location.orientation),
-      body = (log "newBody" Sprites.update old.body new.location.position) }
+    { position = new.location.position,
+      orientation = new.location.orientation,
+      body = Sprites.update old.body new.location.position }
   in updateBullet oldBullet newBullet
 
 displayBullets : (Int, Int) -> Dict String OutputBullet -> List Form

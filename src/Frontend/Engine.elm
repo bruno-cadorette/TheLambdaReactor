@@ -4,7 +4,6 @@ import Signal
 import Math.Vector2 exposing (..)
 import Time exposing(Time, fps)
 import Keyboard
-import Debug exposing(log)
 import Mouse
 import Point exposing(..)
 import Graphics.Element exposing (show)
@@ -17,6 +16,7 @@ import Dict exposing (Dict)
 import Maybe exposing (withDefault)
 import Map exposing (..)
 import Tuple exposing (mapFst)
+import Debug exposing (log)
 
 type alias OutputGameState = {player : OutputEntity, enemies : Dict String OutputEntity, bullets : Dict String OutputBullet}
 
@@ -46,7 +46,7 @@ enemiesToShow playerPosition enemies =
 
 bulletsToShow : Vec2 -> Dict String Bullet -> Dict String Bullet
 bulletsToShow playerPosition bullets =
-  let newPosition position = position `sub` playerPosition
+  let newPosition position = sub position playerPosition
   in filterMap (\k v ->
     let p = newPosition v.location.position
     in
@@ -57,7 +57,7 @@ bulletsToShow playerPosition bullets =
 --updatePositionsRelativePlayer : Vec2 -> String -> GameState -> --{playerTemp : Entity, bulletsTemp : List Bullet, enemiesTemp : Dict String Entity}
 updatePositionsRelativePlayer mousePosition id gameState =
   let (player, enemies) = mapFst (changeEntityOrientation mousePosition << Maybe.withDefault initialEntity) (popGet id gameState.players)
-  in {playerTemp = player, bulletsTemp = (log "Projectiles" gameState.projectiles), enemiesTemp = enemiesToShow player.location.position enemies}
+  in {playerTemp = player, bulletsTemp = bulletsToShow player.location.position gameState.projectiles, enemiesTemp = enemiesToShow player.location.position enemies}
 
 --mergeEvents : Signal Vec2 -> Signal String -> Signal GameState -> Signal OutputGameState
 mergeEvents =
@@ -76,7 +76,7 @@ updateBullets old new =
 
 update : Signal String -> Signal GameState -> Signal OutputGameState
 update id gamestate =
-  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies old.enemies new.enemiesTemp, bullets = updateBullets (log "oldBullets" old.bullets) (log "newBullets" new.bulletsTemp)})
+  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies old.enemies new.enemiesTemp, bullets = updateBullets old.bullets new.bulletsTemp})
   initialOutputGameState <| mergeEvents id gamestate
 
 --getPlayerPosition : String -> GameState.GameState -> Vec2

@@ -38,7 +38,7 @@ display =
   Graphics.Collage.collage w h <| displayMap player.entity.location.position field
                                   ++ [displayEntity (w,h) player]
                                   ++ displayEveryone (w,h) (Dict.values enemies)
-                                  ++ displayBullets (w, h) (log "displayBullets" bullets)
+                                  ++ displayBullets (w, h) bullets
                                   ++ [Graphics.Collage.move (150, 0) chat])
 
 main =
