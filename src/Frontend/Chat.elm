@@ -3,10 +3,10 @@ module Chat where
 import Input exposing (safeKeyboardPresses)
 import Char exposing (fromCode, KeyCode)
 import Debug exposing (..)
-import Graphics.Collage as Collage
+import Graphics.Collage as Collage exposing (..)
 import Graphics.Element exposing (Element, show, leftAligned, flow, down)
 import Keyboard.Keys exposing (enter, backspace, Key)
-import List
+import List exposing (..)
 import Protocol exposing (..)
 import Signal
 import SocketIO exposing (..)
@@ -40,13 +40,13 @@ stringBuilder key m =
         BuildString <| String.append str <| String.fromChar <| fromCode key
 
 writtenText: Signal Element
-writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>color darkBlue>>leftAligned)
+writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>Text.color (Color.rgb 255 255 240)>>leftAligned)
 
 timeToClear = Time.every <| 10 * Time.second
 
 receiveMessage : Signal Time -> Signal String -> Signal (List Element)
 receiveMessage removeMessage newStr =
-  Signal.merge (Signal.map (Text.fromString>>color black>>Just) newStr) (Signal.map (always Nothing) removeMessage)
+  Signal.merge (Signal.map (Text.fromString>>Text.color (Color.rgb 240 240 240)>>Just) newStr) (Signal.map (always Nothing) removeMessage)
   |> Signal.foldp (\x xs ->
     case x of
       Just x' -> xs ++ [leftAligned x']
@@ -56,10 +56,17 @@ displayChat : Signal Collage.Form
 displayChat =
   Signal.map3(\writting received (w, h) ->
     Collage.group
-      [Collage.move ((toFloat w) / 2 - 100, 100 - (toFloat h) / 2) <| Collage.filled white <| Collage.rect 210 200,
-      Collage.move ((toFloat w) / 2 - 100, 50 - (toFloat h) / 2) <|
+      [Collage.move (3 / 8 * (toFloat w), (toFloat h / 8) - (toFloat h / 2)) <|
+        Collage.filled (Color.rgba 100 100 100 0.7) <|
+          Collage.rect (toFloat w / 4) (toFloat h / 4),
+      Collage.move (3 / 8 * (toFloat w) + 5, (toFloat h / 8) - (toFloat h / 2)) <|
         Collage.toForm <|
-          flow down (List.map (Graphics.Element.width 200) (received ++ [writting]))]) writtenText (receiveMessage timeToClear received.signal) Window.dimensions
+          Graphics.Element.container (w // 4 - 10) (h // 4) Graphics.Element.midBottom <|
+            flow down <|
+              List.map
+                (Graphics.Element.width <| w // 4 - 10)
+                (received ++ [writting])])
+  writtenText (receiveMessage timeToClear received.signal) Window.dimensions
 
 sendMessage : Task x Socket -> Signal (Task x ())
 sendMessage serverSocket = Signal.map (\s ->
@@ -77,13 +84,13 @@ sendMailbox = Signal.mailbox ""
 received : Signal.Mailbox String
 received = Signal.mailbox "null"
 
-
-forwardMessage = Signal.forwardTo received.address
+forwardMessage : String -> Signal.Address String
+forwardMessage playerName = Signal.forwardTo received.address
   (\x -> case decodeMessage x of
-      Ok {name, body} -> name ++  ": " ++ body
+      Ok {name, body} -> playerName ++  ": " ++ body
       Err e -> e)
 
-chatCommunication : Socket -> Task.Task a ()
-chatCommunication socket =
+chatCommunication : Socket -> String -> Task.Task a ()
+chatCommunication socket playerName =
     on "receiveServerMessage" received.address socket `Task.andThen` \_ ->
-    on "receiveMessage" forwardMessage socket
+    on "receiveMessage" (forwardMessage playerName) socket

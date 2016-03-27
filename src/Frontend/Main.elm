@@ -18,10 +18,12 @@ gameSocket : Task x Socket
 gameSocket =
   io "http://localhost:8001" defaultOptions
 
+port playerName : String
+
 port communication : Task a ()
 port communication =
   gameSocket `andThen` \socket ->
-  chatCommunication socket `andThen`
+  chatCommunication socket playerName `andThen`
   always (gameInputCommunication socket) `andThen`
   always (initialMessage socket)
 
