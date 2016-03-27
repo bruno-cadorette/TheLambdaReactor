@@ -1,12 +1,9 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Lib (module Exportable, decodeMessage) where
-  import Elm.Module
   import Elm.Derive
-  import Elm.TyRep
   import GameState
   import Game.Helper as Exportable
-  import Data.Proxy
   import Character
   import Bullet
   import Data.Maybe as Exportable
@@ -16,14 +13,13 @@ module Lib (module Exportable, decodeMessage) where
   import Control.Lens as Exportable
   import qualified Data.ByteString.Lazy.Char8 as BS
   import Data.Text as Text
-  import Debug.Trace
   import Control.Monad
   import Game.MapReader
 
+  Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Location
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Entity
-  Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Hit
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Message
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameMap

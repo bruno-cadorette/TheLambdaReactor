@@ -6,13 +6,9 @@ import Reactive
 import qualified Data.Map.Strict as Map
 import Control.Monad.State.Strict
 import Control.Monad.Reader
-import Data.Text
-import Data.Aeson
 import Network.SocketIO
 import Character
 import Lib
-import Data.ByteString.Char8
-import Data.Text.Encoding
 import Game.MapReader
 import Debug.Trace
 
@@ -24,7 +20,6 @@ instance GetSocket UserConnection where
     getSocket (EnterGame _ s) = s
     getSocket (LeaveGame s) = s
     getSocket (Both _ s _) = s
-
 
 
 connectionManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserConnection, Behavior PlayerNames))
@@ -45,17 +40,20 @@ connectionManager = do
         connection (Both n s s') m = ((Both n s s'), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) $ Map.delete s' m)
 
 --TODO put the message in a ToJson instance so that the client will decide the message to show on each case
+joinGame ::(MonadIO m, MonadReader Socket m) => String -> GameMap -> Socket -> m ()
 joinGame n gameMap s  = do
                 emit "login" (getSocketId s)
                 emit "gameMap" gameMap
                 broadcastAll "receiveServerMessage" (n `mappend` " has join the game")
+--MonadIO m MonadReader Socket m
+leftGame :: (MonadIO m, MonadReader Socket m) => Socket -> Map.Map Socket a -> m ()
 leftGame s m =
     case Map.lookup s m of
-        Just x -> broadcastAll "receiveServerMessage" ( (getSocketId s) `mappend` " has left the game")
+        Just _ -> broadcastAll "receiveServerMessage" ( (getSocketId s) `mappend` " has left the game")
         Nothing -> broadcastAll "receiveServerMessage" ("Someone has left the game" :: String) -- return () -- TODO log
 
 connectionMessageSender :: (MonadIO m) => GameMap -> PlayerNames -> UserConnection -> ReaderT Socket m ()
-connectionMessageSender gameMap m (EnterGame n s) = joinGame n gameMap s
+connectionMessageSender gameMap _ (EnterGame n s) = joinGame n gameMap s
 connectionMessageSender _ m (LeaveGame s) = leftGame s m
 connectionMessageSender gameMap m (Both n _ s) = do
     joinGame n gameMap s

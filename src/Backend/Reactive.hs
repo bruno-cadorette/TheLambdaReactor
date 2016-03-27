@@ -171,8 +171,10 @@ allEvents = go toEventofList--fmap (foldl (unionWith (++)) never . fmap (fmap pu
         go f = fmap (fmap f . sequenceA) . sequenceA
         
 toEventofList = foldl (unionWith (++)) never . fmap (fmap pure)
-        
-        
+
+
+testOns = do
+    on "test1" (handler Pipes.yield)
 testConnectionneApi :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event (SocketInput String)))
 testConnectionneApi = do
     userConnectedSocket <- trace "allo" $ createSocketEvent "test1"
@@ -187,7 +189,7 @@ producer x = do
     
 socketIOPartPipes :: Output (SocketInput a) -> Event (SocketInput a) -> IO ()
 socketIOPartPipes output event = 
-    (compile $ reactimate outEvent) >>= actuate
+    trace "pipe" $ (compile $ reactimate outEvent) >>= actuate
     where 
         outEvent = fmap (\x -> runEffect $ trace "yielding" $ Pipes.yield x >-> Pipes.Concurrent.toOutput output) event
 --sequenceA (m [MomentIO (Event a)]) -> fmap (\[MomentIO (Event a)] -> sequenceA) -> MomentIO (
@@ -210,7 +212,7 @@ initializeWithReactive serverApi inputs = do --inputs outputNetwork =  do
    -- initialize serverApi $  . inputs
     (output, input, _) <- trace "spawn!" $ liftIO $ spawn' unbounded
     a <- initialize serverApi $ do 
-        mio <- inputs 
+        mio <- trace "inputs" $ inputs 
         return $ trace "AAAA" $ fmap (socketIOPartPipes output) mio
         --trace "on!" $ on "test1" $ handler (\x -> runEffect $ producer x >-> Pipes.Concurrent.toOutput output)
     liftIO $ forkIO $ runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive

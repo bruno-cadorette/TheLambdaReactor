@@ -2,8 +2,6 @@ module Game.Map (Point2d(..), createMap,findNearestWall,module Export) where
   import Data.Trees.KdTree as Export
   import Linear.V2
   import GHC.Float
-  import Control.Lens
-
 
   data Point2d = Point2d { p2x :: Double, p2y :: Double}
     deriving (Eq, Ord, Show)
@@ -12,6 +10,7 @@ module Game.Map (Point2d(..), createMap,findNearestWall,module Export) where
       dimension _ = 2
       coord 0 p = p2x p
       coord 1 p = p2y p
+      coord _ _ = 0
 
   v2FloatToPoint2d :: V2 Float -> Point2d
   v2FloatToPoint2d (V2 x y) = (Point2d (float2Double x) (float2Double y))
