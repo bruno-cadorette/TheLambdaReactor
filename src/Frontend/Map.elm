@@ -14,7 +14,7 @@ mapTileList =
 
 initialMap : Map
 initialMap =
-  { tiles = group (makeMap 40 0 mapTileList), position = origin }
+  { tiles = group (makeMap 50 0 mapTileList), position = origin }
 
 mapCollage : Int -> Int -> Element
 mapCollage w h =
