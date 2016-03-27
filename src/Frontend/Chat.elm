@@ -25,22 +25,24 @@ sendToString x =
     BuildString str -> str
 
 ----Write a message----
-buildWord : Signal MessageToSend
-buildWord = Signal.foldp (stringBuilder) (BuildString "") safeKeyboardPresses
+buildWord : String -> Signal MessageToSend
+buildWord playerName =
+  Signal.foldp (stringBuilder playerName) (BuildString "") safeKeyboardPresses
 
-stringBuilder : KeyCode -> MessageToSend -> MessageToSend
-stringBuilder key m =
+stringBuilder : String -> KeyCode -> MessageToSend -> MessageToSend
+stringBuilder playerName key m =
     let str = sendToString m
     in
       if key == enter.keyCode then
-        log "enter" <| SendMessage str
+        log "enter" <| SendMessage (playerName ++ ": " ++ str)
       else if key == backspace.keyCode then
         BuildString <| String.dropRight 1 str
       else
         BuildString <| String.append str <| String.fromChar <| fromCode key
 
-writtenText: Signal Element
-writtenText = buildWord |> Signal.map (sendToString>>Text.fromString>>Text.color (Color.rgb 255 255 240)>>leftAligned)
+writtenText: String -> Signal Element
+writtenText playerName =
+  (buildWord playerName) |> Signal.map (sendToString>>Text.fromString>>Text.color (Color.rgb 255 255 240)>>leftAligned)
 
 timeToClear = Time.every <| 10 * Time.second
 
@@ -52,8 +54,8 @@ receiveMessage removeMessage newStr =
       Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
-displayChat : Signal Collage.Form
-displayChat =
+displayChat : String -> Signal Collage.Form
+displayChat playerName =
   Signal.map3(\writting received (w, h) ->
     Collage.group
       [Collage.move (3 / 8 * (toFloat w), (toFloat h / 8) - (toFloat h / 2)) <|
@@ -66,13 +68,13 @@ displayChat =
               List.map
                 (Graphics.Element.width <| w // 4 - 10)
                 (received ++ [writting])])
-  writtenText (receiveMessage timeToClear received.signal) Window.dimensions
+  (writtenText playerName) (receiveMessage timeToClear received.signal) Window.dimensions
 
-sendMessage : Task x Socket -> Signal (Task x ())
-sendMessage serverSocket = Signal.map (\s ->
+sendMessage : String -> Task x Socket -> Signal (Task x ())
+sendMessage playerName serverSocket = Signal.map (\s ->
   case s of
     SendMessage m -> serverSocket `andThen` emit "sendMessage" m
-    BuildString s -> Task.succeed ()) buildWord
+    BuildString s -> Task.succeed ()) (buildWord playerName)
 
 -- send a value once at program start
 initialMessage : Socket -> Task x ()
@@ -84,13 +86,13 @@ sendMailbox = Signal.mailbox ""
 received : Signal.Mailbox String
 received = Signal.mailbox "null"
 
-forwardMessage : String -> Signal.Address String
-forwardMessage playerName = Signal.forwardTo received.address
+forwardMessage : Signal.Address String
+forwardMessage = Signal.forwardTo received.address
   (\x -> case decodeMessage x of
-      Ok {name, body} -> playerName ++  ": " ++ body
+      Ok {name, body} -> body
       Err e -> e)
 
-chatCommunication : Socket -> String -> Task.Task a ()
-chatCommunication socket playerName =
+chatCommunication : Socket -> Task.Task a ()
+chatCommunication socket =
     on "receiveServerMessage" received.address socket `Task.andThen` \_ ->
-    on "receiveMessage" (forwardMessage playerName) socket
+    on "receiveMessage" forwardMessage socket

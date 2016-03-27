@@ -23,13 +23,13 @@ port playerName : String
 port communication : Task a ()
 port communication =
   gameSocket `andThen` \socket ->
-  chatCommunication socket playerName `andThen`
+  chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
   always (initialMessage socket)
 
 port inputs : Signal (Task x ())
 port inputs =
-  Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
+  Signal.mergeMany [(sendMessage playerName gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
 
 display =
   Signal.map3 (\(w,h) chat {player, enemies, bullets} ->
@@ -40,4 +40,4 @@ display =
                                   ++ [chat])
 
 main =
-  display dimensions displayChat <| update currentPlayerId gameStateUpdate
+  display dimensions (displayChat playerName) <| update currentPlayerId gameStateUpdate
