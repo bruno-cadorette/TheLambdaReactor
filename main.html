@@ -3,14 +3,25 @@
     <title>John Cena!</title>
     <script type="text/javascript" src="elm.js"></script>
     <link rel="stylesheet" type="text/css" href="styles.css">
+
 	</head>
 
-	<body>
+	<body background="resources/background.jpg">
 
 	  <h1 align="center">Procedural-functional-elm-haskell-lambda-cena-shooter game</h1>
 
+    <div id="selectName">
+      <form>
+        Player name: <input id="nameField" type="text" name="playerName" pattern="[A-Za-z0-9]{3,}" required="required">
+        <input type="button" onclick="showMenu()" value="Enter">
+      </form>
+      <div style="overflow: auto">
+        Your name must be composed of letters and/or numbers with at least 3 characters.
+      </div>
+    </div>
+
 		<div id="mainMenu">
-			<ul style="padding: 0px; margin-top: 0px; margin-bottom: 0px">
+			<ul>
 				<button type=button onclick="startGame()">Start Game</button>
 				<button type=button onclick="startGame()">Choose Server</button>
 				<button type=button onclick="startGame()">Settings</button>
@@ -19,12 +30,23 @@
 
     <div id="game"/>
 
+    <script src="http://code.jquery.com/jquery-2.2.2.min.js"></script>
+    <script src="http://jqueryvalidation.org/files/dist/jquery.validate.min.js"></script>
+    <script src="http://jqueryvalidation.org/files/dist/additional-methods.min.js"></script>
     <script type="text/javascript">
+      function showMenu() {
+        if ($("#nameField")[0].checkValidity()) {
+          document.getElementById("selectName").style.display = "none";
+          document.getElementById("mainMenu").style.display = "block";
+          //Save name somewhere and do something with it
+        }
+      }
+
   		function startGame() {
       	var div = document.getElementById("game");
   			Elm.embed(Elm.Main, div);
 
-  			document.getElementById('mainMenu').style.display = "none";
+  			document.getElementById("mainMenu").style.display = "none";
   			div.style.display = "block";
   		}
 
