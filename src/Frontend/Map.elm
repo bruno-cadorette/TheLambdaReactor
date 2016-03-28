@@ -6,6 +6,7 @@ import Dict exposing (..)
 import Point exposing (..)
 import Math.Vector2 exposing (..)
 import GameState
+
 import Debug exposing (..)
 
 type alias Map = { tiles : Form, position : Point, size : (Int, Int) }

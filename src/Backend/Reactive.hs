@@ -13,7 +13,7 @@ module Reactive (
     module Reactive.Banana,
     module Reactive.Banana.Frameworks,
     fps,
-    test1, test2, testChan, initializeWithReactive, testjaifaim, 
+    test1, test2, initializeWithReactive, initWithReactive, testConnectionneApi3, 
     toOutputMaybe) where
 
 import Control.Monad
@@ -76,15 +76,6 @@ type SocketInput a = (Socket, a)
 handler :: ((SocketInput a) -> IO ()) -> a -> ReaderT Socket IO ()
 handler f x = ReaderT (\r -> f (r, x))    
 
-
-testChan :: (MonadIO m, MonadState RoutingTable m) => Text -> m ()
-testChan text = do
-    chan <- liftIO newTChanIO
-    on text $ handler (atomically . writeTChan chan)
-    liftIO $ do 
-        (_, x) <- atomically $ readTChan chan
-        putStrLn x
-
 test1 :: (MonadIO m, MonadState RoutingTable m) => Text -> m ()
 test1 text = do
     (output, input, _) <- trace "spawn!" $ liftIO $ spawn' unbounded
@@ -119,13 +110,7 @@ fo a = Reactive.toOutput f3 <$> a
 f4 e = do 
     (ev', n) <- eventnetwork e
     reactimate $ fo $ f2 ev' n 
-consumerReactive :: Consumer (SocketInput String) IO ()
-consumerReactive = do
-    e <- await
-    liftIO $ putStrLn (snd e)
-    --network <- liftIO $ compile $ f4 e
-    --liftIO $ actuate network
-    
+
 pipeHandler :: ((SocketInput a) -> IO ()) -> Consumer (SocketInput a) IO ()
 pipeHandler f = do
     x <- trace "await!" $ await
@@ -173,8 +158,6 @@ allEvents = go toEventofList--fmap (foldl (unionWith (++)) never . fmap (fmap pu
 toEventofList = foldl (unionWith (++)) never . fmap (fmap pure)
 
 
-testOns = do
-    on "test1" (handler Pipes.yield)
 testConnectionneApi :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event (SocketInput String)))
 testConnectionneApi = do
     userConnectedSocket <- trace "allo" $ createSocketEvent "test1"
@@ -182,6 +165,25 @@ testConnectionneApi = do
         userConnected  <-  userConnectedSocket
         return $ (\x -> trace (snd x) $ x) <$> userConnected
         
+        
+--testConnectionneApi2 :: (MonadIO m, MonadState RoutingTable m) => m ()
+testConnectionneApi2 output = do
+    userConnectedSocket <- createSocketEvent "test"
+    liftIO $ do
+        network <- compile $ do
+            userConnected  <-  userConnectedSocket
+            reactimate $ (\x -> runEffect $  Pipes.yield x >-> Pipes.Concurrent.toOutput output) <$> userConnected
+        actuate network
+            
+testConnectionneApi3 :: (MonadIO m, MonadState RoutingTable m) => m ()
+testConnectionneApi3 = do
+    userConnectedSocket <- createSocketEvent "test"
+    liftIO $ do
+        network <- compile $ do
+            userConnected  <-  userConnectedSocket
+            reactimate $ (putStrLn . snd) <$> userConnected
+        actuate network
+            
 producer :: SocketInput String -> Producer (SocketInput String) IO ()
 producer x = do
     lift $ putStrLn ("yielding " ++ snd x)
@@ -215,16 +217,35 @@ initializeWithReactive serverApi inputs = do --inputs outputNetwork =  do
         mio <- trace "inputs" $ inputs 
         return $ trace "AAAA" $ fmap (socketIOPartPipes output) mio
         --trace "on!" $ on "test1" $ handler (\x -> runEffect $ producer x >-> Pipes.Concurrent.toOutput output)
-    liftIO $ forkIO $ runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive
+    liftIO $ runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive
     return a
     
+consumerReactive :: Consumer (SocketInput String) IO ()
+consumerReactive = forever $ trace "consumerReactive" $ do
+    e <- trace "await" $ await
+    liftIO $ putStrLn (snd e)
     
+    
+    
+    
+initWithReactive' serverApi = 
+    withSpawn unbounded $ \(output, input) -> do
+
+        liftIO $ forkFinally (runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive) (\a -> putStrLn "input thread is dead")
+        initialize serverApi $ testConnectionneApi2 output
+        
     --initialize serverApi $ {-$ do
         --TODO sequenceA [on "a", on "b", on "c"]
         --mInput <- inputs 
 --        ==lift $ mInput >>= outputNetwork >>= actuate-}
 
-testjaifaim a = trace "allo" $ initializeWithReactive a testConnectionneApi
+initWithReactive serverApi = do
+    (output, input) <- liftIO $ spawn unbounded
+    liftIO $ forkFinally (runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive) (\a -> putStrLn "input thread is dead")
+    initialize serverApi $ testConnectionneApi2 output 
+    
+
+
 {-FPS method-}
 fps:: Int -> MomentIO (Event UTCTime)
 fps frame = do

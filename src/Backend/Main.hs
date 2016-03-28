@@ -23,7 +23,7 @@ main = do
   writeGameStateElm
   gameMap <- parseMap "test.dat"
   --socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI $ server gameMap
-  socketIoHandler <- testjaifaim EIOSnap.snapAPI
+  socketIoHandler <- initWithReactive EIOSnap.snapAPI
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")

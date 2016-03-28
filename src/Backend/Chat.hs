@@ -46,7 +46,7 @@ server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x =
     testSocket <- testManager
 
     liftIO $ do
-        network <- compile $ trace "YOU ONLY COMPILE ONCE" $ do
+        network <- compile $ do
             sendMessageEvent <- sendMessageSocket
             inputEvent <- testSocket
             (connectionEvent, connectedPlayers) <- usersSocket

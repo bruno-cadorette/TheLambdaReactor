@@ -53,7 +53,7 @@ keyboardMovement = movementMailbox.signal
 decodeSignal : Decode.Decoder a -> Signal.Address (Maybe a) -> Signal.Address String
 decodeSignal decoder address= Signal.forwardTo address (Decode.decodeString decoder >> logError >> Result.toMaybe)
 
-defaultGameState = { players = Dict.empty, projectiles =  [], enemies = [], hits = [] }
+defaultGameState = { players = Dict.empty, projectiles =  Dict.empty, enemies = [], hits = [] }
 defaultGameMap = {size = (0,0), items = [], sprites = []}
 
 gameMapMailbox : Signal.Mailbox (Maybe GameMap)
@@ -100,7 +100,7 @@ inputHandler input isMovement =
 playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 
 emitFromSignal : (a -> Encode.Value) -> String -> Task x Socket-> Signal a -> Signal (Task x ())
-emitFromSignal encodeFunc emitTo socket = Signal.map(\s -> socket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc s))
+emitFromSignal encodeFunc emitTo socket = Signal.map(\s -> socket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc (log "test1" s)))
 
 --emitMovement : Task x Socket -> Vec2 -> Task x ()
 --emitMovement serverSocket v = --serverSocket `andThen` emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v)
@@ -112,6 +112,6 @@ sendMovement s = emitFromSignal jsonEncVec2 "userInput" s movementMailbox.signal
 
 sendShot s = emitFromSignal jsonEncVec2 "userShoot" s normalizedMouseInput
 
-sendTest s = emitFromSignal Encode.float "test1" s <| every second
+sendTest s = emitFromSignal Encode.float "test" s <| every second
 --sendShot : Signal Vec2 -> Signal (Task x ())
 --sendShot = sendFromSignal vec2Encoder "shootInput"
