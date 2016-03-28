@@ -40,12 +40,12 @@ moveGameState bound time gs = hurtPlayers $ (moveAllBullet bound time (moveAllPl
 
 hurtPlayers :: GameState -> GameState
 hurtPlayers gs =   let bulletBounding = fmap (\ x ->(x, (BoundingSphere (H.position $ Bullet.location x) 0.5) )) $ Map.elems $projectiles gs
-                       hurtedPlayers = Map.foldrWithKey (\k x acc -> let hitted = Prelude.filter (\ (Bullet _ _ _ id') -> not $ id' == k) $ intersectingMany (BoundingSphere (H.position $ C.location x) 1.0) bulletBounding
-                                                                      in case hitted of
+                       hurtPlayers' = Map.foldrWithKey (\k x acc -> let hits' = Prelude.filter (\ (Bullet _ _ _ id') -> not $ id' == k) $ intersectingMany (BoundingSphere (H.position $ C.location x) 1.0) bulletBounding
+                                                                      in case hits' of
                                                                          [] -> acc
                                                                          _ -> k:acc) [] $ players gs
   in
-    Prelude.foldr (\ x gameState -> hurtPlayer gameState x ) gs hurtedPlayers
+    Prelude.foldr (\ x gameState -> hurtPlayer gameState x ) gs hurtPlayers'
 
 moveAllPlayer :: KdTree Point2d -> GameState -> GameState
 moveAllPlayer bound (GameState p b e h) = (GameState (Map.map (\ p' -> if (playerCanMove p' bound) then moveEntity p' else moveEntityBackward p') p) b e h)
