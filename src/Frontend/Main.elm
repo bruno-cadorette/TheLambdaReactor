@@ -3,7 +3,7 @@ module Main where
 import Signal
 import Input exposing(..)
 import Chat exposing (..)
-import Window exposing (dimensions)
+import Window exposing (dimensions, width)
 import Engine exposing (..)
 import Player exposing (..)
 import SocketIO exposing (..)
@@ -18,17 +18,18 @@ gameSocket : Task x Socket
 gameSocket =
   io "http://localhost:8001" defaultOptions
 
+port playerName : String
+
 port communication : Task a ()
 port communication =
   gameSocket `andThen` \socket ->
   chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
-  always (initialMessage socket) `andThen`
-  always (emit "test" "test" socket)
+  always (initialMessage socket)
 
 port inputs : Signal (Task x ())
 port inputs =
-  Signal.mergeMany [(sendMessage gameSocket), (sendShot gameSocket), (sendMovement gameSocket), sendTest gameSocket, initializeInput]
+  Signal.mergeMany [(sendMessage playerName gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
 
 display =
   Signal.map4 (\(w,h) chat map {player, enemies, bullets} ->
@@ -36,7 +37,7 @@ display =
                                   ++ [displayEntity (w,h) player]
                                   ++ displayEveryone (w,h) (Dict.values enemies)
                                   ++ displayBullets (w, h) bullets
-                                  ++ [Graphics.Collage.move (150, 0) chat])
+                                  ++ [chat])
 
 main =
-  display dimensions displayChat (Signal.map getMap currentGameMap) <| update currentPlayerId gameStateUpdate
+  display dimensions (displayChat playerName) (Signal.map getMap currentGameMap) <| update currentPlayerId gameStateUpdate

@@ -27,3 +27,7 @@ spec = describe "BoundingSphereSpec" $ do
           intersectBoxPos (V2 5 0) (V2 0 0) 1.0 1.0 `shouldBe` False
         it "intersectBoxPos Same" $ do
           intersectBoxPos (V2 0 0) (V2 0 0) 1.0 0.5 `shouldBe` True
+        it "interSectMany Same" $ do
+          intersectingMany (BoundingSphere (V2 0.0 0.0) 1) [(True,(BoundingSphere (V2 0.0 0.0) 1))] `shouldBe` [True]
+        it "interSectMany False" $ do
+          intersectingMany (BoundingSphere (V2 0.0 0.0) 1) [(True,(BoundingSphere (V2 5.0 0.2) 1))] `shouldBe` []
