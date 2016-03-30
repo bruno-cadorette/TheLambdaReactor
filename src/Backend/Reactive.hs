@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE GADTs #-}
 
 module Reactive (
     createSocketEvent,
@@ -13,7 +14,7 @@ module Reactive (
     module Reactive.Banana,
     module Reactive.Banana.Frameworks,
     fps,
-    test1, test2, initializeWithReactive, initWithReactive, testConnectionneApi3, 
+    test1, test2, initializeWithReactive, initWithReactive, 
     toOutputMaybe) where
 
 import Control.Monad
@@ -32,6 +33,7 @@ import Data.Text (Text)
 import Network.SocketIO
 import Network.EngineIO(ServerAPI)
 import Debug.Trace
+import Data.Bifunctor
 
 class GetSocket a where
     getSocket :: a -> Socket
@@ -175,15 +177,37 @@ testConnectionneApi2 output = do
             reactimate $ (\x -> runEffect $  Pipes.yield x >-> Pipes.Concurrent.toOutput output) <$> userConnected
         actuate network
             
-testConnectionneApi3 :: (MonadIO m, MonadState RoutingTable m) => m ()
-testConnectionneApi3 = do
-    userConnectedSocket <- createSocketEvent "test"
-    liftIO $ do
-        network <- compile $ do
-            userConnected  <-  userConnectedSocket
-            reactimate $ (putStrLn . snd) <$> userConnected
-        actuate network
-            
+testConnectionneApi3 output = do
+    on "test" (handler (\a -> void $ atomically $ send output a))
+    
+testConnectionneApi4 = 
+    [onListen "test" (id :: String -> String)]
+       
+  
+onListen :: FromJSON a => Text -> (a -> b) -> SocketListener b
+onListen = SocketListener
+data SocketListener b where
+    SocketListener :: FromJSON a => Text -> (a -> b) -> SocketListener b
+    
+runListener :: MonadState RoutingTable m => Output (Socket, t) -> SocketListener t -> m ()
+runListener output (SocketListener text f) =
+    on text (handler (void . atomically . send output . second f))
+    
+mergeListeners
+  :: (MonadState RoutingTable m) =>
+     Output (Socket, a) -> [(SocketListener a)] -> m ()
+mergeListeners ouput [] = return ()
+mergeListeners ouput xs = foldl1 (>>) $ fmap (runListener ouput) xs
+
+{-data TestApi = TestInt Int | TestString String | TestList [Int]
+apiExample = do
+    on' "a" TestInt
+    on' "b" TestString
+    on' "c" TestList-}
+    
+--listenOn :: (FromJSON a) => Text -> (a -> b) -> SocketListener b
+--listenOn text = SocketListener 
+    
 producer :: SocketInput String -> Producer (SocketInput String) IO ()
 producer x = do
     lift $ putStrLn ("yielding " ++ snd x)
@@ -194,30 +218,6 @@ socketIOPartPipes output event =
     trace "pipe" $ (compile $ reactimate outEvent) >>= actuate
     where 
         outEvent = fmap (\x -> runEffect $ trace "yielding" $ Pipes.yield x >-> Pipes.Concurrent.toOutput output) event
---sequenceA (m [MomentIO (Event a)]) -> fmap (\[MomentIO (Event a)] -> sequenceA) -> MomentIO (
-
---allEvents :: (MonadState RoutingTable m) => [SocketIOEvent a] -> m (MomentIO (Event [b]))
---allEvents events = mapM(\(text, f) -> on text (handler f))
-
---on' :: fromJSON a => String -> (a -> b) -> (String, (a -> b))
---on' text f = (text, f)
-
---fff :: (MonadState RoutingTable m) => [(Text, Int->Int)] -> m ()
---fff = mapM (\(text, f) -> on text $ handler (\s x -> (s, f x)))
-
---testewgew :: [(Text, Int->Int)]
---testewgew = [("test1", id), ("test2", (+1))]
-
---initializeWithReactive :: (MonadIO m, MonadState RoutingTable m) => 
---    Network.EngineIO.ServerAPI m -> m (MomentIO ([Event (SocketInput Connection)])) -> IO (m ())
-initializeWithReactive serverApi inputs reactiveNetwork = do --inputs outputNetwork =  do
-    (output, input) <- liftIO $ spawn unbounded
-    (addHandler, fire) <- registerCallback
-    liftIO $ do 
-        forkFinally (runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive' fire) (\a -> putStrLn "input thread is dead")
-        network <- compile $ fromAddHandler addHandler >>= reactiveNetwork
-        actuate network
-    initialize serverApi $ inputs output 
     
 consumerReactive :: Consumer (SocketInput String) IO ()
 consumerReactive = forever $ trace "consumerReactive" $ do
@@ -228,9 +228,23 @@ consumerReactive' :: Handler (SocketInput a) -> Consumer (SocketInput a) IO ()
 consumerReactive' fire = forever $ await >>= liftIO . fire
  
 initWithReactive serverApi = do
-    initializeWithReactive serverApi testConnectionneApi2 testEventNetwork
+    initializeWithReactive serverApi testEventNetwork testConnectionneApi4
     
-
+initializeWithReactive
+  :: (MonadIO m, FromJSON a) =>
+     ServerAPI m
+     -> (Event (Socket, a) -> MomentIO ())
+     -> [SocketListener a]
+     -> IO (m ())
+initializeWithReactive
+ serverApi reactiveNetwork xs = do 
+    (output, input) <- liftIO $ spawn unbounded
+    (addHandler, fire) <- registerCallback
+    liftIO $ do 
+        forkFinally (runEffect $ fromInput input >-> consumerReactive' fire) (\a -> putStrLn "input thread is dead")
+        network <- compile $ fromAddHandler addHandler >>= reactiveNetwork
+        actuate network
+    initialize serverApi $ mergeListeners output xs
 
 {-FPS method-}
 fps:: Int -> MomentIO (Event UTCTime)
