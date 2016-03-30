@@ -23,7 +23,8 @@ port communication =
   gameSocket `andThen` \socket ->
   chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
-  always (initialMessage socket)
+  always (initialMessage socket) `andThen`
+  always (emit "test" "test" socket)
 
 port inputs : Signal (Task x ())
 port inputs =

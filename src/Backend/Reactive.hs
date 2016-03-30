@@ -107,7 +107,7 @@ fo a = Reactive.toOutput f3 <$> a
    
 
 --f4 :: MonadMoment m => Event (Socket, Connection) -> m (Event (Socket, Int))
-f4 e = do 
+testEventNetwork e = do 
     (ev', n) <- eventnetwork e
     reactimate $ fo $ f2 ev' n 
 
@@ -210,39 +210,25 @@ socketIOPartPipes output event =
 
 --initializeWithReactive :: (MonadIO m, MonadState RoutingTable m) => 
 --    Network.EngineIO.ServerAPI m -> m (MomentIO ([Event (SocketInput Connection)])) -> IO (m ())
-initializeWithReactive serverApi inputs = do --inputs outputNetwork =  do
-   -- initialize serverApi $  . inputs
-    (output, input, _) <- trace "spawn!" $ liftIO $ spawn' unbounded
-    a <- initialize serverApi $ do 
-        mio <- trace "inputs" $ inputs 
-        return $ trace "AAAA" $ fmap (socketIOPartPipes output) mio
-        --trace "on!" $ on "test1" $ handler (\x -> runEffect $ producer x >-> Pipes.Concurrent.toOutput output)
-    liftIO $ runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive
-    return a
+initializeWithReactive serverApi inputs reactiveNetwork = do --inputs outputNetwork =  do
+    (output, input) <- liftIO $ spawn unbounded
+    (addHandler, fire) <- registerCallback
+    liftIO $ do 
+        forkFinally (runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive' fire) (\a -> putStrLn "input thread is dead")
+        network <- compile $ fromAddHandler addHandler >>= reactiveNetwork
+        actuate network
+    initialize serverApi $ inputs output 
     
 consumerReactive :: Consumer (SocketInput String) IO ()
 consumerReactive = forever $ trace "consumerReactive" $ do
     e <- trace "await" $ await
     liftIO $ putStrLn (snd e)
-    
-    
-    
-    
-initWithReactive' serverApi = 
-    withSpawn unbounded $ \(output, input) -> do
 
-        liftIO $ forkFinally (runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive) (\a -> putStrLn "input thread is dead")
-        initialize serverApi $ testConnectionneApi2 output
-        
-    --initialize serverApi $ {-$ do
-        --TODO sequenceA [on "a", on "b", on "c"]
-        --mInput <- inputs 
---        ==lift $ mInput >>= outputNetwork >>= actuate-}
-
+consumerReactive' :: Handler (SocketInput a) -> Consumer (SocketInput a) IO ()
+consumerReactive' fire = forever $ await >>= liftIO . fire
+ 
 initWithReactive serverApi = do
-    (output, input) <- liftIO $ spawn unbounded
-    liftIO $ forkFinally (runEffect $ trace "fromInput!" $ fromInput input >-> consumerReactive) (\a -> putStrLn "input thread is dead")
-    initialize serverApi $ testConnectionneApi2 output 
+    initializeWithReactive serverApi testConnectionneApi2 testEventNetwork
     
 
 
