@@ -131,3 +131,26 @@ jsonEncLocation  val =
    , ("orientation", jsonEncVec2 val.orientation)
    ]
 
+
+
+type alias GameMap  =
+   { size: (Int, Int)
+   , items: (List Int)
+   , sprites: (List (Int, Int, Int))
+   }
+
+jsonDecGameMap : Json.Decode.Decoder ( GameMap )
+jsonDecGameMap =
+   ("size" := Json.Decode.tuple2 (,) (Json.Decode.int) (Json.Decode.int)) `Json.Decode.andThen` \psize ->
+   ("items" := Json.Decode.list (Json.Decode.int)) `Json.Decode.andThen` \pitems ->
+   ("sprites" := Json.Decode.list (Json.Decode.tuple3 (,,) (Json.Decode.int) (Json.Decode.int) (Json.Decode.int))) `Json.Decode.andThen` \psprites ->
+   Json.Decode.succeed {size = psize, items = pitems, sprites = psprites}
+
+jsonEncGameMap : GameMap -> Value
+jsonEncGameMap  val =
+   Json.Encode.object
+   [ ("size", (\(v1,v2) -> Json.Encode.list [(Json.Encode.int) v1,(Json.Encode.int) v2]) val.size)
+   , ("items", (Json.Encode.list << List.map Json.Encode.int) val.items)
+   , ("sprites", (Json.Encode.list << List.map (\(v1,v2,v3) -> Json.Encode.list [(Json.Encode.int) v1,(Json.Encode.int) v2,(Json.Encode.int) v3])) val.sprites)
+   ]
+

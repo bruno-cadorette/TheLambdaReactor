@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-module GameStateManagement (gameStateManager,gameStateSender, UserInput,fpsClock,testManager,updateStuff) where
+module GameStateManagement (gameStateManager,gameStateSender, UserInput(..),fpsClock,testManager,updateStuff,createMovement,handleInput,createShoot) where
 
 import Reactive
 import qualified Data.Map.Strict as Map
@@ -22,11 +22,11 @@ type Direction = V2 Float
 
 
 
-data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Socket Direction Socket
+data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Socket Direction Socket | None
 
 instance GetSocket UserInput where
-    getSocket (Movement _ s) = s
-    getSocket (Shoot _ s) = s
+    getSocket (GameStateManagement.Movement _ s) = s
+    getSocket (GameStateManagement.Shoot _ s) = s
     getSocket (Both _ s _ _) = s
 
 
@@ -40,7 +40,7 @@ fpsClock playerNames = do
                         fpsEvent <- fps (33 * 1000)
                         return (fpsEvent, getSocketBehavior playerNames)
 
-gameStateManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Behavior GameEngine))
+gameStateManager :: (MonadIO m) => m (MomentIO (Behavior GameEngine))
 gameStateManager  = do
 
     return $ do
@@ -68,8 +68,20 @@ updateStuff pls time game input = getGameStateForJSON $handleInput pls game inpu
               handleInput pls2 game' (Movement m s) _  = (game', Map.update (\ x -> Just $ move x m) s pls2)
               handleInput pls2 game' (Shoot d s) t = (handleShoot d (Map.lookup s pls2) game' (getSocketId s) t, pls2)
               handleInput pls2 game' (Both m s d _) t = (handleShoot d (Map.lookup s pls2) game' (getSocketId s) t,  Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game' None _ = (game',pls2)
 
 
+handleInput :: (Socket,ApiExample) -> GameEngine -> GameEngine
+handleInput (s,MovementIn n) ge = ge
+handleInput (s,ShootIn n) ge = ge
+handleInput _ ge = ge
+
+
+createMovement :: Socket -> [Char] -> UserInput
+createMovement s n = Movement (fromJust $A.decode $ BS.pack n) s
+
+createShoot :: Socket -> [Char] -> UserInput
+createShoot s n = Shoot (fromJust $A.decode $ BS.pack n) s
 
 
 --Dont really need it right now

@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 
-module Chat (server) where
+module Chat (Chat.initWithReactive) where
 
 import Reactive
 import qualified Data.Map.Strict as Map
@@ -19,6 +19,12 @@ import GameEngine
 import Character
 import Data.Time.Clock
 import Lib
+import Network.SocketIO.Reactive
+import Network.EngineIO(ServerAPI)
+import Debug.Trace
+
+type Move = V2 Float
+type Direction = V2 Float
 
 sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
 sendMessage p (s, n) =
@@ -35,11 +41,23 @@ setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   gameUpdated <- accumB  emptyGameState $((\ updates currenTime _ old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
   return gameUpdated
 
-server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
+setGameEvent2 :: (Behavior GameEngine) -> Behavior (Map.Map Socket Entity) -> Event (Socket, ApiExample) -> Event a -> KdTree Point2d -> MomentIO (Behavior GameState)
+setGameEvent2 inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
+  let inputEventTrans = transform <$> inputEvent
+  bcurrentTime <- fromPoll getCurrentTime
+  --gameStateObject <- inputSocket
+  let mix = updateStuff <$> connectedPlayers <*> bcurrentTime <*> inputSocket <@> inputEventTrans
+  gameObject <- accumB emptyGameState $ fmap mergeGameState mix
+  gameUpdated <- accumB  emptyGameState $((\ updates currenTime _ old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
+  return gameUpdated
+  where
+    transform (s,MovementIn n) = createMovement s (unpack n)
+    transform (s,ShootIn n) = createShoot s (unpack n)
+    tranform (s, _) = None
+
+{-server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
 server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
                  in do
-    
-                 
     sendMessageSocket   <- createSocketEvent "sendMessage"
     usersSocket <- connectionManager
     inputSocket <- gameStateManager
@@ -57,3 +75,38 @@ server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x =
             reactimate $ (\ g s t -> toOutputMaybe (gameStateSender g t) s) <$> x <*>  sockBehavior <@> fpsEvent
 
         actuate network
+        -}
+
+f2 :: Event Socket -> Behavior a -> Event (Socket, a)
+f2 ev n = fmap (\n' s -> (s, n')) n <@> ev
+
+eventnetwork :: (MonadMoment m) => Event (Socket, ApiExample) -> m (Event Socket, Behavior ApiExample)
+eventnetwork e = mapAccum Disconnection $ (\ev acc -> (fst ev, (snd ev))) <$> e
+
+handleEvent :: PlayerNames -> GameEngine -> (Socket,ApiExample) -> (PlayerNames,GameEngine)
+handleEvent pl ge (s,(MovementIn m)) = (pl,ge)
+handleEvent pl ge (s,(ShootIn sh)) = (pl,ge)
+handleEvent pl ge (s,(Disconnection)) = (pl,ge)
+handleEvent pl ge (s,_) = (pl,ge)
+
+testEventNetwork :: Map.Map (Int, Int) Int -> Event (Socket, ApiExample)-> MomentIO ()
+testEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
+                 in do
+    (ev', n) <- eventnetwork e
+    connectedPlayers <- accumB Map.empty $ (\ e' cp -> handleConnection (trace (show $snd e') $e') cp) <$> e
+    movementInput <- accumB getNewGameState $ (\ e' ge -> ge) <$> e
+    (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
+    x <- setGameEvent2 movementInput connectedPlayers e fpsEvent mapBound
+    reactimateSocket (\(_,n)-> broadcastAll "updateGameState" $ trace (show n) $ n) $ f2 ev' x
+    --reactimateSocket (\(_,x) -> broadcastAll "Lol" x)
+
+listenerExample :: [SocketListener ApiExample]
+listenerExample =
+      [OnListen "newUser" Connection,
+       OnDisconnect Disconnection,
+       OnListen "userInput" MovementIn,
+       OnListen "userShoot" ShootIn]
+
+initWithReactive :: MonadIO m => Network.EngineIO.ServerAPI m -> Map.Map (Int, Int) Int -> IO (m ())
+initWithReactive serverApi mapBound = do
+      initializeWithReactive serverApi (testEventNetwork mapBound) listenerExample

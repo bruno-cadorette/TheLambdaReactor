@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-module UserManagement (connectionManager, connectionMessageSender, UserConnection(..), PlayerNames) where
+module UserManagement (connectionManager, connectionMessageSender, UserConnection(..), PlayerNames,joinGame,leftGame,handleConnection) where
 
 import Reactive
 import qualified Data.Map.Strict as Map
@@ -38,6 +38,13 @@ connectionManager = do
         connection (EnterGame n s) m = ((EnterGame n s), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) (trace (show $ Map.elems m) m))
         connection (LeaveGame s) m = ((LeaveGame s), Map.delete s m)
         connection (Both n s s') m = ((Both n s s'), Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) $ Map.delete s' m)
+
+
+handleConnection :: (Socket, ApiExample) -> PlayerNames -> PlayerNames
+handleConnection (s,(Connection n)) m =  Map.insert s (Entity 100 (Location (V2 0.0 0.0) (V2 0.0 0.0))) m
+handleConnection (s,(Disconnection)) m =  Map.delete s m
+handleConnection _ m = m
+
 
 --TODO put the message in a ToJson instance so that the client will decide the message to show on each case
 joinGame ::(MonadIO m, MonadReader Socket m) => String -> GameMap -> Socket -> m ()

@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Lib (module Exportable, decodeMessage) where
+module Lib (module Exportable, decodeMessage, ApiExample(..)) where
   import Elm.Derive
   import GameState
   import Game.Helper as Exportable
@@ -15,6 +15,8 @@ module Lib (module Exportable, decodeMessage) where
   import Data.Text as Text
   import Control.Monad
   import Game.MapReader
+
+  data ApiExample = Connection String | MovementIn Text | ShootIn Text | Disconnection | Test String deriving (Show)
 
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState

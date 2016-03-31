@@ -12,7 +12,8 @@ import Snap.Http.Server.Config
 import qualified Network.SocketIO as SocketIO
 import qualified Snap.CORS as CORS
 import Game.MapReader
-
+--import Reactive
+import Network.SocketIO.Reactive
 --This is usefull for generating the file with ghci without having to start the server
 writeGameStateElm :: IO ()
 writeGameStateElm = writeFile "GameState.elm" generateGameState
@@ -21,7 +22,7 @@ main :: IO ()
 main = do
   writeGameStateElm
   gameMap <- parseMap "test.dat"
-  socketIoHandler <- SocketIO.initialize EIOSnap.snapAPI $ server gameMap
+  socketIoHandler <- initWithReactive EIOSnap.snapAPI gameMap
   Snap.httpServe (setPort 8001 defaultConfig) $ CORS.applyCORS CORS.defaultOptions $
     Snap.route [ ("/socket.io", socketIoHandler)
                , ("/", Snap.serveDirectory "../frontend")
