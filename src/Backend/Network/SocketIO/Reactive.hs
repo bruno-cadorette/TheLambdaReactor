@@ -33,14 +33,15 @@ class GetSocket a where
 instance GetSocket (Socket, a) where
     getSocket = fst
 
+
 instance GetSocket Socket where
     getSocket = id
-    
-    
+
+
 type SocketInput a = (Socket, a)
 
 handler :: ((SocketInput a) -> IO ()) -> a -> ReaderT Socket IO ()
-handler f x = ReaderT (\r -> f (r, x))    
+handler f x = ReaderT (\r -> f (r, x))
 
 registerCallback :: (MonadIO m) => IO (AddHandler (Socket, a), (Socket, a) -> m ())
 registerCallback = do
@@ -56,27 +57,27 @@ broadcastAll text x = do
 
 reactimateSocket :: GetSocket s => (s -> ReaderT Socket IO ()) -> Event s -> MomentIO ()
 reactimateSocket f = reactimate . fmap (\a -> runReaderT (f a) $ getSocket a)
-    
-    
+
+
 fireCallback :: Handler (SocketInput a) -> Consumer (SocketInput a) IO ()
-fireCallback fire = forever $ await >>= liftIO . fire    
-    
+fireCallback fire = forever $ await >>= liftIO . fire
+
 data SocketListener b where
     OnListen :: FromJSON a => Text -> (a -> b) -> SocketListener b
     OnDisconnect ::  b -> SocketListener b
-    
+
 runListener :: MonadState RoutingTable m => Output (Socket, t) -> SocketListener t -> m ()
 runListener output (OnListen text f) =
     on text (handler (void . atomically . send output . second f))
-runListener output (OnDisconnect a) = 
+runListener output (OnDisconnect a) =
     appendDisconnectHandler (handler (\(s, ()) -> void $ atomically $ send output (s, a)) ())
-    
+
 mergeListeners
   :: (MonadState RoutingTable m) =>
      Output (Socket, a) -> [(SocketListener a)] -> m ()
 mergeListeners _ [] = return ()
-mergeListeners output xs = foldl1 (>>) $ fmap (runListener output) xs    
-    
+mergeListeners output xs = foldl1 (>>) $ fmap (runListener output) xs
+
 initializeWithReactive
   :: (MonadIO m) =>
      ServerAPI m
@@ -84,10 +85,10 @@ initializeWithReactive
      -> [SocketListener a]
      -> IO (m ())
 initializeWithReactive
- serverApi reactiveNetwork xs = do 
+ serverApi reactiveNetwork xs = do
     (output, input) <- liftIO $ spawn unbounded
     (addHandler, fire) <- registerCallback
-    liftIO $ do 
+    liftIO $ do
         void $ forkIO(runEffect $ fromInput input >-> fireCallback fire)
         network <- compile $ fromAddHandler addHandler >>= reactiveNetwork
         actuate network
