@@ -77,11 +77,11 @@ handleInput (s,ShootIn n) ge = ge
 handleInput _ ge = ge
 
 
-createMovement :: Socket -> [Char] -> UserInput
-createMovement s n = Movement (fromJust $A.decode $ BS.pack (trace n n)) s
+createMovement :: Socket -> V2 Float -> UserInput
+createMovement s n = Movement n s
 
-createShoot :: Socket -> [Char] -> UserInput
-createShoot s n = Shoot (fromJust $A.decode $ BS.pack n) s
+createShoot :: Socket -> V2 Float -> UserInput
+createShoot s n = Shoot n s
 
 
 --Dont really need it right now
