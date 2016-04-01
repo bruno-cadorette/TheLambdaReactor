@@ -17,10 +17,10 @@ import Lib
 import Debug.Trace
 import Data.Aeson as A
 import qualified Data.ByteString.Lazy.Char8 as BS
+
+
 type Move = V2 Float
 type Direction = V2 Float
-
-
 
 data UserInput = Movement Move Socket | Shoot Direction Socket | Both Move Socket Direction Socket | None
 

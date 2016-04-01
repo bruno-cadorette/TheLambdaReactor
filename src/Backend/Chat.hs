@@ -51,9 +51,9 @@ setGameEvent2 inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   gameUpdated <- accumB  emptyGameState $((\ updates currenTime _ old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
   return gameUpdated
   where
-    transform (s,MovementIn n) = createMovement s (unpack n)
-    transform (s,ShootIn n) = createShoot s (unpack n)
-    tranform (s, _) = None
+    transform (s,MovementIn n) = createMovement s ((trace "MOVEMENT" $ show n))
+    transform (s,ShootIn n) = createShoot s $ show n
+    transform (s, _) = None
 
 {-server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
 server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
@@ -81,7 +81,7 @@ f2 :: Event Socket -> Behavior a -> Event (Socket, a)
 f2 ev n = fmap (\n' s -> (s, n')) n <@> ev
 
 eventnetwork :: (MonadMoment m) => Event (Socket, ApiExample) -> m (Event Socket, Behavior ApiExample)
-eventnetwork e = mapAccum Disconnection $ (\ev acc -> (fst ev, (snd ev))) <$> e
+eventnetwork e = mapAccum Disconnection $ (\ev acc -> (fst ev, (trace (show $snd ev) (snd ev)))) <$> e
 
 handleEvent :: PlayerNames -> GameEngine -> (Socket,ApiExample) -> (PlayerNames,GameEngine)
 handleEvent pl ge (s,(MovementIn m)) = (pl,ge)

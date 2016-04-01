@@ -19,6 +19,7 @@ gameSocket =
   io "http://localhost:8001" defaultOptions
 
 port playerName : String
+port playerName = "john cena"
 
 port communication : Task a ()
 port communication =
