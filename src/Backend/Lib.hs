@@ -18,7 +18,7 @@ module Lib (module Exportable, decodeMessage, ApiExample(..)) where
   type Move = V2 Float
   type Direction = V2 Float
 
-  data ApiExample = Connection String | MovementIn Move | ShootIn Direction | Disconnection | Test String deriving (Show)
+  data ApiExample = Connection String | MovementIn Text | ShootIn Text | Disconnection | Test String deriving (Show)
 
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState
