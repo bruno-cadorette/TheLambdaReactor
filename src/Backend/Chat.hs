@@ -111,9 +111,8 @@ testEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x 
     let sockE = filterJust $ bToE sockBehavior fpsEvent
     x <- setGameEvent2 movementInput connectedPlayers e fpsEvent mapBound
     reactimateSocket (\n -> connectionMessageSender (mapToExport gameMap)  n) connectionEvent
-    reactimateSocket (\(_,n)-> broadcastAll "updateGameState" $ trace (show n) $ n) $ f2 ev' x
+    --reactimateSocket (\(_,n)-> broadcastAll "updateGameState" $ trace (show n) $ n) $ f2 ev' x
     reactimateSocket (\(s,n)-> broadcastAll "updateGameState" n) $ (\ x sock -> (sock,x)) <$> x <@> sockE
-    --reactimateSocket (\(_,x) -> broadcastAll "Lol" x)
 
 listenerExample :: [SocketListener ApiExample]
 listenerExample =
