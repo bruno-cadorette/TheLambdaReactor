@@ -51,8 +51,8 @@ setGameEvent2 inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   gameUpdated <- accumB  emptyGameState $((\ updates currenTime _ old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
   return gameUpdated
   where
-    transform (s,MovementIn n) = createMovement s ((trace "MOVEMENT" $ unpack n))
-    transform (s,ShootIn n) = createShoot s $ unpack n
+    transform (s,MovementIn n) = createMovement s (trace "MOVEMENT" n)
+    transform (s,ShootIn n) = createShoot s n
     transform (s, _) = None
 
 {-server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
