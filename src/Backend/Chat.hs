@@ -51,8 +51,8 @@ setGameEvent2 inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   gameUpdated <- accumB  emptyGameState $((\ updates currenTime _ old -> (moveGameState mapBound currenTime) $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
   return gameUpdated
   where
-    transform (s,MovementIn n) = createMovement s ((trace "MOVEMENT" $ show n))
-    transform (s,ShootIn n) = createShoot s $ show n
+    transform (s,MovementIn n) = createMovement s ((trace "MOVEMENT" $ unpack n))
+    transform (s,ShootIn n) = createShoot s $ unpack n
     transform (s, _) = None
 
 {-server :: (MonadIO m, MonadState RoutingTable m) =>  Map.Map (Int, Int) Int -> m ()
@@ -79,7 +79,10 @@ server gameMap =let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x =
 
 f2 :: Event Socket -> Behavior a -> Event (Socket, a)
 f2 ev n = fmap (\n' s -> (s, n')) n <@> ev
-
+{-
+f2E :: Event Socket -> Event UTCTime -> Event (SocketInput UTCTime)
+f2E ev n = (fmap (\n' s -> (s, n')) n) ev
+-}
 eventnetwork :: (MonadMoment m) => Event (Socket, ApiExample) -> m (Event Socket, Behavior ApiExample)
 eventnetwork e = mapAccum Disconnection $ (\ev acc -> (fst ev, (trace (show $snd ev) (snd ev)))) <$> e
 
@@ -89,14 +92,20 @@ handleEvent pl ge (s,(ShootIn sh)) = (pl,ge)
 handleEvent pl ge (s,(Disconnection)) = (pl,ge)
 handleEvent pl ge (s,_) = (pl,ge)
 
+isConnection :: ApiExample -> Bool
+isConnection (Connection n) = True
+isConnection _ = False
+
 testEventNetwork :: Map.Map (Int, Int) Int -> Event (Socket, ApiExample)-> MomentIO ()
 testEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
                  in do
     (ev', n) <- eventnetwork e
+    let connectionEvent = filterE (\ (s,x) -> isConnection x) e
     connectedPlayers <- accumB Map.empty $ (\ e' cp -> handleConnection (trace (show $snd e') $e') cp) <$> e
     movementInput <- accumB getNewGameState $ (\ e' ge -> ge) <$> e
     (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
     x <- setGameEvent2 movementInput connectedPlayers e fpsEvent mapBound
+    reactimateSocket (\n -> connectionMessageSender (mapToExport gameMap)  n) connectionEvent
     reactimateSocket (\(_,n)-> broadcastAll "updateGameState" $ trace (show n) $ n) $ f2 ev' x
     --reactimateSocket (\(_,x) -> broadcastAll "Lol" x)
 

@@ -65,7 +65,7 @@ testManager = do
 updateStuff :: Map.Map Socket Entity -> UTCTime  -> GameEngine -> UserInput-> GameState
 updateStuff pls time game input = getGameStateForJSON $handleInput pls game input time
             where
-              handleInput pls2 game' (Movement m s) _  = (game', Map.update (\ x -> Just $ move x m) s pls2)
+              handleInput pls2 game' (Movement m s) _  = (game', Map.update (\ x -> Just $ move x (trace ((show m)++"UPDATESTUFF") m)) s pls2)
               handleInput pls2 game' (Shoot d s) t = (handleShoot d (Map.lookup s pls2) game' (getSocketId s) t, pls2)
               handleInput pls2 game' (Both m s d _) t = (handleShoot d (Map.lookup s pls2) game' (getSocketId s) t,  Map.update (\ x -> Just $ move x m) s pls2)
               handleInput pls2 game' None _ = (game',pls2)
@@ -78,7 +78,7 @@ handleInput _ ge = ge
 
 
 createMovement :: Socket -> [Char] -> UserInput
-createMovement s n = Movement (fromJust $A.decode $ BS.pack n) s
+createMovement s n = Movement (fromJust $A.decode $ BS.pack (trace n n)) s
 
 createShoot :: Socket -> [Char] -> UserInput
 createShoot s n = Shoot (fromJust $A.decode $ BS.pack n) s

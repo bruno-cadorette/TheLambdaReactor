@@ -53,15 +53,10 @@ joinGame n gameMap s  = do
                 emit "gameMap" gameMap
                 broadcastAll "receiveServerMessage" (n `mappend` " has join the game")
 --MonadIO m MonadReader Socket m
-leftGame :: (MonadIO m, MonadReader Socket m) => Socket -> Map.Map Socket a -> m ()
-leftGame s m =
-    case Map.lookup s m of
-        Just _ -> broadcastAll "receiveServerMessage" ( (getSocketId s) `mappend` " has left the game")
-        Nothing -> broadcastAll "receiveServerMessage" ("Someone has left the game" :: String) -- return () -- TODO log
+leftGame :: (MonadIO m, MonadReader Socket m) => Socket -> m ()
+leftGame s =
+    broadcastAll "receiveServerMessage" ( (getSocketId s) `mappend` " has left the game")
 
-connectionMessageSender :: (MonadIO m) => GameMap -> PlayerNames -> UserConnection -> ReaderT Socket m ()
-connectionMessageSender gameMap _ (EnterGame n s) = joinGame n gameMap s
-connectionMessageSender _ m (LeaveGame s) = leftGame s m
-connectionMessageSender gameMap m (Both n _ s) = do
-    joinGame n gameMap s
-    leftGame s m
+connectionMessageSender :: (MonadIO m) => GameMap -> (Socket, ApiExample) -> ReaderT Socket m ()
+connectionMessageSender gameMap (s,(Connection n)) = joinGame n gameMap s
+connectionMessageSender _ (s,Disconnection) = leftGame s
