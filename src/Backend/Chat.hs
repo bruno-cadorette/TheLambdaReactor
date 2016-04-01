@@ -94,7 +94,11 @@ handleEvent pl ge (s,_) = (pl,ge)
 
 isConnection :: ApiExample -> Bool
 isConnection (Connection n) = True
+isConnection (Disconnection) = True
 isConnection _ = False
+
+bToE :: Behavior a -> Event b-> Event a
+bToE b e = (\ x y -> x) <$> b <@> e
 
 testEventNetwork :: Map.Map (Int, Int) Int -> Event (Socket, ApiExample)-> MomentIO ()
 testEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
@@ -104,9 +108,11 @@ testEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x 
     connectedPlayers <- accumB Map.empty $ (\ e' cp -> handleConnection (trace (show $snd e') $e') cp) <$> e
     movementInput <- accumB getNewGameState $ (\ e' ge -> ge) <$> e
     (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
+    let sockE = filterJust $ bToE sockBehavior fpsEvent
     x <- setGameEvent2 movementInput connectedPlayers e fpsEvent mapBound
     reactimateSocket (\n -> connectionMessageSender (mapToExport gameMap)  n) connectionEvent
     reactimateSocket (\(_,n)-> broadcastAll "updateGameState" $ trace (show n) $ n) $ f2 ev' x
+    reactimateSocket (\(s,n)-> broadcastAll "updateGameState" n) $ (\ x sock -> (sock,x)) <$> x <@> sockE
     --reactimateSocket (\(_,x) -> broadcastAll "Lol" x)
 
 listenerExample :: [SocketListener ApiExample]
