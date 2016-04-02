@@ -25,11 +25,16 @@ tileSize = 32
 emptyGameState :: GameState
 emptyGameState = GameState Map.empty Map.empty [] []
 
+
+-- A U B
+--B = (A N B U B)
+--B = old
+--A = up
 -- update old
 mergeGameState :: GameState -> GameState -> GameState
 mergeGameState (GameState p b e _ ) (GameState p' b' _ _ ) = let newBullet = Map.map (\ b'' -> b'' {Bullet.location = moveLocation (Bullet.location b'')  (H.position $ C.location $ fromJust $ Map.lookup (playerId b'') p') }) b
   in
-   (GameState (Map.unionWith  (\ p1 p2 -> p2 {C.location = changeOri  (C.location p2) (orientation $ C.location p1)} ) p p')
+   (GameState (Map.unionWith  (\ p1 p2 -> p2 {C.location = changeOri  (C.location p2) (orientation $ C.location p1)} ) (Map.intersection p' p) p)
               (Map.unionWith (\ b1 _ -> b1) newBullet b') e [])
 
 hurtPlayer :: GameState -> Id -> GameState
