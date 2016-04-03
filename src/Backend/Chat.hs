@@ -26,12 +26,13 @@ import Debug.Trace
 type Move = V2 Float
 type Direction = V2 Float
 
-sendMessage :: PlayerNames -> (Socket, Text) -> EventHandler ()
+{-
+sendMessage :: (Socket, ApiExample) -> EventHandler ()
 sendMessage p (s, n) =
     case Map.lookup s p of
         Just x -> broadcastAll "receiveMessage" $ Message (pack (show x)) n
         Nothing -> broadcastAll "receiveMessage" $ Message "ERROR USER" n
-
+-}
 setGameEvent :: MomentIO (Behavior GameEngine) -> Behavior (Map.Map Socket Entity) -> Event UserInput -> Event a -> KdTree Point2d -> MomentIO (Behavior GameState)
 setGameEvent inputSocket connectedPlayers inputEvent fpsEvent mapBound = do
   bcurrentTime <- fromPoll getCurrentTime
@@ -97,6 +98,10 @@ isConnection (Connection n) = True
 isConnection (Disconnection) = True
 isConnection _ = False
 
+isChat :: ApiExample -> Bool
+isChat (ChatIn x) = True
+isChat _ = False
+
 bToE :: Behavior a -> Event b-> Event a
 bToE b e = (\ x y -> x) <$> b <@> e
 
@@ -105,12 +110,14 @@ testEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x 
                  in do
     (ev', n) <- eventnetwork e
     let connectionEvent = filterE (\ (s,x) -> isConnection x) e
+    let chatEvent = filterE (\(s,x) -> isChat x) e
     connectedPlayers <- accumB Map.empty $ (\ e' cp -> handleConnection (trace (show $snd e') $e') cp) <$> e
     movementInput <- accumB getNewGameState $ (\ e' ge -> ge) <$> e
     (fpsEvent,sockBehavior) <- fpsClock connectedPlayers
     let sockE = filterJust $ bToE sockBehavior fpsEvent
     x <- setGameEvent2 movementInput connectedPlayers e fpsEvent mapBound
     reactimateSocket (\n -> connectionMessageSender (mapToExport gameMap)  n) connectionEvent
+    reactimateSocket (\ (s,ChatIn x) -> broadcastAll "receiveMessage" (Message (getSocketId s) x)) chatEvent
     --reactimateSocket (\(_,n)-> broadcastAll "updateGameState" $ trace (show n) $ n) $ f2 ev' x
     reactimateSocket (\(s,n)-> broadcastAll "updateGameState" n) $ (\ x sock -> (sock,x)) <$> x <@> sockE
 
@@ -119,7 +126,8 @@ listenerExample =
       [OnListen "newUser" Connection,
        OnDisconnect Disconnection,
        OnListen "userInput" MovementIn,
-       OnListen "userShoot" ShootIn]
+       OnListen "userShoot" ShootIn,
+       OnListen "sendMessage" ChatIn]
 
 initWithReactive :: MonadIO m => Network.EngineIO.ServerAPI m -> Map.Map (Int, Int) Int -> IO (m ())
 initWithReactive serverApi mapBound = do
