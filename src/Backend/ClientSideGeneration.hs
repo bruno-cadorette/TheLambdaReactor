@@ -9,6 +9,11 @@ import Bullet
 import Lib
 import Game.MapReader
 
+{-
+  This module use elm-bridge to create the json wrapper of our records type for the elm application.
+  The output of this file is in GameState.elm
+-}
+
 generateGameState :: String
 generateGameState =
     moduleHeader "GameState" ++ vec2Json ++ makeModuleContentWithAlterations (defaultAlterations . myAlteration)

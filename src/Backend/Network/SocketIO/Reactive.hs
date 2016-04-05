@@ -9,7 +9,9 @@ module Network.SocketIO.Reactive(
     broadcastAll,
     SocketListener(..),
     reactimateSocket,
-    initializeWithReactive) where
+    initializeWithReactive,
+    module Reactive.Banana,
+    module Reactive.Banana.Frameworks) where
 
 import Control.Monad
 import Control.Monad.IO.Class

@@ -20,6 +20,7 @@ module Lib (module Exportable, decodeMessage, ApiExample(..)) where
 
   data ApiExample = Connection String | MovementIn Move | ShootIn Direction | Disconnection | ChatIn Text.Text deriving (Show)
 
+  {-Derive game records from toJson, fromJSON, and ElmDerive, see ClientSideGeneration.hs-}
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameState
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Location
@@ -31,6 +32,8 @@ module Lib (module Exportable, decodeMessage, ApiExample(..)) where
 
   decodeMessage :: Text.Text -> Maybe Message
   decodeMessage text = Aeson.decode (BS.pack (Text.unpack text))
+
+  {-In the package linear, V2 does not instantiate to/fromJSON, the warning here is okay-}
 
   instance (Aeson.ToJSON a) => Aeson.ToJSON (V2 a)  where
    toJSON x =

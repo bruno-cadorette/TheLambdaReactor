@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-module GameStateManagement (gameStateManager,gameStateSender, UserInput(..),fpsClock,testManager,updateStuff,createMovement,handleInput,createShoot) where
+module GameStateManagement ( UserInput(..),fpsClock,updateStuff,createMovement,createShoot) where
 
 import Reactive
 import qualified Data.Map.Strict as Map
@@ -40,28 +40,6 @@ fpsClock playerNames = do
                         fpsEvent <- fps (33 * 1000)
                         return (fpsEvent, getSocketBehavior playerNames)
 
-gameStateManager :: (MonadIO m) => m (MomentIO (Behavior GameEngine))
-gameStateManager  = do
-
-    return $ do
-        fpsEventMoment <- fps (33 * 1000)
-        let eUpdate = (updateWorld) <$ fpsEventMoment
-        accumB getNewGameState eUpdate
-
-updateWorld :: GameEngine -> GameEngine
-updateWorld m = m
-
-testManager :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event UserInput))
-testManager = do
-    userInputSocket <- createSocketEvent "userInput"
-    userShootSocket <- createSocketEvent "userShoot"
-    return $ do
-      userInput  <-  userInputSocket
-      userShoot <- userShootSocket
-      let inputEvent = (\(s, n) -> Movement (fromJust $A.decode $ BS.pack n) s) <$> userInput
-      let shootEvent = (\(s, n) -> Shoot (fromJust $A.decode $ BS.pack n) s) <$> userShoot
-      return (unionWith (\ (Movement n s) (Shoot n' s') -> Both n s n' s') inputEvent shootEvent)
-
 updateStuff :: Map.Map Socket Entity -> UTCTime  -> GameEngine -> UserInput-> GameState
 updateStuff pls time game input = getGameStateForJSON $handleInput pls game input time
             where
@@ -71,22 +49,9 @@ updateStuff pls time game input = getGameStateForJSON $handleInput pls game inpu
               handleInput pls2 game' None _ = (game',pls2)
 
 
-handleInput :: (Socket,ApiExample) -> GameEngine -> GameEngine
-handleInput (s,MovementIn n) ge = ge
-handleInput (s,ShootIn n) ge = ge
-handleInput _ ge = ge
-
-
+--Create game record from communication
 createMovement :: Socket -> V2 Float -> UserInput
 createMovement s n = Movement n s
 
 createShoot :: Socket -> V2 Float -> UserInput
 createShoot s n = Shoot n s
-
-
---Dont really need it right now
-notifyMove :: GameState -> UTCTime -> EventHandler()
-notifyMove n _ = broadcastAll "updateGameState" (trace "sending updates!" n)
-
-gameStateSender :: GetSocket a => GameState -> UTCTime -> a -> EventHandler()
-gameStateSender game time _ = notifyMove  game time
