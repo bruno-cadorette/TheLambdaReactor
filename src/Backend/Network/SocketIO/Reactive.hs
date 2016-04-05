@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
-
 
 module Network.SocketIO.Reactive(
     GetSocket(..),
@@ -24,28 +24,31 @@ import Data.Aeson
 import Pipes.Concurrent
 import Pipes
 import Data.Text (Text)
+import Data.ByteString.Lazy.Char8 (pack)
 import Network.SocketIO
-import Network.EngineIO(ServerAPI)
-import Data.Bifunctor
+import Network.EngineIO (ServerAPI)
 
 
 class GetSocket a where
     getSocket :: a -> Socket
 
-instance GetSocket (Socket, a) where
+instance GetSocket (SocketInput a) where
     getSocket = fst
-
 
 instance GetSocket Socket where
     getSocket = id
-
-
+    
+    
 type SocketInput a = (Socket, a)
 
-handler :: ((SocketInput a) -> IO ()) -> a -> ReaderT Socket IO ()
-handler f x = ReaderT (\r -> f (r, x))
+data SocketListener b where
+    OnListen :: FromJSON a => Text -> (a -> b) -> SocketListener b -- ^ This is like the 'on' function on the socket-io package
+    OnDisconnect ::  b -> SocketListener b -- ^ This is like the 'appendDisconnectHandler' function on the socket-io package
 
-registerCallback :: (MonadIO m) => IO (AddHandler (Socket, a), (Socket, a) -> m ())
+handler :: (FromJSON a) => (SocketInput a -> IO ()) -> a -> ReaderT Socket IO ()
+handler f x = ReaderT (\r -> f (r, x))    
+
+registerCallback :: (MonadIO m) => IO (AddHandler (SocketInput a), (SocketInput a) -> m ())
 registerCallback = do
     (addHandler, fire) <- newAddHandler
     void $ register addHandler (const $ pure ())
@@ -57,40 +60,40 @@ broadcastAll text x = do
     emit text x
     broadcast text x
 
+{- Like the reactimate function from Reactive.Banana, but for Socket Event instead of just IO () -}
 reactimateSocket :: GetSocket s => (s -> ReaderT Socket IO ()) -> Event s -> MomentIO ()
 reactimateSocket f = reactimate . fmap (\a -> runReaderT (f a) $ getSocket a)
-
-
+    
+    
 fireCallback :: Handler (SocketInput a) -> Consumer (SocketInput a) IO ()
-fireCallback fire = forever $ await >>= liftIO . fire
-
-data SocketListener b where
-    OnListen :: FromJSON a => Text -> (a -> b) -> SocketListener b
-    OnDisconnect ::  b -> SocketListener b
-
-runListener :: MonadState RoutingTable m => Output (Socket, t) -> SocketListener t -> m ()
+fireCallback fire = forever $ await >>= liftIO . fire    
+    
+runListener :: MonadState RoutingTable m => Output (SocketInput t) -> SocketListener t -> m ()
 runListener output (OnListen text f) =
-    on text (handler (void . atomically . send output . second f))
-runListener output (OnDisconnect a) =
+    on text (handler (\(s, a) -> 
+        case decode $ pack a of
+            Just v  -> void $ atomically $ send output (s, f v)
+            Nothing -> print $ "Decode error on " `mappend` text))
+runListener output (OnDisconnect a) = 
     appendDisconnectHandler (handler (\(s, ()) -> void $ atomically $ send output (s, a)) ())
-
+    
 mergeListeners
   :: (MonadState RoutingTable m) =>
-     Output (Socket, a) -> [(SocketListener a)] -> m ()
+     Output (SocketInput a) -> [SocketListener a] -> m ()
 mergeListeners _ [] = return ()
-mergeListeners output xs = foldl1 (>>) $ fmap (runListener output) xs
-
+mergeListeners output xs = foldl1 (>>) $ fmap (runListener output) xs    
+    
+-- | The second argument is your reactive-banana graph, the third argument is the listeners
 initializeWithReactive
-  :: (MonadIO m) =>
+  :: MonadIO m =>
      ServerAPI m
-     -> (Event (Socket, a) -> MomentIO ())
+     -> (Event (SocketInput a) -> MomentIO ())
      -> [SocketListener a]
      -> IO (m ())
-initializeWithReactive
- serverApi reactiveNetwork xs = do
+initializeWithReactive serverApi reactiveNetwork xs = do 
     (output, input) <- liftIO $ spawn unbounded
     (addHandler, fire) <- registerCallback
-    liftIO $ do
+    liftIO $ do 
         void $ forkIO(runEffect $ fromInput input >-> fireCallback fire)
         network <- compile $ fromAddHandler addHandler >>= reactiveNetwork
         actuate network
