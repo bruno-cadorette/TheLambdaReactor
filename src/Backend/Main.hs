@@ -9,11 +9,9 @@ import qualified Snap.Core as Snap
 import qualified Snap.Util.FileServe as Snap
 import qualified Snap.Http.Server as Snap
 import Snap.Http.Server.Config
-import qualified Network.SocketIO as SocketIO
 import qualified Snap.CORS as CORS
 import Game.MapReader
---import Reactive
-import Network.SocketIO.Reactive
+
 --This is usefull for generating the file with ghci without having to start the server
 writeGameStateElm :: IO ()
 writeGameStateElm = writeFile "GameState.elm" generateGameState

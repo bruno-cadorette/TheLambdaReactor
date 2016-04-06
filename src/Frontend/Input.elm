@@ -36,7 +36,7 @@ initializeInput = Signal.map (\x ->
     Typing t   -> Signal.send keyboardInputMailbox.address (log "initializeInput" t)) <| gameInput Keyboard.wasd
 
 gameStateUpdate : Signal GameState
-gameStateUpdate = Signal.filterMap identity defaultGameState gameStateMailbox.signal
+gameStateUpdate = Signal.filterMap (log "gamestate") defaultGameState gameStateMailbox.signal
 
 currentPlayerId : Signal PlayerId
 currentPlayerId = Signal.map (log "id") playerIdMailbox.signal

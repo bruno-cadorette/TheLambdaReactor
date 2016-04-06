@@ -40,7 +40,7 @@ createSprite position =
 
 getSprite :  Int -> Dict Int Form -> Form
 getSprite i sprites =
-  Maybe.withDefault (createSprite (0,0)) <| Dict.get (log (toString i) i) sprites
+  Maybe.withDefault (createSprite (0,0)) <| Dict.get i sprites
 
 displayMap : Vec2 -> Map -> List Form
 displayMap pos _ =

@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Lib (module Exportable, decodeMessage, ApiExample(..)) where
+module Lib (module Exportable, decodeMessage, ApiExample(..), ConnectionType(..), UserInput(..)) where
   import Elm.Derive
   import GameState
   import Game.Helper as Exportable
@@ -18,7 +18,10 @@ module Lib (module Exportable, decodeMessage, ApiExample(..)) where
   type Move = V2 Float
   type Direction = V2 Float
 
-  data ApiExample = Connection String | MovementIn Move | ShootIn Direction | Disconnection | ChatIn Text.Text deriving (Show)
+  data ConnectionType = Connection String | Disconnection deriving (Show)
+  data UserInput = Movement Move | Shoot Direction deriving (Show)
+  
+  data ApiExample = Conn ConnectionType | Input UserInput | ChatIn Text.Text deriving (Show)
 
   {-Derive game records from toJson, fromJSON, and ElmDerive, see ClientSideGeneration.hs-}
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Bullet

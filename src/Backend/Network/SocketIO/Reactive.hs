@@ -24,6 +24,7 @@ import Data.Aeson
 import Pipes.Concurrent
 import Pipes
 import Data.Text (Text)
+import Data.Monoid
 import Data.ByteString.Lazy.Char8 (pack)
 import Network.SocketIO
 import Network.EngineIO (ServerAPI)
@@ -72,8 +73,12 @@ runListener :: MonadState RoutingTable m => Output (SocketInput t) -> SocketList
 runListener output (OnListen text f) =
     on text (handler (\(s, a) -> 
         case decode $ pack a of
-            Just v  -> void $ atomically $ send output (s, f v)
-            Nothing -> print $ "Decode error on " `mappend` text))
+            Just v  -> do
+                print $ "Received " <> show a
+                void $ atomically $ send output (s, f v)
+            Nothing -> do 
+                print $ "Decode error on " <> text
+                print $ "Received " <> show a))
 runListener output (OnDisconnect a) = 
     appendDisconnectHandler (handler (\(s, ()) -> void $ atomically $ send output (s, a)) ())
     
