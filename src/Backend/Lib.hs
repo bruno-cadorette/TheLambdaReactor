@@ -1,13 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Lib (module Exportable, decodeMessage, ApiExample(..), ConnectionType(..), UserInput(..)) where
+module Lib (module Exportable, decodeMessage, ApiExample(..), ConnectionType(..), UserInput(..), InitialName(..), Message(..)) where
   import Elm.Derive
   import GameState
   import Game.Helper as Exportable
   import Character
   import Bullet
   import Data.Maybe as Exportable
-  import Message
   import Data.Aeson as Aeson
   import Linear.V2 as Exportable
   import Control.Lens as Exportable
@@ -17,9 +16,15 @@ module Lib (module Exportable, decodeMessage, ApiExample(..), ConnectionType(..)
   import Game.MapReader
   type Move = V2 Float
   type Direction = V2 Float
-
+  
+  newtype InitialName = InitialName { initialName :: String } deriving (Show)
   data ConnectionType = Connection String | Disconnection deriving (Show)
   data UserInput = Movement Move | Shoot Direction deriving (Show)
+  
+  data Message = Message
+    { name :: Text.Text
+    , body :: Text.Text
+    } deriving (Show)
   
   data ApiExample = Conn ConnectionType | Input UserInput | ChatIn Text.Text deriving (Show)
 
@@ -31,6 +36,7 @@ module Lib (module Exportable, decodeMessage, ApiExample(..), ConnectionType(..)
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Hit
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''Message
   Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''GameMap
+  Elm.Derive.deriveBoth Elm.Derive.defaultOptions ''InitialName
 
 
   decodeMessage :: Text.Text -> Maybe Message

@@ -1,4 +1,4 @@
-module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement, sendShot, sendTest, currentGameMap) where
+module Input (gameStateUpdate, gameInputCommunication, currentPlayerId, safeKeyboardPresses, initializeInput, sendMovement, sendShot, sendTest, currentGameMap, emitJSON) where
 
 import Signal
 import Signal.Extra exposing (foldps)
@@ -100,7 +100,11 @@ inputHandler input isMovement =
 playerInput = Signal.map(\{x, y} -> vec2 (toFloat x) (toFloat y ))
 
 emitFromSignal : (a -> Encode.Value) -> String -> Task x Socket-> Signal a -> Signal (Task x ())
-emitFromSignal encodeFunc emitTo socket = Signal.map(\s -> socket `andThen` emit emitTo (Encode.encode 0 <| encodeFunc (log "test1" s)))
+emitFromSignal encodeFunc emitTo socket = Signal.map(\s -> socket `andThen` emitJSON encodeFunc emitTo s)
+
+
+emitJSON : (a -> Encode.Value) -> String -> a -> Socket -> Task x ()
+emitJSON f emitTo a = emit emitTo (Encode.encode 0 <| f a)
 
 --emitMovement : Task x Socket -> Vec2 -> Task x ()
 --emitMovement serverSocket v = --serverSocket `andThen` emit "userInput" (log "emit" <| Encode.encode 0 <| jsonEncVec2 v)

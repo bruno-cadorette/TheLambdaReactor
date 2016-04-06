@@ -6,7 +6,6 @@ module Chat (Chat.initWithReactive) where
 
 import qualified Data.Map.Strict as Map
 import UserManagement
-import Message
 import Network.SocketIO
 import GameState
 import GameStateManagement
@@ -64,7 +63,7 @@ serverEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k 
 
 listenerExample :: [SocketListener ApiExample]
 listenerExample =
-      [OnListen "newUser" (Conn . Connection),
+      [OnListen "newUser" (\(InitialName str) -> Conn $ Connection str),
        OnDisconnect (Conn Disconnection),
        OnListen "userInput" (Input . Movement),
        OnListen "userShoot" (Input . Shoot),

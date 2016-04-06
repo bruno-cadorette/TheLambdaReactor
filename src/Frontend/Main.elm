@@ -13,6 +13,7 @@ import Task exposing (Task, andThen)
 import Map exposing (..)
 import Debug exposing (log)
 import Bullet exposing (..)
+import GameState exposing (..)
 
 gameSocket : Task x Socket
 gameSocket =
@@ -26,7 +27,7 @@ port communication =
   gameSocket `andThen` \socket ->
   chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
-  always (initialMessage socket)
+  always (emitJSON jsonEncInitialName "newUser" {initialName = "john cena"} socket)
 
 port inputs : Signal (Task x ())
 port inputs =

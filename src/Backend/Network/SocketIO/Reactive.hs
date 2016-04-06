@@ -73,9 +73,7 @@ runListener :: MonadState RoutingTable m => Output (SocketInput t) -> SocketList
 runListener output (OnListen text f) =
     on text (handler (\(s, a) -> 
         case decode $ pack a of
-            Just v  -> do
-                print $ "Received " <> show a
-                void $ atomically $ send output (s, f v)
+            Just v  -> void $ atomically $ send output (s, f v)
             Nothing -> do 
                 print $ "Decode error on " <> text
                 print $ "Received " <> show a))

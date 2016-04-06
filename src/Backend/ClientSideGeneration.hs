@@ -22,7 +22,9 @@ generateGameState =
       DefineElm (Proxy :: Proxy Bullet),
       DefineElm (Proxy :: Proxy Hit),
       DefineElm (Proxy :: Proxy Location),
-      DefineElm (Proxy :: Proxy GameMap)
+      DefineElm (Proxy :: Proxy GameMap),
+      DefineElm (Proxy :: Proxy InitialName),
+      DefineElm (Proxy :: Proxy Message)
     ]
 
 myAlteration :: ETypeDef -> ETypeDef
