@@ -7,7 +7,6 @@ import qualified Data.Map.Strict as Map
 import Data.Text as T
 import Linear.V2
 import System.Random
-import Data.Maybe
 
 import Game.Helper as H
 import Network.SocketIO
@@ -36,5 +35,6 @@ getPlayer (GameEngine players' _ _ _) uuid' = Map.lookup uuid' players'
 
 --Handle shooting event
 handleShoot :: V2 Float -> Maybe Entity -> GameEngine -> Id -> UTCTime -> GameEngine
-handleShoot direction entity (GameEngine p b e gen) sockId time  =
-  addBullet (GameEngine p b e gen) ((C.location $ fromJust entity) {orientation = direction})  (getCurrentMilli time) sockId
+handleShoot direction (Just entity) (GameEngine p b e gen) sockId time  =
+  addBullet (GameEngine p b e gen) ((C.location entity) {orientation = direction})  (getCurrentMilli time) sockId
+handleShoot _ Nothing g _ _ = g

@@ -154,3 +154,40 @@ jsonEncGameMap  val =
    , ("sprites", (Json.Encode.list << List.map (\(v1,v2,v3) -> Json.Encode.list [(Json.Encode.int) v1,(Json.Encode.int) v2,(Json.Encode.int) v3])) val.sprites)
    ]
 
+
+
+type alias InitialName  =
+   { initialName: String
+   }
+
+jsonDecInitialName : Json.Decode.Decoder ( InitialName )
+jsonDecInitialName =
+   ("initialName" := Json.Decode.string) `Json.Decode.andThen` \pinitialName ->
+   Json.Decode.succeed {initialName = pinitialName}
+
+jsonEncInitialName : InitialName -> Value
+jsonEncInitialName  val =
+   Json.Encode.object
+   [ ("initialName", Json.Encode.string val.initialName)
+   ]
+
+
+
+type alias Message  =
+   { name: String
+   , body: String
+   }
+
+jsonDecMessage : Json.Decode.Decoder ( Message )
+jsonDecMessage =
+   ("name" := Json.Decode.string) `Json.Decode.andThen` \pname ->
+   ("body" := Json.Decode.string) `Json.Decode.andThen` \pbody ->
+   Json.Decode.succeed {name = pname, body = pbody}
+
+jsonEncMessage : Message -> Value
+jsonEncMessage  val =
+   Json.Encode.object
+   [ ("name", Json.Encode.string val.name)
+   , ("body", Json.Encode.string val.body)
+   ]
+
