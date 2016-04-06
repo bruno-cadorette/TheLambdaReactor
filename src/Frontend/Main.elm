@@ -13,6 +13,7 @@ import Task exposing (Task, andThen)
 import Map exposing (displayMap)
 import Debug exposing (log)
 import Bullet exposing (..)
+import UserInterface exposing (displayUI)
 
 gameSocket : Task x Socket
 gameSocket =
@@ -36,8 +37,8 @@ display =
   Graphics.Collage.collage w h <| displayMap w h player.entity.location.position
                                   ++ [displayEntity (w,h) player]
                                   ++ displayEveryone (w,h) (Dict.values enemies)
-                                  ++ displayBullets (w, h) bullets
-                                  ++ [chat])
+                                  ++ displayBullets (w,h) bullets
+                                  ++ displayUI (w,h) player.entity.hp playerName chat)
 
 main =
   display dimensions (displayChat playerName) <| update currentPlayerId gameStateUpdate

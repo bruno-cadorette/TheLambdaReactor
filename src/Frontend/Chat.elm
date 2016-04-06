@@ -54,14 +54,12 @@ receiveMessage removeMessage newStr =
       Just x' -> xs ++ [leftAligned x']
       Nothing -> List.drop 1 xs) []
 
-displayChat : String -> Signal Collage.Form
+displayChat : String -> Signal Element
 displayChat playerName =
   Signal.map3(\writting received (w, h) ->
-    Collage.group
-      [Collage.move (3 / 8 * (toFloat w), (toFloat h / 8) - (toFloat h / 2)) <|
-        Collage.filled (Color.rgba 100 100 100 0.7) <|
+    Collage.collage (w // 4) (h // 4)
+      [ Collage.filled (Color.rgba 100 100 100 0.7) <|
           Collage.rect (toFloat w / 4) (toFloat h / 4),
-      Collage.move (3 / 8 * (toFloat w) + 5, (toFloat h / 8) - (toFloat h / 2)) <|
         Collage.toForm <|
           Graphics.Element.container (w // 4 - 10) (h // 4) Graphics.Element.midBottom <|
             flow down <|
