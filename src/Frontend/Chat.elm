@@ -35,7 +35,7 @@ stringBuilder playerName key m =
     in
       if key == enter.keyCode then
         log "enter" <| SendMessage (playerName ++ ": " ++ str)
-      else if key == backspace.keyCode then
+      else if key == 61 then
         BuildString <| String.dropRight 1 str
       else
         BuildString <| String.append str <| String.fromChar <| fromCode key
