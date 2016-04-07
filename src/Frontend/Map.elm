@@ -16,7 +16,7 @@ exampleMap = { size = (6,4), items = [15,15,15,15,15,15,15,15,0,0,15,15,15,15,0,
 getMap : GameState.GameMap -> Map
 getMap {size, items, sprites} =
   let spriteDict = Dict.fromList <| List.map(\(a,b,c) -> (a, createSprite (b,c))) sprites
-  in { tiles = group <| makeMap (fst size) 0 items spriteDict, position = origin, size = (32 * fst size , 32 * snd size) }
+  in { tiles = group <| makeMap (fst size) 16 items spriteDict, position = origin, size = (32 * fst size , 32 * snd size) }
 
 mapCollage : (Int, Int) -> Map -> Element
 mapCollage (w, h) map =
@@ -26,7 +26,7 @@ makeMap : Int -> Float -> List Int -> Dict Int Form -> List Form
 makeMap w shiftY tiles sprites =
   case tiles of
     [] -> []
-    _ -> List.append (makeMapRow 0 shiftY (List.take w tiles) sprites) (makeMap w (shiftY + 32) (List.drop w tiles) sprites)
+    _ -> List.append (makeMapRow 16 shiftY (List.take w tiles) sprites) (makeMap w (shiftY + 32) (List.drop w tiles) sprites)
 
 makeMapRow : Float -> Float -> List Int -> Dict Int Form -> List Form
 makeMapRow shiftX shiftY tiles sprites =
@@ -45,4 +45,4 @@ getSprite i sprites =
 displayMap : Vec2 -> Map -> List Form
 displayMap pos _ =
   let map = getMap exampleMap
-  in [Graphics.Collage.move (Basics.negate (getX pos) / 2, Basics.negate (getY pos) / 2) <| toForm <| mapCollage map.size map]
+  in [Graphics.Collage.move (Basics.negate (getX pos), Basics.negate (getY pos)) <| toForm <| mapCollage map.size map]
