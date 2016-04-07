@@ -4,7 +4,7 @@ import Input exposing(..)
 import Chat exposing (..)
 import Engine exposing (..)
 import Player exposing (..)
-import Map exposing (displayMap)
+import Map exposing (displayMap, getMap)
 import Bullet exposing (..)
 import UserInterface exposing (displayUI)
 
@@ -22,14 +22,13 @@ gameSocket =
   io "http://localhost:8001" defaultOptions
 
 port playerName : String
-port playerName = "john cena"
 
 port communication : Task a ()
 port communication =
   gameSocket `andThen` \socket ->
   chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
-  always (emitJSON jsonEncInitialName "newUser" {initialName = "john cena"} socket)
+  always (emitJSON jsonEncInitialName "newUser" {initialName = playerName} socket)
 
 port inputs : Signal (Task x ())
 port inputs =
