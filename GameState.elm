@@ -156,19 +156,19 @@ jsonEncGameMap  val =
 
 
 
-type alias InitialName  =
-   { initialName: String
+type alias ConnectionName  =
+   { playerName: String
    }
 
-jsonDecInitialName : Json.Decode.Decoder ( InitialName )
-jsonDecInitialName =
-   ("initialName" := Json.Decode.string) `Json.Decode.andThen` \pinitialName ->
-   Json.Decode.succeed {initialName = pinitialName}
+jsonDecConnectionName : Json.Decode.Decoder ( ConnectionName )
+jsonDecConnectionName =
+   ("playerName" := Json.Decode.string) `Json.Decode.andThen` \pplayerName ->
+   Json.Decode.succeed {playerName = pplayerName}
 
-jsonEncInitialName : InitialName -> Value
-jsonEncInitialName  val =
+jsonEncConnectionName : ConnectionName -> Value
+jsonEncConnectionName  val =
    Json.Encode.object
-   [ ("initialName", Json.Encode.string val.initialName)
+   [ ("playerName", Json.Encode.string val.playerName)
    ]
 
 

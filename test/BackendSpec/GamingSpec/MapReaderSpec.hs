@@ -19,7 +19,7 @@ spec = describe "MapReaderSpec" $ do
             Map.elems mapo `shouldNotBe` []
           it "mapToExport size" $ do
             mapo <- parseMap "test/test.dat"
-            taille (mapToExport mapo) `shouldBe` (8,3)
+            Game.MapReader.size (mapToExport mapo) `shouldBe` (8,3)
           it "mapToExport items" $ do
             mapo <- parseMap "test/test.dat"
             length (items (mapToExport mapo)) `shouldBe` (8*3)

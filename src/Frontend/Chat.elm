@@ -74,10 +74,6 @@ sendMessage playerName serverSocket = Signal.map (\s ->
     SendMessage m -> serverSocket `andThen` emit "sendMessage" m
     BuildString s -> Task.succeed ()) (buildWord playerName)
 
--- send a value once at program start
-initialMessage : Socket -> Task x ()
-initialMessage = emit "newUser" "JOHN CENA"
-
 sendMailbox : Signal.Mailbox String
 sendMailbox = Signal.mailbox ""
 

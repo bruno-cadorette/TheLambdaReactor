@@ -15,27 +15,29 @@ import Task exposing (Task, andThen)
 import Dict
 import Graphics.Collage
 import Graphics.Element as Elem
+import GameState exposing (..)
 
 gameSocket : Task x Socket
 gameSocket =
   io "http://localhost:8001" defaultOptions
 
 port playerName : String
+port playerName = "john cena"
 
 port communication : Task a ()
 port communication =
   gameSocket `andThen` \socket ->
   chatCommunication socket `andThen`
   always (gameInputCommunication socket) `andThen`
-  always (initialMessage socket)
+  always (emitJSON jsonEncInitialName "newUser" {initialName = "john cena"} socket)
 
 port inputs : Signal (Task x ())
 port inputs =
   Signal.mergeMany [(sendMessage playerName gameSocket), (sendShot gameSocket), (sendMovement gameSocket), initializeInput]
 
 display =
-  Signal.map3 (\(w,h) chat {player, enemies, bullets} ->
-  Graphics.Collage.collage w h <| displayMap w h player.entity.location.position
+  Signal.map4 (\(w,h) chat map {player, enemies, bullets} ->
+  Graphics.Collage.collage w h <| displayMap player.entity.location.position map
                                   ++ [displayEntity (w,h) player]
                                   ++ displayEveryone (w,h) (Dict.values enemies)
                                   ++ displayBullets (w,h) bullets
@@ -43,4 +45,4 @@ display =
 
 main : Signal Elem.Element
 main =
-  display dimensions (displayChat playerName) <| update currentPlayerId gameStateUpdate
+  display dimensions (displayChat playerName) (Signal.map getMap currentGameMap) <| update currentPlayerId gameStateUpdate

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module GameEngine(getGameStateForJSON, getNewGameState, addBullet, GameEngine (..),getPlayer,handleShoot,getPlayersHit) where
+module GameEngine(getGameStateForJSON, getNewGameState, addBullet, GameEngine (..),getPlayer,handleShoot) where
 import GameState (GameState(..))
 import Character as C
 import Bullet
@@ -7,7 +7,6 @@ import qualified Data.Map.Strict as Map
 import Data.Text as T
 import Linear.V2
 import System.Random
-import Data.Maybe
 
 import Game.Helper as H
 import Network.SocketIO
@@ -29,16 +28,13 @@ addBullet (GameEngine players' bullet enemy ran) location' uuid' sockId =
     (GameEngine players' (Map.insert (T.pack $ show uuid') (Bullet uuid' location' 0.2 sockId) bullet) enemy ran)
 
 
---TODO Remove thiss
-getPlayersHit :: GameEngine -> Map.Map a Entity -> [Entity]
-getPlayersHit _ _ = []
-
 --Should not use this too often, just a helper function
 getPlayer :: GameEngine -> Text -> Maybe(Entity)
 getPlayer (GameEngine players' _ _ _) uuid' = Map.lookup uuid' players'
 
-    --TODO CRUD Bullet and Enem
 
+--Handle shooting event
 handleShoot :: V2 Float -> Maybe Entity -> GameEngine -> Id -> UTCTime -> GameEngine
-handleShoot direction entity (GameEngine p b e gen) sockId time  =
-  addBullet (GameEngine p b e gen) ((C.location $ fromJust entity) {orientation = direction})  (getCurrentMilli time) sockId
+handleShoot direction (Just entity) (GameEngine p b e gen) sockId time  =
+  addBullet (GameEngine p b e gen) ((C.location entity) {orientation = direction})  (getCurrentMilli time) sockId
+handleShoot _ Nothing g _ _ = g

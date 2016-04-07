@@ -1,17 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
 
-module Reactive (
+module Reactive {-# DEPRECATED "Use Network.SocketIO.Reactive instead" #-} (
     createSocketEvent,
     disconnectEvent,
-    toOutput,
-    broadcastAll,
-    foldp,
-    GetSocket(..),
+    Reactive.toOutput,
     module Reactive.Banana,
     module Reactive.Banana.Frameworks,
+    module Network.SocketIO.Reactive,
     fps,
+    initWithReactive, 
     toOutputMaybe) where
 
 import Control.Monad
@@ -23,41 +21,21 @@ import Data.Time
 import Reactive.Banana
 import Reactive.Banana.Frameworks
 import Data.Aeson
-import Data.Text
+import Data.Text (Text)
 import Network.SocketIO
+import Network.EngineIO(ServerAPI)
 import Debug.Trace
-import Data.Maybe
-
-class GetSocket a where
-    getSocket :: a -> Socket
-
-instance GetSocket (Socket, a) where
-    getSocket = fst
-
-instance GetSocket Socket where
-    getSocket = id
+import Network.SocketIO.Reactive
 
 
-
-
-
-handler :: Handler (Socket, a) -> a -> ReaderT Socket IO ()
-handler f x = ReaderT (\r -> f (r, x))
-
-{-createCallbackInner
-  :: (FromJSON a, MonadIO m,
-      MonadState RoutingTable m) =>
-     Text -> m (AddHandler (Socket, a))-}
+createCallbackInner
+  :: (FromJSON a, MonadIO m) =>
+     (Handler (SocketInput a) -> m b) -> m (AddHandler (SocketInput a))
 createCallbackInner callback = do
     (addHandler, fire) <- liftIO $ registerCallback
     void $ callback fire
     return addHandler
 
-createCallback
-  :: (FromJSON a, MonadIO m,
-      MonadState RoutingTable m) =>
-     Text -> m (AddHandler (Socket, a))
-createCallback text = createCallbackInner (on text . handler)
 
 disconnectCallback :: (MonadIO m, MonadState RoutingTable m) => m (AddHandler (Socket, ()))
 disconnectCallback = createCallbackInner (\fire -> appendDisconnectHandler $ handler fire ())
@@ -69,37 +47,70 @@ registerCallback = do
     return (addHandler, liftIO . fire)
 
 
+createCallback
+  :: (MonadIO m, MonadState RoutingTable m, FromJSON a) =>
+     Text -> m (AddHandler (SocketInput a))
+createCallback text = createCallbackInner (on text . handler)    
+    
+handler :: ((SocketInput a) -> IO ()) -> a -> ReaderT Socket IO ()
+handler f x = ReaderT (\r -> f (r, x))    
+    
+    
+eventnetwork
+  :: (MonadMoment m) =>
+     Event (Socket, ApiExample) -> m (Event Socket, Behavior Int)
+eventnetwork e = mapAccum 0 $ (\ev acc -> (fst ev, acc + 1)) <$> e
+    
+f2 :: Event Socket -> Behavior Int -> Event (Socket, Int)
+f2 ev n = fmap (\n' s -> (s, n')) n <@> ev 
+   
+
+testEventNetwork :: Event (Socket, ApiExample) -> MomentIO ()
+testEventNetwork e = do 
+    (ev', n) <- eventnetwork e
+    reactimateSocket (\(_,n)-> broadcastAll "numberConnected" $ trace (show n) $ n) $ f2 ev' n 
+
+    
+        
+    
+
 {- Create an Event from an 'on' EventHandler -}
 createSocketEvent :: (MonadIO m, FromJSON a, MonadState RoutingTable m) =>
     Text -> m (MomentIO (Event (Socket, a)))
-createSocketEvent = fmap fromAddHandler . createCallback
+createSocketEvent = trace "createSocketEventCalled" . fmap fromAddHandler . createCallback
 
 {- Create an Event from the disconnect EventHandler -}
 disconnectEvent :: (MonadIO m, MonadState RoutingTable m) => m (MomentIO (Event (Socket, ())))
 disconnectEvent = fmap fromAddHandler disconnectCallback
 
-{- Broadcast to every socket, including the current socket -}
-broadcastAll :: (MonadIO m, MonadReader Socket m, ToJSON a) => Text -> a -> m ()
-broadcastAll text x = do
-    emit text x
-    broadcast text x
+data ApiExample = Connection String | Count Int | Disconnection | Test String
 
+listenerExample :: [SocketListener ApiExample]
+listenerExample = 
+    [OnListen "connection" Connection, 
+     OnDisconnect Disconnection,
+     OnListen "count" Count,
+     OnListen "test" Test]
+     
+initWithReactive ::
+                  MonadIO m =>
+                  Network.EngineIO.ServerAPI m -> IO (m ())
+                  
+initWithReactive serverApi = do
+    initializeWithReactive serverApi testEventNetwork listenerExample
 
 {-FPS method-}
 fps:: Int -> MomentIO (Event UTCTime)
 fps frame = do
     (eTime, fireTime) <- newEvent
-    liftIO . forkIO . forever $
-            threadDelay frame >> getCurrentTime >>= (trace "new FPS Event" fireTime)
+    void $ liftIO . forkIO . forever $
+            threadDelay frame >> getCurrentTime >>= fireTime
     return eTime
-
+    
 {- This function should be used just before reactimate to map your output. -}
 toOutput :: GetSocket s => (s -> ReaderT Socket m ()) -> s -> m ()
 toOutput event a = runReaderT (event a) $ getSocket a
 
 toOutputMaybe :: (GetSocket s, Monad m) => (s -> ReaderT Socket m ()) -> Maybe s -> m ()
-toOutputMaybe event (Just a)  = runReaderT (event a) $ getSocket a
-toOutputMaybe event Nothing  = return ()
-
-foldp :: MonadMoment m => (a -> b -> b) -> b -> Event a -> m (Event b)
-foldp f z e = accumE z (fmap f e)
+toOutputMaybe event (Just a)  = Reactive.toOutput event a
+toOutputMaybe _ Nothing  = return ()

@@ -22,7 +22,7 @@ type alias GameState  =
    { players: (Dict String Entity)
    , projectiles: (Dict String Bullet)
    , enemies: (List Entity)
-   , hits: (List Hit)
+   , hits: (List Vec2)
    }
 
 jsonDecGameState : Json.Decode.Decoder ( GameState )
@@ -30,7 +30,7 @@ jsonDecGameState =
    ("players" := Json.Decode.dict (jsonDecEntity)) `Json.Decode.andThen` \pplayers ->
    ("projectiles" := Json.Decode.dict (jsonDecBullet)) `Json.Decode.andThen` \pprojectiles ->
    ("enemies" := Json.Decode.list (jsonDecEntity)) `Json.Decode.andThen` \penemies ->
-   ("hits" := Json.Decode.list (jsonDecHit)) `Json.Decode.andThen` \phits ->
+   ("hits" := Json.Decode.list (jsonDecVec2)) `Json.Decode.andThen` \phits ->
    Json.Decode.succeed {players = pplayers, projectiles = pprojectiles, enemies = penemies, hits = phits}
 
 jsonEncGameState : GameState -> Value
@@ -39,7 +39,7 @@ jsonEncGameState  val =
    [ ("players", encodeMap (Json.Encode.string) (jsonEncEntity) val.players)
    , ("projectiles", encodeMap (Json.Encode.string) (jsonEncBullet) val.projectiles)
    , ("enemies", (Json.Encode.list << List.map jsonEncEntity) val.enemies)
-   , ("hits", (Json.Encode.list << List.map jsonEncHit) val.hits)
+   , ("hits", (Json.Encode.list << List.map jsonEncVec2) val.hits)
    ]
 
 
@@ -130,3 +130,64 @@ jsonEncLocation  val =
    [ ("position", jsonEncVec2 val.position)
    , ("orientation", jsonEncVec2 val.orientation)
    ]
+
+
+
+type alias GameMap  =
+   { size: (Int, Int)
+   , items: (List Int)
+   , sprites: (List (Int, Int, Int))
+   }
+
+jsonDecGameMap : Json.Decode.Decoder ( GameMap )
+jsonDecGameMap =
+   ("size" := Json.Decode.tuple2 (,) (Json.Decode.int) (Json.Decode.int)) `Json.Decode.andThen` \psize ->
+   ("items" := Json.Decode.list (Json.Decode.int)) `Json.Decode.andThen` \pitems ->
+   ("sprites" := Json.Decode.list (Json.Decode.tuple3 (,,) (Json.Decode.int) (Json.Decode.int) (Json.Decode.int))) `Json.Decode.andThen` \psprites ->
+   Json.Decode.succeed {size = psize, items = pitems, sprites = psprites}
+
+jsonEncGameMap : GameMap -> Value
+jsonEncGameMap  val =
+   Json.Encode.object
+   [ ("size", (\(v1,v2) -> Json.Encode.list [(Json.Encode.int) v1,(Json.Encode.int) v2]) val.size)
+   , ("items", (Json.Encode.list << List.map Json.Encode.int) val.items)
+   , ("sprites", (Json.Encode.list << List.map (\(v1,v2,v3) -> Json.Encode.list [(Json.Encode.int) v1,(Json.Encode.int) v2,(Json.Encode.int) v3])) val.sprites)
+   ]
+
+
+
+type alias InitialName  =
+   { initialName: String
+   }
+
+jsonDecInitialName : Json.Decode.Decoder ( InitialName )
+jsonDecInitialName =
+   ("initialName" := Json.Decode.string) `Json.Decode.andThen` \pinitialName ->
+   Json.Decode.succeed {initialName = pinitialName}
+
+jsonEncInitialName : InitialName -> Value
+jsonEncInitialName  val =
+   Json.Encode.object
+   [ ("initialName", Json.Encode.string val.initialName)
+   ]
+
+
+
+type alias Message  =
+   { name: String
+   , body: String
+   }
+
+jsonDecMessage : Json.Decode.Decoder ( Message )
+jsonDecMessage =
+   ("name" := Json.Decode.string) `Json.Decode.andThen` \pname ->
+   ("body" := Json.Decode.string) `Json.Decode.andThen` \pbody ->
+   Json.Decode.succeed {name = pname, body = pbody}
+
+jsonEncMessage : Message -> Value
+jsonEncMessage  val =
+   Json.Encode.object
+   [ ("name", Json.Encode.string val.name)
+   , ("body", Json.Encode.string val.body)
+   ]
+

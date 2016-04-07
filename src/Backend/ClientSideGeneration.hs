@@ -7,6 +7,12 @@ import Data.Proxy
 import Character
 import Bullet
 import Lib
+import Game.MapReader
+
+{-
+  This module use elm-bridge to create the json wrapper of our records type for the elm application.
+  The output of this file is in GameState.elm
+-}
 
 generateGameState :: String
 generateGameState =
@@ -15,7 +21,10 @@ generateGameState =
       DefineElm (Proxy :: Proxy Entity),
       DefineElm (Proxy :: Proxy Bullet),
       DefineElm (Proxy :: Proxy Hit),
-      DefineElm (Proxy :: Proxy Location)
+      DefineElm (Proxy :: Proxy Location),
+      DefineElm (Proxy :: Proxy GameMap),
+      DefineElm (Proxy :: Proxy InitialName),
+      DefineElm (Proxy :: Proxy Message)
     ]
 
 myAlteration :: ETypeDef -> ETypeDef
@@ -53,7 +62,3 @@ moduleHeader moduleName = unlines
      , ""
      , ""
      ]
-
-main :: IO ()
-main =
-   putStrLn $ generateGameState

@@ -13,9 +13,10 @@ class Character a where
   move :: a -> V2 Float -> a -- Move is the deplacement vector
   isDead :: a -> Bool
 
-
+--Base entity
 data Entity = Entity {hp :: Int, location :: Location} deriving (Generic,Show, Eq)
 
+--Constant of the speed of a character
 speed :: Float
 speed = 2
 
