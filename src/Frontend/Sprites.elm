@@ -6,10 +6,7 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Math.Vector2 exposing (..)
 
-{- Test Values -}
-
 {- Sprites -}
-
 type alias Sprite =
   { length : Int,
   frames : Dict.Dict Int Element

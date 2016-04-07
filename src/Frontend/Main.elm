@@ -1,19 +1,20 @@
 module Main where
 
-import Signal
 import Input exposing(..)
 import Chat exposing (..)
-import Window exposing (dimensions, width)
 import Engine exposing (..)
 import Player exposing (..)
-import SocketIO exposing (..)
-import Dict
-import Graphics.Collage
-import Task exposing (Task, andThen)
 import Map exposing (displayMap)
-import Debug exposing (log)
 import Bullet exposing (..)
 import UserInterface exposing (displayUI)
+
+import Signal
+import Window exposing (dimensions, width)
+import SocketIO exposing (..)
+import Task exposing (Task, andThen)
+import Dict
+import Graphics.Collage
+import Graphics.Element as Elem
 
 gameSocket : Task x Socket
 gameSocket =
@@ -40,5 +41,6 @@ display =
                                   ++ displayBullets (w,h) bullets
                                   ++ displayUI (w,h) player.entity.hp playerName chat)
 
+main : Signal Elem.Element
 main =
   display dimensions (displayChat playerName) <| update currentPlayerId gameStateUpdate

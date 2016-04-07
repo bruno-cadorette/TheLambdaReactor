@@ -1,4 +1,10 @@
 module Bullet(displayBullets, OutputBullet, toOutputBullet, initialBulletBody, changeBulletPosition) where
+
+import Point exposing (..)
+import Sprites exposing (..)
+import Map exposing (..)
+import GameState exposing (..)
+
 import Mouse
 import Time exposing (fps, fpsWhen, every, second)
 import Debug exposing(..)
@@ -8,13 +14,9 @@ import Graphics.Collage exposing (Form)
 import Color exposing (red, black, blue)
 import List
 import Signal.Time exposing (limitRate)
-import Point exposing (..)
 import Math.Vector2 exposing (..)
 import Debug exposing (..)
-import Sprites exposing (..)
-import Map exposing (..)
 import Dict exposing (values, Dict)
-import GameState exposing (..)
 
 type alias OutputBullet = { position : Point, orientation : Point, body : Sprites.Animator}
 
