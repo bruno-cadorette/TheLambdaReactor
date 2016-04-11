@@ -43,6 +43,5 @@ getSprite i sprites =
   Maybe.withDefault (createSprite (0,0)) <| Dict.get i sprites
 
 displayMap : Vec2 -> Map -> List Form
-displayMap pos _ =
-  let map = getMap exampleMap
-  in [Graphics.Collage.move (Basics.negate (getX pos), Basics.negate (getY pos)) <| toForm <| mapCollage map.size map]
+displayMap pos map =
+  [Graphics.Collage.move (Basics.negate (getX pos), Basics.negate (getY pos)) <| toForm <| mapCollage map.size map]

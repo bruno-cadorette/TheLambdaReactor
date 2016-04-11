@@ -14,7 +14,7 @@ import SocketIO exposing (..)
 import Task exposing (Task, andThen)
 import Dict
 import Graphics.Collage
-import Graphics.Element as Elem
+import Graphics.Element
 import GameState exposing (..)
 
 gameSocket : Task x Socket
@@ -38,10 +38,10 @@ display =
   Signal.map4 (\(w,h) chat map {player, enemies, bullets} ->
   Graphics.Collage.collage w h <| displayMap player.entity.location.position map
                                   ++ [displayEntity (w,h) player]
-                                  ++ displayEveryone (w,h) (Dict.values enemies)
+                                  ++ displayEnemies (w,h) (Dict.values enemies)
                                   ++ displayBullets (w,h) bullets
                                   ++ displayUI (w,h) player.entity.hp playerName chat)
 
-main : Signal Elem.Element
+main : Signal Graphics.Element.Element
 main =
   display dimensions (displayChat playerName) (Signal.map getMap currentGameMap) <| update currentPlayerId gameStateUpdate

@@ -50,11 +50,17 @@ initialEntity = { location = initialLocation, hp = 0}
 initialCharacterAnimation = Sprites.animator (Sprites.sprite "../../resources/sheets/character.png" 48 48 (0,0) 8) 4 origin
 initialOutputEntity = {entity = initialEntity, anim = initialCharacterAnimation}
 
+displayEnemy : (Int, Int) -> OutputEntity -> Graphics.Collage.Form
+displayEnemy (w, h) outputEntity =
+  Graphics.Collage.rotate (getOrientation outputEntity.entity.location.position (mapOrientation w h outputEntity.entity.location.orientation) - 90)
+    <| Graphics.Collage.move (toTuple outputEntity.entity.location.position)
+    <| Graphics.Collage.toForm (Sprites.draw outputEntity.anim)
 
 displayEntity : (Int, Int) -> OutputEntity -> Graphics.Collage.Form
 displayEntity (w, h) outputEntity =
   Graphics.Collage.rotate (getOrientation outputEntity.entity.location.position (mapOrientation w h outputEntity.entity.location.orientation) - 90)
     <| Graphics.Collage.toForm (Sprites.draw outputEntity.anim)
 
-displayEveryone : ( Int, Int ) -> List OutputEntity -> List Graphics.Collage.Form
-displayEveryone p = List.map (displayEntity p)
+displayEnemies : ( Int, Int ) -> List OutputEntity -> List Graphics.Collage.Form
+displayEnemies p =
+  List.map (displayEnemy p)
