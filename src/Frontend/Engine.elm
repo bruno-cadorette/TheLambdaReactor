@@ -34,14 +34,14 @@ popGet key dict =
 playerInput = Signal.map(\{x, y} -> fromRecord {x = toFloat x, y = toFloat y }) Keyboard.wasd
 mouseInput = Signal.map(\(x, y) -> vec2 (toFloat x) (toFloat y)) Mouse.position
 
-enemiesToShow : Vec2 -> Dict String Entity -> Dict String Entity
+enemiesToShow : Vec2 -> Dict String OutputEntity -> Dict String OutputEntity
 enemiesToShow playerPosition enemies =
   let newPosition position = position `sub` playerPosition
   in filterMap (\k v ->
-    let p = newPosition v.location.position
+    let p = newPosition v.entity.location.position
     in
       if distance (vec2 0 0) p < fov
-        then Just (changeEntityPosition p v)
+        then Just <| changeOutputEntityPosition p v
         else Nothing) enemies
 
 bulletsToShow : Vec2 -> Dict String Bullet -> Dict String Bullet
@@ -57,14 +57,15 @@ bulletsToShow playerPosition bullets =
 --updatePositionsRelativePlayer : Vec2 -> String -> GameState -> --{playerTemp : Entity, bulletsTemp : List Bullet, enemiesTemp : Dict String Entity}
 updatePositionsRelativePlayer mousePosition id gameState =
   let (player, enemies) = mapFst (changeEntityOrientation mousePosition << Maybe.withDefault initialEntity) (popGet id gameState.players)
-  in {playerTemp = player, bulletsTemp = bulletsToShow player.location.position gameState.projectiles, enemiesTemp = enemiesToShow player.location.position enemies}
+  in {playerTemp = player, bulletsTemp = bulletsToShow player.location.position gameState.projectiles, enemiesTemp = enemies}
 
 --mergeEvents : Signal Vec2 -> Signal String -> Signal GameState -> Signal OutputGameState
 mergeEvents =
   Signal.map3 updatePositionsRelativePlayer mouseInput
 
-updateEnemies old new =
-  let i = intersectWith toOutputEntity old new
+--updateEnemies : Dict String OutputEntity -> Dict String Entity -> Dict String OutputEntity
+updateEnemies player old new =
+  let i = enemiesToShow player.location.position <| intersectWith toOutputEntity old new
       d = Dict.map (\k e -> {entity = e, anim = initialCharacterAnimation}) <| diff' new old
   in Dict.union i d
 
@@ -76,7 +77,7 @@ updateBullets old new =
 
 update : Signal String -> Signal GameState -> Signal OutputGameState
 update id gamestate =
-  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies old.enemies new.enemiesTemp, bullets = updateBullets old.bullets new.bulletsTemp})
+  Signal.foldp (\new old -> {player = toOutputEntity old.player new.playerTemp, enemies = updateEnemies new.playerTemp old.enemies new.enemiesTemp, bullets = updateBullets old.bullets new.bulletsTemp})
   initialOutputGameState <| mergeEvents id gamestate
 
 --getPlayerPosition : String -> GameState.GameState -> Vec2

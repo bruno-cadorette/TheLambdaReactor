@@ -19,15 +19,26 @@ import Sprites exposing (..)
 type alias OutputEntity = { entity : Entity, anim : Sprites.Animator }
 
 changeEntityOrientation : Vec2 -> Entity -> Entity
-changeEntityOrientation p player =
+changeEntityOrientation o player =
   let location = player.location
-  in {player | location = { location | orientation = p }}
+  in {player | location = { location | orientation = o }}
+
+changeOutputEntityOrientation : Vec2 -> OutputEntity -> OutputEntity
+changeOutputEntityOrientation o player =
+  let location = player.entity.location
+      entity = player.entity
+  in {player | entity = { entity | location = { location | orientation = o }}}
 
 changeEntityPosition : Vec2 -> Entity -> Entity
 changeEntityPosition p player =
   let location = player.location
   in {player | location = { location | position = p }}
 
+changeOutputEntityPosition : Vec2 -> OutputEntity -> OutputEntity
+changeOutputEntityPosition p player =
+  let location = player.entity.location
+      entity = player.entity
+  in {player | entity = { entity | location = { location | position = p }}}
 
 hasMoved : Entity -> Entity -> Bool
 hasMoved old new = old.location.position /= new.location.position
