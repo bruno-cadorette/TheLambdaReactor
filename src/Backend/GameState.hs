@@ -48,7 +48,7 @@ moveGameState :: KdTree Point2d -> UTCTime -> GameState -> GameState
 moveGameState bound time gs = hurtPlayers $ (moveAllBullet bound time (moveAllPlayer bound gs))
 
 hurtPlayers :: GameState -> GameState
-hurtPlayers gs =   let bulletBounding = fmap (\ x ->(x, (BoundingSphere (H.position $ Bullet.location x) 0.5) )) $ Map.elems $projectiles gs
+hurtPlayers gs =   let bulletBounding = fmap (\ x ->(x, (BoundingSphere (H.position $ Bullet.location x) 15) )) $ Map.elems $projectiles gs
                        hurtPlayers' = Map.foldrWithKey (\k x acc -> let hits' = Prelude.filter (\ (Bullet _ _ _ id') -> not $ id' == k) $ intersectingMany (BoundingSphere (H.position $ C.location x) 1.0) bulletBounding
                                                                       in case hits' of
                                                                          [] -> acc
