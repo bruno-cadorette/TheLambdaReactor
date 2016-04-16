@@ -21,7 +21,9 @@ speed :: Float
 speed = 2
 
 moveEntity :: Entity -> Entity
-moveEntity p = move p $ (orientation $ location p) ^* speed
+moveEntity p
+  | hp p >= 0 = move p $ (orientation $ location p) ^* speed
+  | otherwise = p
 
 moveEntityBackward :: Entity -> Entity
 moveEntityBackward p = move p $ (orientation $ location p) ^* ((negate 1) * speed)

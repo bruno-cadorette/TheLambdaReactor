@@ -11,7 +11,6 @@ import Character as C
 import Game.Helper as H
 import Game.Map
 import Bullet
-import Data.Maybe
 import Data.Time.Clock
 import Game.BoundingSphere
 import Linear.V2
@@ -31,8 +30,15 @@ emptyGameState = GameState Map.empty Map.empty [] []
 --B = old
 --A = up
 -- update old
+createBullet :: Bullet -> Map Id Entity -> Maybe Bullet
+createBullet b'' p' = let player' = Map.lookup (playerId b'') p'
+                   in
+                   case player' of
+                     Just p -> if hp p > 0 then Just (b'' {Bullet.location = moveLocation (Bullet.location b'')  (H.position $ C.location $ p)}) else Nothing
+                     Nothing -> Nothing
+
 mergeGameState :: GameState -> GameState -> GameState
-mergeGameState (GameState p b e _ ) (GameState p' b' _ _ ) = let newBullet = Map.map (\ b'' -> b'' {Bullet.location = moveLocation (Bullet.location b'')  (H.position $ C.location $ fromJust $ Map.lookup (playerId b'') p') }) b
+mergeGameState (GameState p b e _ ) (GameState p' b' _ _ ) = let newBullet = Map.mapMaybe (\ b'' -> createBullet b'' p') b
   in
    (GameState (Map.unionWith  (\ p1 p2 -> p2 {C.location = changeOri  (C.location p2) (orientation $ C.location p1)} ) p (Map.intersection p' p))
               (Map.unionWith (\ b1 _ -> b1) newBullet b') e [])

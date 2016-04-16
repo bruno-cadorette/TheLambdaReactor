@@ -35,6 +35,5 @@ getPlayer (GameEngine players' _ _ _) uuid' = Map.lookup uuid' players'
 
 --Handle shooting event
 handleShoot :: V2 Float -> Maybe Entity -> GameEngine -> Id -> UTCTime -> GameEngine
-handleShoot direction (Just entity) (GameEngine p b e gen) sockId time  =
-  addBullet (GameEngine p b e gen) ((C.location entity) {orientation = direction})  (getCurrentMilli time) sockId
+handleShoot direction (Just entity) (GameEngine p b e gen) sockId time = addBullet (GameEngine p b e gen) ((C.location entity) {orientation = direction})  (getCurrentMilli time) sockId
 handleShoot _ Nothing g _ _ = g
