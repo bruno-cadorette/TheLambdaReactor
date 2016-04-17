@@ -6,6 +6,7 @@ import Data.Char
 import Data.Bits
 import Data.Maybe
 import Data.List
+import Data.Ord
 
 data GameMap = GameMap {size :: (Int, Int), items::[Int], sprites :: [(Int, Int, Int)]} deriving (Show, Eq)
 type MapFromFile = Map.Map (Int, Int) Int
@@ -14,7 +15,7 @@ parseMap :: String -> IO MapFromFile
 parseMap fileName = do
     content <- readFile fileName
     let linesOfFile = lines content
-    return (Map.fromList (zipWith2dIndex (fmap (\ x -> fmap  digitToInt  x ) linesOfFile)))
+    return (Map.fromList (zipWith2dIndex (fmap (fmap digitToInt) linesOfFile)))
 
 
 zipWith2dIndex :: [[a]] -> [((Int, Int), a)]
@@ -26,8 +27,9 @@ test = [0,0,2,2,0,0,0,4,9,5,8,0,0,4,10,6,8,0,0,0,1,1,0,0]
 test2= [15,15,15,15,15,15,15,15,0,0,15,15,15,15,0,0,15,15,15,15,15,15,15,15]
                                    
 mapToExport :: MapFromFile -> GameMap
-mapToExport gameMap = GameMap (x + 1, y + 1) test2{-(Map.elems $ neonSprites gameMap)-} [( i, i*32, 0) | i <- [0..15]]
+mapToExport gameMap = GameMap (x + 1, y + 1) (fmap snd $ sortBy (comparing comp) $ Map.assocs gameMap){-(Map.elems $ neonSprites gameMap)-} [( i, i*32, 0) | i <- [0..15]]
     where
+    comp ((x,y), _) = (y,x)
     (x, y) =  (maximum $ Map.keys gameMap)
                       
 
