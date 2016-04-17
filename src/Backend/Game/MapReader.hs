@@ -15,8 +15,13 @@ parseMap :: String -> IO MapFromFile
 parseMap fileName = do
     content <- readFile fileName
     let linesOfFile = lines content
-    return (Map.fromList (zipWith2dIndex (fmap (fmap digitToInt) linesOfFile)))
+    return (centerMap (Map.fromList (zipWith2dIndex (fmap (fmap digitToInt) linesOfFile))))
 
+
+centerMap :: MapFromFile -> MapFromFile
+centerMap mff = Map.foldrWithKey (\ (x,y) z  acc -> Map.insert (x-(middleX `div` 2),y-(middleY `div` 2)) z acc) Map.empty mff
+    where
+      (middleX, middleY) = (maximum $ Map.keys mff)
 
 zipWith2dIndex :: [[a]] -> [((Int, Int), a)]
 zipWith2dIndex xss = [((i, j), x) | (j,xs) <- zip [0..] xss
@@ -25,22 +30,22 @@ zipWith2dIndex xss = [((i, j), x) | (j,xs) <- zip [0..] xss
 
 test = [0,0,2,2,0,0,0,4,9,5,8,0,0,4,10,6,8,0,0,0,1,1,0,0]
 test2= [15,15,15,15,15,15,15,15,0,0,15,15,15,15,0,0,15,15,15,15,15,15,15,15]
-                                   
+
 mapToExport :: MapFromFile -> GameMap
 mapToExport gameMap = GameMap (x + 1, y + 1) (fmap snd $ sortBy (comparing comp) $ Map.assocs gameMap){-(Map.elems $ neonSprites gameMap)-} [( i, i*32, 0) | i <- [0..15]]
     where
     comp ((x,y), _) = (y,x)
     (x, y) =  (maximum $ Map.keys gameMap)
-                      
+
 
 neonSprites :: MapFromFile -> MapFromFile
 neonSprites gameMap = Map.mapWithKey getSprite gameMap
-    where 
+    where
         getSprite k v = neighborScore $ neighbors k v gameMap
 
 neighbors :: (Int, Int) -> Int -> MapFromFile -> [Int]
 neighbors (x, y) v gameMap = fmap (\k-> differentValues $ fromMaybe 1 $ Map.lookup k gameMap) [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
-    where 
+    where
         differentValues i = if i == v then 0 else 1
 
 neighborScore :: [Int] -> Int

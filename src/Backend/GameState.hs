@@ -14,6 +14,7 @@ import Bullet
 import Data.Time.Clock
 import Game.BoundingSphere
 import Linear.V2
+import Debug.Trace
 
 data Hit = Hit {uuid :: Int, player :: Entity, bullet :: Bullet} deriving (Generic,Show, Eq)
 data GameState = GameState {players :: Map Text.Text Entity, projectiles :: Map Text.Text Bullet,enemies :: [Entity], hits :: [V2 Float]} deriving (Generic,Show,Eq)
@@ -37,11 +38,11 @@ createBullet b'' p' = let player' = Map.lookup (playerId b'') p'
                      Just p -> if hp p > 0 then Just (b'' {Bullet.location = moveLocation (Bullet.location b'')  (H.position $ C.location $ p)}) else Nothing
                      Nothing -> Nothing
 
-mergeGameState :: GameState -> GameState -> GameState
-mergeGameState (GameState p b e _ ) (GameState p' b' _ _ ) = let newBullet = Map.mapMaybe (\ b'' -> createBullet b'' p') b
+mergeGameState :: KdTree Point2d -> UTCTime -> GameState -> GameState -> GameState
+mergeGameState  bound time  (GameState p b e _ ) (GameState p' b' _ _ )  = let newBullet = Map.mapMaybe (\ b'' -> createBullet b'' p') b
   in
    (GameState (Map.unionWith  (\ p1 p2 -> p2 {C.location = changeOri  (C.location p2) (orientation $ C.location p1)} ) p (Map.intersection p' p))
-              (Map.unionWith (\ b1 _ -> b1) newBullet b') e [])
+              (Map.unionWith (\ b1 _ -> b1) newBullet (Map.filter (\ b'' -> bulletCanMove b'' bound time) b')) e [])
 
 hurtPlayer :: GameState -> Id -> GameState
 hurtPlayer (GameState pl pro enn hit') uuid' = (GameState (Map.update (\ p -> Just p {hp = (hp p) - 10}) uuid' pl ) pro enn (createHit (Map.lookup uuid' pl) hit'))
@@ -79,7 +80,7 @@ bulletCanMove b gameBound time = let probBullet = divide tileSize $ H.position $
 playerCanMove :: Entity -> KdTree Point2d -> Bool
 playerCanMove newEnt gameBound = let probEntity = divide tileSize $ H.position $ C.location $ moveEntity newEnt in
                               case findNearestWall probEntity gameBound  of
-                                                    Just p -> if(intersectBoxPos p probEntity 1.0 1.0) then
-                                                                  False else
+                                                    Just p -> if(intersectBoxPos p probEntity 0.5 0.5) then
+                                                                  (trace (show p ++ " " ++ (show $ probEntity)) False) else
                                                                   True
                                                     Nothing -> True

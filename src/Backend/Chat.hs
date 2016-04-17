@@ -23,8 +23,8 @@ setGameEvent2 :: Behavior GameEngine -> Behavior (Map.Map Socket Entity) -> Even
 setGameEvent2 gameEngine connectedPlayers inputEvent fpsEvent mapBound = do
   bcurrentTime <- fromPoll getCurrentTime
   let mix = updateStuff <$> connectedPlayers <*> bcurrentTime <*> gameEngine <@> inputEvent
-  gameObject <- accumB emptyGameState $ fmap mergeGameState mix
-  accumB  emptyGameState $((\ updates currenTime _ old -> moveGameState mapBound currenTime $ mergeGameState updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
+  gameObject <- accumB emptyGameState $ (mergeGameState mapBound) <$> bcurrentTime <@> mix
+  accumB  emptyGameState $((\ updates currenTime _ old -> moveGameState mapBound currenTime $ mergeGameState mapBound currenTime updates old ) <$> gameObject <*> bcurrentTime <@> fpsEvent)
 
 getConnectionOnly :: ApiExample -> Maybe ConnectionType
 getConnectionOnly (Conn a) = Just a
