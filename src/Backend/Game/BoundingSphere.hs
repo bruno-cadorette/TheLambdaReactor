@@ -1,4 +1,4 @@
-module Game.BoundingSphere (BoundingSphere(..), intersecting, intersectingMany,intersectPos,intersectBoxPos) where
+module Game.BoundingSphere (BoundingSphere(..), intersecting, intersectingMany,intersectPos,intersectBoxPos,intertest) where
   import Linear.V2
   import Debug.Trace
 
@@ -19,4 +19,6 @@ module Game.BoundingSphere (BoundingSphere(..), intersecting, intersectingMany,i
 
   intersectBoxPos:: V2 Float -> V2 Float -> Float -> Float -> Bool
   intersectBoxPos (V2 x1 y1) (V2 x2 y2) dif1 dif2 = let pyth = sqrt ((x1 - x2) ** 2 + (y1 - y2) ** 2)
-                                                      in if pyth < (dif1 + dif2) then (trace ("Bounded " ++ (show pyth) ++ " < " ++ (show $ dif1+dif2)) True) else False 
+                                                      in if pyth < (dif1 + dif2) then (trace ("Bounded " ++ (show pyth) ++ " < " ++ (show $ dif1+dif2)) True) else False
+  intertest (V2 x1 y1) (V2 x2 y2) dif1 dif2 = let pyth = sqrt ((x1 - x2) ** 2 + (y1 - y2) ** 2)
+                                                in  x1 < x2 && x1 + dif1 > x2 && y1 < y2 && y1 + dif1 > y2

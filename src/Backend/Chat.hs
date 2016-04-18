@@ -47,7 +47,7 @@ bToE :: Behavior a -> Event b-> Event a
 bToE b e = const <$> b <@> e
 
 serverEventNetwork :: Map.Map (Int, Int) Int -> Event (SocketInput ApiExample)-> MomentIO ()
-serverEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 1 then k : acc else acc ) [] gameMap
+serverEventNetwork gameMap e = let mapBound = createMap $ Map.foldrWithKey (\ k x acc -> if x == 0 then k : acc else acc ) [] gameMap
                  in do
     let connectionEvent = filterEventSocketInput getConnectionOnly e
     let chatEvent = filterEventSocketInput getChatOnly e

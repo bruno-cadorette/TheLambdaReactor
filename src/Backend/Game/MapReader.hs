@@ -19,9 +19,12 @@ parseMap fileName = do
 
 
 centerMap :: MapFromFile -> MapFromFile
-centerMap mff = Map.foldrWithKey (\ (x,y) z  acc -> Map.insert (x-(middleX `div` 2),y-(middleY `div` 2)) z acc) Map.empty mff
+centerMap mff = Map.foldrWithKey (\ (x,y) z  acc -> Map.insert (x-(maxX `div` 2),y-(maxY `div` 2)) z acc) Map.empty mff
     where
-      (middleX, middleY) = (maximum $ Map.keys mff)
+      (maxX, maxY) = (maximum $ Map.keys mff)
+      (minX, minY) = (minimum $ Map.keys mff)
+      middleX = maxX - minX
+      middleY = maxY - minY
 
 zipWith2dIndex :: [[a]] -> [((Int, Int), a)]
 zipWith2dIndex xss = [((i, j), x) | (j,xs) <- zip [0..] xss
@@ -35,7 +38,10 @@ mapToExport :: MapFromFile -> GameMap
 mapToExport gameMap = GameMap (x + 1, y + 1) (fmap snd $ sortBy (comparing comp) $ Map.assocs gameMap){-(Map.elems $ neonSprites gameMap)-} [( i, i*32, 0) | i <- [0..15]]
     where
     comp ((x,y), _) = (y,x)
-    (x, y) =  (maximum $ Map.keys gameMap)
+    (maxX, maxY) = (maximum $ Map.keys gameMap)
+    (minX, minY) = (minimum $ Map.keys gameMap)
+    x = maxX - minX
+    y = maxY - minY
 
 
 neonSprites :: MapFromFile -> MapFromFile

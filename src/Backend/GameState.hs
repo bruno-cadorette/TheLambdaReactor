@@ -80,7 +80,7 @@ bulletCanMove b gameBound time = let probBullet = divide tileSize $ H.position $
 playerCanMove :: Entity -> KdTree Point2d -> Bool
 playerCanMove newEnt gameBound = let probEntity = divide tileSize $ H.position $ C.location $ moveEntity newEnt in
                               case findNearestWall probEntity gameBound  of
-                                                    Just p -> if(intersectBoxPos p probEntity 0.5 0.5) then
+                                                    Just p -> if(intertest p probEntity 1 2) then
                                                                   (trace (show p ++ " " ++ (show $ probEntity)) False) else
                                                                   True
                                                     Nothing -> True
